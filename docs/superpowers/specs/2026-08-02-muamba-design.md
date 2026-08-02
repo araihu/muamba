@@ -1,6 +1,6 @@
 # Muamba design
 
-**Status:** Approved design, pending written-spec review  
+**Status:** Approved
 **Date:** 2026-08-02  
 **Module:** `github.com/araihu/muamba`
 
