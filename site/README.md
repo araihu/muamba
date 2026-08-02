@@ -2,13 +2,12 @@
 
 Static landing and documentation site for [Muamba](https://github.com/araihu/muamba), published at [muamba.araihu.com](https://muamba.araihu.com).
 
-Go + templ pre-render the pages with Goshtoso. The docs route uses `goshtoso-app-shells/componentdocshell`. Vinext packages the generated HTML and local embedded assets for Cloudflare Workers; the deployed routes return constant documents and use no API or WebAssembly.
+Go + templ pre-render the pages with Goshtoso. The docs route uses `goshtoso-app-shells/componentdocshell`. A small Node build copies those generated documents and local assets into `dist/`; Wrangler publishes that directory as Cloudflare Static Assets. There is no application Worker, API, server rendering, React runtime, or WebAssembly.
 
 ## Development
 
 ```bash
 npm install
-npm run generate
 npm run dev
 ```
 
@@ -23,7 +22,7 @@ Edit `internal/pages/*.templ`, run `templ generate`, then run `npm run generate`
 
 ## Deployment
 
-Wrangler owns the Worker and the `muamba.araihu.com` custom domain:
+Global Wrangler owns the assets-only deployment and the `muamba.araihu.com` custom domain:
 
 ```bash
 npm run deploy

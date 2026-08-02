@@ -1,17 +1,12 @@
 {
-  "$schema": "./node_modules/wrangler/config-schema.json",
+  "$schema": "https://developers.cloudflare.com/workers/wrangler/config-schema.json",
   "name": "muamba-site",
   "account_id": "482241c1c361c24977ac6540df946c2f",
-  "compatibility_date": "2026-08-02",
-  "compatibility_flags": ["nodejs_compat"],
-  "main": "./worker/index.ts",
+  "compatibility_date": "2026-07-29",
   "assets": {
-    "directory": "dist/client",
-    "not_found_handling": "none",
-    "binding": "ASSETS"
-  },
-  "images": {
-    "binding": "IMAGES"
+    "directory": "dist",
+    "html_handling": "drop-trailing-slash",
+    "not_found_handling": "404-page"
   },
   "routes": [
     {
@@ -20,7 +15,5 @@
     }
   ],
   "workers_dev": true,
-  "observability": {
-    "enabled": true
-  }
+  "observability": { "enabled": true }
 }

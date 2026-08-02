@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -28,9 +27,6 @@ func run() error {
 		return err
 	}
 	if err := render("app/_generated/docs/index.html", pages.DocsPage()); err != nil {
-		return err
-	}
-	if err := writeHTMLModule(); err != nil {
 		return err
 	}
 
@@ -59,28 +55,6 @@ func run() error {
 	}
 	return nil
 }
-
-func writeHTMLModule() error {
-	landing, err := os.ReadFile("app/_generated/index.html")
-	if err != nil {
-		return err
-	}
-	docs, err := os.ReadFile("app/_generated/docs/index.html")
-	if err != nil {
-		return err
-	}
-	landingJSON, err := json.Marshal(string(landing))
-	if err != nil {
-		return err
-	}
-	docsJSON, err := json.Marshal(string(docs))
-	if err != nil {
-		return err
-	}
-	content := fmt.Sprintf("export const landingHtml = %s;\nexport const docsHtml = %s;\n", landingJSON, docsJSON)
-	return os.WriteFile("app/_generated/html.ts", []byte(content), 0o644)
-}
-
 func render(name string, component templ.Component) error {
 	if err := os.MkdirAll(filepath.Dir(name), 0o755); err != nil {
 		return err
