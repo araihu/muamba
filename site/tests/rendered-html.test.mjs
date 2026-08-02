@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { runInNewContext } from "node:vm";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 
@@ -49,6 +50,49 @@ test("landing footer identifies linked Muamba and Arai Hu projects", async () =>
   const html = await read("../app/_generated/index.html");
 
   assert.match(html, /<a href="\/">Muamba<\/a> · an <a href="https:\/\/araihu\.com">Arai Hû<\/a> project/);
+});
+
+test("Goshtoso dark-mode runtime follows system preference and toggles persistently", async () => {
+  const source = await read("../public/assets/js/darkmode.js");
+  const listeners = new Map();
+  const stores = new Map();
+  const classes = new Set();
+  const storage = new Map();
+  const context = {
+    document: {
+      addEventListener: (name, listener) => listeners.set(name, listener),
+      documentElement: {
+        classList: {
+          add: (name) => classes.add(name),
+          remove: (name) => classes.delete(name),
+        },
+      },
+    },
+    localStorage: {
+      getItem: (name) => storage.get(name) ?? null,
+      setItem: (name, value) => storage.set(name, value),
+      removeItem: (name) => storage.delete(name),
+    },
+    matchMedia: () => ({ matches: true }),
+  };
+  context.window = context;
+  context.Alpine = {
+    store(name, value) {
+      if (value !== undefined) stores.set(name, value);
+      return stores.get(name);
+    },
+  };
+
+  runInNewContext(source, context);
+  listeners.get("alpine:init")();
+
+  const darkMode = stores.get("darkMode");
+  assert.equal(darkMode.on, true);
+  assert.equal(classes.has("dark"), true);
+  darkMode.toggle();
+  assert.equal(darkMode.on, false);
+  assert.equal(classes.has("dark"), false);
+  assert.equal(storage.get("darkMode"), false);
 });
 
 test("docs use Goshtoso componentdocshell and remain static", async () => {
