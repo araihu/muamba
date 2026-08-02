@@ -1,0 +1,135 @@
+package pages
+
+import (
+	"github.com/araihu/goshtoso-app-shells/componentdocshell"
+	"github.com/araihu/goshtoso/components/alert"
+	"github.com/araihu/goshtoso/components/codeblock"
+	"github.com/araihu/goshtoso/components/pageheader"
+	selectfield "github.com/araihu/goshtoso/components/select"
+	"github.com/araihu/goshtoso/components/sidebar"
+)
+
+func DocsPage() templ.Component {
+	cfg := componentdocshell.Config{
+		Brand: componentdocshell.Brand{Name: "Muamba", HomeURL: "/"},
+		Navigation: componentdocshell.Navigation{
+			Items: []sidebar.Item{{ID: "docs", Label: "Get started", Href: "/docs"}},
+			SectionsTitle: "Guide",
+			Sections: []sidebar.Section{{Title: "Guide", Items: []sidebar.Item{
+				{ID: "manifest", Label: "Manifest", Href: "/docs#manifest"},
+				{ID: "workflow", Label: "Trust workflow", Href: "/docs#workflow"},
+				{ID: "cache", Label: "Integrity cache", Href: "/docs#cache"},
+				{ID: "embedding", Label: "Go embedding", Href: "/docs#embedding"},
+			}}},
+			DisableSearch: true,
+		},
+		Appearance: componentdocshell.AppearanceConfig{
+			Themes: []selectfield.Option{
+				{Value: "araihu", Label: "Arai Hû"},
+				{Value: "goshtoso", Label: "Goshtoso"},
+				{Value: "minimal", Label: "Minimal"},
+			},
+			DefaultTheme: "araihu",
+			InitialColorScheme: componentdocshell.ColorSchemeSystem,
+		},
+		Interactions: componentdocshell.InteractionConfig{LocalRuntime: true},
+		RepositoryURL: "https://github.com/araihu/muamba",
+		Footer: docsFooter(),
+	}
+	page := componentdocshell.Page{
+		Title: "Get started",
+		DocumentTitle: "Muamba docs · Get started",
+		Description: "Install Muamba, write a manifest, establish trust, and verify remote assets offline.",
+		CanonicalURL: "https://muamba.araihu.com/docs",
+		Active: "docs",
+		Content: docsContent(),
+		Head: docsHead(),
+		EnableTOC: true,
+	}
+	return componentdocshell.Layout(cfg, page)
+}
+
+templ docsHead() {
+	<meta property="og:type" content="website"/>
+	<meta property="og:title" content="Muamba docs · Get started"/>
+	<meta property="og:description" content="Install Muamba, write a manifest, establish trust, and verify remote assets offline."/>
+	<meta property="og:url" content="https://muamba.araihu.com/docs"/>
+	<meta property="og:image" content="https://muamba.araihu.com/og.png"/>
+	<meta name="twitter:card" content="summary_large_image"/>
+	<link rel="stylesheet" href="/styles/site.css"/>
+}
+
+templ docsContent() {
+	<article class="muamba-docs">
+		@pageheader.PageHeader(pageheader.Config{Title: "Get started", Description: "Pin remote assets once, enforce their identity everywhere after."})
+		<section aria-labelledby="requirements">
+			<h2 id="requirements" data-toc-heading>Requirements and installation</h2>
+			<p>Muamba requires Go 1.26.5 or newer. Pin the command in your consumer module as a Go tool:</p>
+			@codeblock.CodeBlock(codeblock.Config{Language: "bash", Label: "Install", Code: `go get -tool github.com/araihu/muamba/cmd/muamba@latest
+go tool muamba help`})
+		</section>
+		<section aria-labelledby="manifest">
+			<h2 id="manifest" data-toc-heading>Write a manifest</h2>
+			<p>One resource groups every artifact that moves under the same logical version. Paths remain explicit and reviewable.</p>
+			@codeblock.CodeBlock(codeblock.Config{Language: "yaml", Label: "muamba.yaml", Code: `schema: 1
+
+resources:
+  bootstrap:
+    version: "5.3.8"
+    downloads:
+      bundle-js:
+        url: https://unpkg.com/bootstrap@${version}/dist/js/bootstrap.bundle.min.js
+        path: assets/vendor/bootstrap/${version}/bootstrap.bundle.min.js
+      core-css:
+        url: https://unpkg.com/bootstrap@${version}/dist/css/bootstrap.min.css
+        path: assets/vendor/bootstrap/${version}/bootstrap.min.css
+      license:
+        url: https://unpkg.com/bootstrap@${version}/LICENSE
+        path: assets/vendor/bootstrap/${version}/LICENSE`})
+			<p><code>&#36;&#123;version&#125;</code> is the only template token. Strict mode rejects expanded URLs that do not contain the exact declared version.</p>
+		</section>
+		<section aria-labelledby="workflow">
+			<h2 id="workflow" data-toc-heading>Establish and enforce trust</h2>
+			@alert.Alert(alert.Config{Title: "Trust is explicit", Description: "Review every source URL before lock. Muamba will verify later bytes against that decision, but it cannot decide whether a source is trustworthy for you.", Tone: alert.ToneWarning})
+			<h3 id="lock">1. Lock reviewed sources</h3>
+			@codeblock.CodeBlock(codeblock.Config{Language: "bash", Label: "First trust", Code: `go tool muamba lock --strict`})
+			<p>Lock downloads every unlocked URL and platform variant, stores verified bytes, and writes SHA-384 SRI values atomically.</p>
+			<h3 id="verify">2. Verify offline</h3>
+			@codeblock.CodeBlock(codeblock.Config{Language: "bash", Label: "Read-only verification", Code: `go tool muamba verify --strict`})
+			<p>Verification reads committed files and integrity cache blobs without network access.</p>
+			<h3 id="sync">3. Restore known bytes</h3>
+			@codeblock.CodeBlock(codeblock.Config{Language: "bash", Label: "Materialize", Code: `go tool muamba sync --strict`})
+			<p>Sync repairs missing or corrupt destinations only when cached or remote bytes match the lock.</p>
+		</section>
+		<section aria-labelledby="cache">
+			<h2 id="cache" data-toc-heading>Use the integrity cache</h2>
+			<p>Cache identity is the parsed algorithm and digest—not URL, version, or resource name. Identical locked bytes deduplicate safely.</p>
+			@codeblock.CodeBlock(codeblock.Config{Language: "bash", Label: "CI", Code: `go tool muamba sync --strict \
+  --target linux/amd64 \
+  --cache-dir .cache/muamba`})
+		</section>
+		<section aria-labelledby="embedding">
+			<h2 id="embedding" data-toc-heading>Generate a Go embed registry</h2>
+			<p>Generate one deterministic registry for each package that owns vendored files. The output exposes resources, files, original integrity, and normalized hashes.</p>
+			@codeblock.CodeBlock(codeblock.Config{Language: "bash", Label: "Generate", Code: `go tool muamba generate-go \
+  --strict \
+  -f muamba.yaml \
+  --dir assets \
+  --output muamba_gen.go`})
+			@codeblock.CodeBlock(codeblock.Config{Language: "go", Label: "Use", Code: `hash, ok := assets.MuambaHash("bootstrap", "core-css")
+if !ok {
+	return errors.New("bootstrap/core-css is not embedded")
+}
+stylesheetURL := "/assets/bootstrap.css?v=" + url.QueryEscape(hash)`})
+		</section>
+		<section aria-labelledby="next">
+			<h2 id="next" data-toc-heading>Continue</h2>
+			<p>Read the full command and manifest reference in the repository README, including platform maps, selectors, max sizes, updates, and failure guarantees.</p>
+			<p><a href="https://github.com/araihu/muamba#readme">Open the complete reference on GitHub</a>.</p>
+		</section>
+	</article>
+}
+
+templ docsFooter() {
+	<p>Muamba docs · static HTML rendered with Goshtoso App Shells.</p>
+}
