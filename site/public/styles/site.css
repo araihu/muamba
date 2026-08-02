@@ -26,27 +26,29 @@ a { color: inherit; }
 .muamba-skip:focus { top: 1rem; }
 .muamba-hero { border-bottom: 1px solid var(--muamba-line); background: color-mix(in srgb, var(--muamba-wash) 70%, transparent); }
 .muamba-topbar { min-height: 5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-bottom: 1px solid var(--muamba-line); }
+.muamba-brand-lockup { display: flex; align-items: center; gap: .75rem; min-width: 0; }
 .muamba-brand { display: inline-flex; align-items: center; gap: .75rem; text-decoration: none; }
 .muamba-brand-mark { display: block; width: 2.5rem; height: 2.5rem; }
 .muamba-brand strong, .muamba-brand small { display: block; }
 .muamba-brand strong { color: var(--muamba-ink); letter-spacing: -.02em; }
 .muamba-brand small { color: var(--muamba-muted); font-size: .72rem; }
+.muamba-version { flex: none; text-decoration: none; }
 .muamba-nav { display: flex; align-items: center; gap: .35rem; }
 .muamba-nav a { padding: .55rem .75rem; text-decoration: none; font-size: .9rem; font-weight: 650; }
 .muamba-nav a:hover { color: var(--muamba-accent); }
-.muamba-mode-toggle { margin-left: .4rem; }
+.muamba-nav .muamba-icon-button { display: inline-flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; padding: .5rem; border: 0; border-radius: var(--radius); background: transparent; color: var(--muamba-ink); cursor: pointer; }
+.muamba-nav .muamba-icon-button:hover { background: var(--color-surface-alt); color: var(--muamba-ink); }
+.dark .muamba-nav .muamba-icon-button:hover { background: var(--color-surface-dark-alt); }
+.muamba-icon-button:focus-visible { outline: 2px solid var(--muamba-accent); outline-offset: 2px; }
+.muamba-icon-button svg { display: block; width: 1.5rem; height: 1.5rem; }
+.muamba-hero-copy { min-width: 0; }
+.muamba-install-code { width: 100%; min-width: 0; max-width: 42rem; margin-top: 1.5rem; }
 .muamba-hero-grid { min-height: 39rem; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(22rem, .95fr); align-items: center; gap: 4rem; padding-block: 5rem; outline: none; }
 .muamba-hero-copy h1 { max-width: 13ch; margin: 1.4rem 0 0; color: var(--muamba-ink); font-size: clamp(3rem, 6vw, 5.6rem); line-height: .98; letter-spacing: -.065em; }
 .muamba-lede { max-width: 39rem; margin: 1.6rem 0 0; color: var(--muamba-muted); font-size: 1.12rem; line-height: 1.75; }
 .muamba-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; margin-top: 2rem; }
 .muamba-cta-link { display: inline-flex; align-items: center; gap: .45rem; font-size: 1rem; font-weight: 700; text-decoration-thickness: .12em; text-underline-offset: .35em; }
 .muamba-actions a:last-child { font-weight: 700; text-underline-offset: .28rem; }
-.muamba-codeblock-compact { min-width: 0; }
-.muamba-codeblock-compact[data-install-codeblock] { max-width: 42rem; margin-top: 1.5rem; }
-.muamba-codeblock-compact > div { display: grid; grid-template-columns: minmax(7rem, auto) minmax(0, 1fr); }
-.muamba-codeblock-compact > div > div:first-child { border-right: 1px solid var(--color-outline); border-bottom: 0; }
-.dark .muamba-codeblock-compact > div > div:first-child { border-right-color: var(--color-outline-dark); }
-.muamba-codeblock-compact .codeblock pre.ch-chroma { padding-block: .72rem; white-space: nowrap; }
 .muamba-manifest-preview { min-width: 0; }
 .muamba-panel-heading { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 1rem; color: var(--muamba-ink); font: 700 .82rem/1 ui-monospace, monospace; }
 .muamba-manifest-preview [data-code-block] { margin: 0; border: 0; border-radius: 0; }
@@ -102,16 +104,13 @@ a { color: inherit; }
 @media (max-width: 430px) {
   .muamba-container { width: min(100% - 1.5rem, 72rem); }
   .muamba-topbar { align-items: flex-start; flex-direction: column; padding-block: 1rem; }
+  .muamba-brand-lockup { width: 100%; justify-content: space-between; }
   .muamba-brand small { display: none; }
   .muamba-nav { width: 100%; gap: 0; justify-content: space-between; }
   .muamba-nav a { padding-inline: .5rem; }
-  .muamba-mode-toggle { margin-left: .5rem; }
   .muamba-hero-grid { padding-block: 2.75rem; }
   .muamba-section { padding-block: 4rem; }
   .muamba-actions { align-items: stretch; flex-direction: column; }
-  .muamba-codeblock-compact > div { grid-template-columns: 1fr; }
-  .muamba-codeblock-compact > div > div:first-child { border-right: 0; border-bottom: 1px solid var(--color-outline); }
-  .dark .muamba-codeblock-compact > div > div:first-child { border-bottom-color: var(--color-outline-dark); }
   .muamba-footer .muamba-container { align-items: flex-start; flex-direction: column; justify-content: center; }
 }
 

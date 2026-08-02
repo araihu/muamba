@@ -26,7 +26,9 @@ test("landing uses Arai Hu color modes and Goshtoso controls", async () => {
   assert.doesNotMatch(html, /src="\/assets\/js\/darkmode\.js"/);
   assert.match(html, /id="muamba-color-mode"/);
   assert.match(html, /<nav[^>]*aria-label="Primary navigation"[^>]*x-data="\{\}"/);
-  assert.match(html, /x-on:change="\$store\.darkMode\.toggle\(\)"/);
+  assert.match(html, /x-bind:aria-label="\$store\.darkMode\.on \? 'Switch to light mode' : 'Switch to dark mode'"/);
+  assert.match(html, /x-on:click="\$store\.darkMode\.toggle\(\)"/);
+  assert.match(html, /aria-label="Source repository"/);
   assert.match(css, /--muamba-ink: var\(--color-on-surface-strong\)/);
   assert.match(css, /--muamba-accent: var\(--color-primary\)/);
   assert.doesNotMatch(css, /--muamba-accent: #[0-9a-f]+/i);
@@ -43,9 +45,23 @@ test("landing keeps navigation links and install command inside Goshtoso compone
   assert.doesNotMatch(primaryCTA, /bg-primary/);
   assert.match(finalCTA, /text-primary/);
   assert.doesNotMatch(finalCTA, /bg-primary/);
-  assert.match(html, /data-install-codeblock="compact"/);
+  assert.match(html, /class="muamba-install-code" aria-label="Install Muamba"/);
   assert.match(html, /aria-label="Copy Install Muamba code"/);
+  assert.doesNotMatch(html, /aria-label="Copy (Lock|Verify|Sync) code"/);
+  assert.doesNotMatch(html, /muamba-codeblock-compact/);
   assert.doesNotMatch(html, /class="muamba-install"/);
+});
+
+test("landing header exposes the current release and icon controls", async () => {
+  const html = await read("../app/_generated/index.html");
+  const navigation = html.match(/<nav aria-label="Primary navigation".*?<\/nav>/)?.[0] ?? "";
+
+  assert.match(html, /href="https:\/\/github\.com\/araihu\/muamba\/releases\/tag\/v0\.0\.2"/);
+  assert.match(html, />v0\.0\.2<\/span><\/span>/);
+  assert.match(html, /<button[^>]*id="muamba-color-mode"[^>]*aria-label="Switch to dark mode"/);
+  assert.match(navigation, /<a[^>]*aria-label="Source repository"/);
+  assert.doesNotMatch(navigation, />GitHub<\/a>/);
+  assert.doesNotMatch(navigation, />Dark mode<\/label>/);
 });
 
 test("landing footer identifies linked Muamba and Arai Hu projects", async () => {
