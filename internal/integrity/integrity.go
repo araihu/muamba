@@ -75,6 +75,10 @@ func FormatSRI(algorithm crypto.Hash, sum []byte) string {
 	return hashName(algorithm) + "-" + base64.StdEncoding.EncodeToString(sum)
 }
 
+func FormatHash(digest Digest) string {
+	return hashName(digest.Algorithm) + ":" + hex.EncodeToString(digest.Sum)
+}
+
 func parseHash(name string) (crypto.Hash, error) {
 	switch strings.ToLower(name) {
 	case "sha256":

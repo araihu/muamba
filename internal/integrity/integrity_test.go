@@ -54,6 +54,32 @@ func TestDefaultFormatIsSHA384SRI(t *testing.T) {
 	}
 }
 
+func TestFormatHashNormalizesSupportedIntegrityForms(t *testing.T) {
+	for _, algorithm := range []crypto.Hash{crypto.SHA256, crypto.SHA384, crypto.SHA512} {
+		sum, err := Compute(strings.NewReader("abc"), algorithm)
+		if err != nil {
+			t.Fatal(err)
+		}
+		name := hashName(algorithm)
+		want := name + ":" + hex.EncodeToString(sum)
+		inputs := []string{
+			FormatSRI(algorithm, sum),
+			name + ":" + strings.ToUpper(hex.EncodeToString(sum)),
+		}
+		for _, input := range inputs {
+			t.Run(input[:6], func(t *testing.T) {
+				digest, parseErr := Parse(input)
+				if parseErr != nil {
+					t.Fatal(parseErr)
+				}
+				if got := FormatHash(digest); got != want {
+					t.Fatalf("FormatHash = %q, want %q", got, want)
+				}
+			})
+		}
+	}
+}
+
 func TestVerifyReportsMismatch(t *testing.T) {
 	digest, err := Parse("sha256-ungWv48Bz+pBQUDeXa4iI7ADYaOWF3qctBD/YfIAFa0=")
 	if err != nil {
