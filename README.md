@@ -1,5 +1,13 @@
 # Muamba
 
+<p align="center">
+  <a href="https://github.com/araihu/muamba/actions/workflows/ci.yml"><img src="https://github.com/araihu/muamba/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://github.com/araihu/muamba/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/coverage-%E2%89%A570%25-brightgreen.svg" alt="Coverage: at least 70%" /></a>
+  <a href="https://pkg.go.dev/github.com/araihu/muamba"><img src="https://pkg.go.dev/badge/github.com/araihu/muamba.svg" alt="Go Reference" /></a>
+  <a href="https://goreportcard.com/report/github.com/araihu/muamba"><img src="https://goreportcard.com/badge/github.com/araihu/muamba" alt="Go Report Card" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT" /></a>
+</p>
+
 Muamba vendors remote files with explicit trust on first use (TOFU). One
 `muamba.yaml` groups every artifact for a dependency under one version, stores
 its integrity lock, and can generate a package-scoped Go embed registry.
@@ -202,16 +210,22 @@ environment variables, keychains, agents, or helper processes—not from
 Git/release discovery, safe archive extraction, resumable downloads, bounded
 parallelism, and a public Go package after a concrete import use appears.
 
-The complete approved behavior and tradeoffs are in
-[`docs/superpowers/specs/2026-08-02-muamba-design.md`](docs/superpowers/specs/2026-08-02-muamba-design.md).
-
 ## Development
 
 ```bash
-go test ./...
-go test -race ./...
+go mod tidy
+gofmt_files="$(gofmt -l .)" || exit 1
+test -z "$gofmt_files"
 go vet ./...
+golangci-lint run
+scripts/check-coverage_test.sh
+scripts/check-coverage.sh
+go test -race ./...
 go run ./cmd/muamba verify --strict -f examples/web-assets/muamba.yaml
 go run ./cmd/muamba generate-go --strict --check \
   -f examples/web-assets/muamba.yaml --dir assets --output muamba_gen.go
 ```
+
+Coverage must remain at or above 70%; CI uploads the raw profile, function
+summary, and HTML report. See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a
+pull request. Report vulnerabilities privately using [SECURITY.md](SECURITY.md).

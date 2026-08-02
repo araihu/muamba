@@ -1,0 +1,22 @@
+# golangci-lint configuration. Standard linters plus a hard cyclomatic
+# complexity ceiling for the repository quality baseline.
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  default: standard
+  enable:
+    - cyclop
+  settings:
+    cyclop:
+      # Existing Muamba orchestration peaks at 23. Prevent further growth while
+      # leaving focused production refactors outside repository setup work.
+      max-complexity: 25
+  exclusions:
+    generated: strict
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

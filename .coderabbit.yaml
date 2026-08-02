@@ -1,0 +1,44 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: "en-US"
+early_access: false
+
+reviews:
+  profile: "assertive"
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  review_details: true
+  enable_prompt_for_ai_agents: false
+  auto_review:
+    enabled: true
+    drafts: false
+  path_filters:
+    - "!examples/**/vendor/**"
+    - "!examples/**/muamba_gen.go"
+  path_instructions:
+    - path: "**/*.go"
+      instructions: |
+        Preserve Muamba's TOFU and integrity boundaries. Flag path traversal,
+        symlink escapes, unsafe redirects, credential disclosure, response-body
+        disclosure, partial writes, non-atomic grouped updates, and unbounded
+        network or filesystem operations.
+    - path: "**/*_test.go"
+      instructions: |
+        Check failure-path coverage, deterministic behavior, race safety, and
+        tests for all changed trust, path, transport, or atomicity invariants.
+    - path: ".github/workflows/**"
+      instructions: |
+        Check least-privilege permissions, immutable action pins, fork-safe
+        pull-request behavior, reproducibility, and required gate coverage.
+  tools:
+    golangci-lint:
+      enabled: true
+      config_file: ".golangci.yml"
+    github-checks:
+      enabled: true
+    gitleaks:
+      enabled: true
+
+chat:
+  auto_reply: true
