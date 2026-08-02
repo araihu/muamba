@@ -27,6 +27,7 @@ type Options struct {
 type embeddedDownload struct {
 	selection manifest.Selection
 	embedPath string
+	hash      string
 }
 
 func Generate(document *manifest.Document, options Options) error {
@@ -80,7 +81,11 @@ func Generate(document *manifest.Document, options Options) error {
 		if verifyErr != nil {
 			return fmt.Errorf("%s/%s: %w", selection.ResourceName, selection.DownloadName, verifyErr)
 		}
-		embedded = append(embedded, embeddedDownload{selection: selection, embedPath: filepath.ToSlash(relative)})
+		embedded = append(embedded, embeddedDownload{
+			selection: selection,
+			embedPath: filepath.ToSlash(relative),
+			hash:      integrity.FormatHash(digest),
+		})
 	}
 	if len(embedded) == 0 {
 		return fmt.Errorf("no downloads found below package directory %s", options.Dir)
@@ -172,14 +177,14 @@ func render(packageName string, downloads []embeddedDownload) ([]byte, error) {
 		}
 		fmt.Fprintf(&buffer, "\t%s = %q\n", identifier, value)
 	}
-	buffer.WriteString(")\n\ntype MuambaResource struct {\n\tName string\n\tVersion string\n\tDownloads []MuambaDownload\n}\n\ntype MuambaDownload struct {\n\tName string\n\tURL string\n\tPath string\n\tIntegrity string\n}\n\n")
+	buffer.WriteString(")\n\ntype MuambaResource struct {\n\tName string\n\tVersion string\n\tDownloads []MuambaDownload\n}\n\ntype MuambaDownload struct {\n\tName string\n\tURL string\n\tPath string\n\tIntegrity string\n\tHash string\n}\n\n")
 	buffer.WriteString("var muambaResources = []MuambaResource{\n")
 	for index := 0; index < len(downloads); {
 		resource := downloads[index].selection.ResourceName
 		fmt.Fprintf(&buffer, "\t{Name: %q, Version: %q, Downloads: []MuambaDownload{\n", resource, downloads[index].selection.Version)
 		for index < len(downloads) && downloads[index].selection.ResourceName == resource {
 			selection := downloads[index].selection
-			fmt.Fprintf(&buffer, "\t\t{Name: %q, URL: %q, Path: %q, Integrity: %q},\n", selection.DownloadName, selection.URL, selection.Path, selection.Integrity)
+			fmt.Fprintf(&buffer, "\t\t{Name: %q, URL: %q, Path: %q, Integrity: %q, Hash: %q},\n", selection.DownloadName, selection.URL, selection.Path, selection.Integrity, downloads[index].hash)
 			index++
 		}
 		buffer.WriteString("\t}},\n")
@@ -188,8 +193,13 @@ func render(packageName string, downloads []embeddedDownload) ([]byte, error) {
 	for _, download := range downloads {
 		fmt.Fprintf(&buffer, "\t%q: %q,\n", download.selection.ResourceName+"\x00"+download.selection.DownloadName, download.embedPath)
 	}
+	buffer.WriteString("}\n\nvar muambaHashes = map[string]string{\n")
+	for _, download := range downloads {
+		fmt.Fprintf(&buffer, "\t%q: %q,\n", download.selection.ResourceName+"\x00"+download.selection.DownloadName, download.hash)
+	}
 	buffer.WriteString("}\n\nfunc MuambaResources() []MuambaResource {\n\tresult := make([]MuambaResource, len(muambaResources))\n\tcopy(result, muambaResources)\n\tfor index := range result {\n\t\tresult[index].Downloads = append([]MuambaDownload(nil), result[index].Downloads...)\n\t}\n\treturn result\n}\n\n")
 	buffer.WriteString("func MuambaResourceByName(name string) (MuambaResource, bool) {\n\tfor _, resource := range MuambaResources() {\n\t\tif resource.Name == name { return resource, true }\n\t}\n\treturn MuambaResource{}, false\n}\n\n")
+	buffer.WriteString("func MuambaHash(resource, download string) (string, bool) {\n\thash, ok := muambaHashes[resource+\"\\x00\"+download]\n\treturn hash, ok\n}\n\n")
 	buffer.WriteString("func MuambaOpen(resource, download string) (fs.File, error) {\n\tpath, ok := muambaEmbeddedPaths[resource+\"\\x00\"+download]\n\tif !ok { return nil, fmt.Errorf(\"unknown Muamba download %s/%s\", resource, download) }\n\treturn muambaFiles.Open(path)\n}\n")
 	formatted, err := format.Source(buffer.Bytes())
 	if err != nil {
