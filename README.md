@@ -57,6 +57,56 @@ The base manifest intentionally has no generic metadata. Consumer-specific
 roles, licensing relationships, attribution, and overlays belong outside
 Muamba.
 
+### Platform-aware executables
+
+Downloads are platform-neutral by default (`platform: multi`) and remain
+unchanged for JavaScript, CSS, licenses, and similar files. A download known to
+work on only one Go target can declare that exact target:
+
+```yaml
+resources:
+  tool:
+    version: "1.2.3"
+    downloads:
+      cli:
+        url: https://example.com/v${version}/tool-linux-x64
+        path: .tools/tool
+        platform: linux/amd64
+        executable: true
+        max_size: 128MiB
+```
+
+Release executables with several platform assets use an exact platform map and
+one shared destination path:
+
+```yaml
+resources:
+  tailwind:
+    version: "4.3.3"
+    downloads:
+      cli:
+        path: .tools/tailwindcss
+        executable: true
+        max_size: 128MiB
+        platforms:
+          linux/amd64:
+            url: https://github.com/tailwindlabs/tailwindcss/releases/download/v${version}/tailwindcss-linux-x64
+            integrity: sha384-...
+          darwin/arm64:
+            url: https://github.com/tailwindlabs/tailwindcss/releases/download/v${version}/tailwindcss-macos-arm64
+            integrity: sha384-...
+```
+
+`url` is optional when `platforms` is present. An exact platform entry wins
+over a compatible base URL; otherwise a base URL applies when `platform` is
+`multi` or matches the target. Target names use exact Go `GOOS/GOARCH` values.
+Unsupported targets fail before downloads or destination writes. Muamba does
+not infer aliases or libc variants.
+
+`executable` defaults to false. Materialized executables use mode `0755`; other
+files use `0644` on POSIX. `max_size` accepts positive binary sizes using
+`KiB`, `MiB`, or `GiB`; omission retains the 100 MiB default.
+
 ## Trust and materialization workflow
 
 From this repository, the committed example can be checked offline:
@@ -72,9 +122,11 @@ first trust explicitly:
 go tool muamba lock --strict
 ```
 
-`lock` downloads only entries without `integrity`, writes the files, and adds
-SHA-384 SRI locks to the same YAML. Commit the manifest and downloaded files
-together.
+`lock` downloads every unlocked base URL and platform variant, caches their
+verified bytes, and adds SHA-384 SRI locks to the same YAML atomically. Only
+the current runtime target is written to each shared destination; use
+`--target GOOS/GOARCH` to choose another target. Commit the manifest and any
+tracked downloaded files together.
 
 Later commands do not silently trust different bytes:
 
@@ -85,8 +137,14 @@ go tool muamba verify --strict
 # Restore missing or corrupt files only when remote bytes match the lock.
 go tool muamba sync --strict
 
+# Restore a CI target explicitly.
+go tool muamba sync --strict --target linux/amd64
+
 # Operate on one resource or download.
 go tool muamba verify --strict bootstrap/core-css
+
+# Offline verification of every locked cache blob.
+go tool muamba verify --strict --all-platforms
 ```
 
 Changing trust is always explicit. Update every download in a grouped resource
@@ -102,13 +160,44 @@ Or re-trust one artifact whose bytes changed at the same URL:
 go tool muamba update bootstrap/core-css --strict
 ```
 
-A grouped update stages and hashes all new downloads before changing the
-manifest or visible files. It refuses to remove an old versioned file if that
-file no longer matches its previous lock.
+A grouped or single-download update stages and hashes every declared platform
+variant before changing the manifest or visible files. It materializes only
+the selected target and refuses to remove an old versioned file if that file
+no longer matches its previous lock.
 
 Commands search the current directory and its parents for `muamba.yaml`.
 Pass `-f PATH` to select one explicitly. Selectors are `resource` or
 `resource/download`; no selector means all downloads.
+
+## Integrity cache and CI
+
+Every locked download can use an integrity-addressed cache, including JS, CSS,
+licenses, and executables. Cache identity is the parsed algorithm and digest,
+not URL, resource, or version. Muamba verifies cache bytes before every use.
+Identical integrity therefore deduplicates safely across declarations.
+
+Cache directory precedence is `--cache-dir`, `MUAMBA_CACHE_DIR`, then the
+`muamba` child of the operating system user cache directory. `sync` follows
+this order:
+
+1. Verify the destination; seed or repair its cache blob without network.
+2. Otherwise verify and copy the cache blob atomically.
+3. Otherwise download, verify, cache, and atomically materialize it.
+
+Corrupt cache or remote bytes never replace an existing destination. Muamba
+uses regular copies rather than symlinks or hard links.
+
+GitHub Actions can persist a repository-local cache while keeping executable
+destinations ignored:
+
+```yaml
+- uses: actions/cache@v4
+  with:
+    path: .cache/muamba
+    key: muamba-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('muamba.yaml') }}
+
+- run: go tool muamba sync --strict --target linux/amd64 --cache-dir .cache/muamba
+```
 
 ## Generate embedded Go resources
 
@@ -117,6 +206,7 @@ Muamba can generate one registry for each Go package containing vendored files:
 ```bash
 go run ./cmd/muamba generate-go \
   --strict \
+  --target linux/amd64 \
   -f examples/web-assets/muamba.yaml \
   --dir assets \
   --output muamba_gen.go
@@ -132,7 +222,8 @@ go run ./cmd/muamba generate-go \
 beneath that package directory, verifies their local bytes, emits explicit
 `//go:embed` paths, and formats deterministic Go. It infers the package from an
 existing non-test `.go` file; use `--package NAME` for an otherwise empty
-package directory.
+package directory. Generation resolves the runtime target by default. Projects
+committing platform-specific generated bytes should always pass `--target`.
 
 The generated API is deliberately small:
 
@@ -191,7 +282,13 @@ explicit option:
 --ca-file private-ca.pem
 --timeout 30s
 --max-size 10485760
+--target linux/amd64
+--cache-dir .cache/muamba
 ```
+
+An explicit `--max-size` byte count overrides every manifest `max_size` for
+that invocation. Otherwise each download's declared limit applies before the
+100 MiB default.
 
 HTTP remains separate from disabled TLS verification, redirect targets are
 checked again, redirects are capped at ten, and response bodies are never
@@ -208,7 +305,9 @@ OAuth 2.0 client credentials, and SSH. Credential values will come from
 environment variables, keychains, agents, or helper processes—not from
 `muamba.yaml`. Other roadmap candidates include protected credential redirects,
 Git/release discovery, safe archive extraction, resumable downloads, bounded
-parallelism, and a public Go package after a concrete import use appears.
+parallelism, cache inspection/eviction, musl targeting, platform aliases, and
+multiple materialization destinations. Muamba remains publisher-neutral and
+does not hardcode release knowledge for Tailwind or other projects.
 
 ## Development
 
