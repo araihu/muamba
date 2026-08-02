@@ -168,10 +168,13 @@ func TestLockPlatformFailurePreservesManifestAndDestination(t *testing.T) {
 
 func TestUpdateResourceRelocksAllPlatformsAndMaterializesSelectedTarget(t *testing.T) {
 	var requests atomic.Int64
-	requestPaths := make(chan string, 2)
+	requestPaths := make(chan string, 8)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requests.Add(1)
-		requestPaths <- r.URL.Path
+		select {
+		case requestPaths <- r.URL.Path:
+		default:
+		}
 		switch {
 		case strings.HasSuffix(r.URL.Path, "/linux"):
 			_, _ = w.Write([]byte("linux new"))
@@ -200,8 +203,8 @@ func TestUpdateResourceRelocksAllPlatformsAndMaterializesSelectedTarget(t *testi
 	if requests.Load() != 2 {
 		t.Fatalf("requests = %d, want 2", requests.Load())
 	}
-	close(requestPaths)
-	for path := range requestPaths {
+	for range 2 {
+		path := <-requestPaths
 		if !strings.Contains(path, "/v2.0.0/") {
 			t.Errorf("update request path = %q", path)
 		}

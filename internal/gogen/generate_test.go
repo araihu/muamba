@@ -2,6 +2,7 @@ package gogen
 
 import (
 	"crypto"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -194,6 +195,41 @@ resources:
 	options.Target = manifest.Target{GOOS: "darwin", GOARCH: "arm64"}
 	if err := Generate(doc, options); err == nil || !strings.Contains(err.Error(), "integrity mismatch") {
 		t.Fatalf("Darwin generation error = %v", err)
+	}
+}
+
+func TestGenerateSelectsRuntimeTargetByDefault(t *testing.T) {
+	target := manifest.RuntimeTarget()
+	contents := "runtime bytes"
+	digest := digestFor(t, contents)
+	repo := testrepo.New(t, fmt.Sprintf(`schema: 1
+resources:
+  tool:
+    version: "1.0.0"
+    downloads:
+      cli:
+        path: assets/vendor/tool
+        platforms:
+          %s:
+            url: https://example.com/${version}/runtime
+            integrity: %s
+`, target.String(), digest))
+	repo.Write(t, "assets/vendor/tool", []byte(contents))
+	repo.Write(t, "assets/doc.go", []byte("package assets\n"))
+	doc, err := manifest.Load(repo.Manifest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := Generate(doc, Options{Dir: "assets", Output: "muamba_gen.go", Strict: true}); err != nil {
+		t.Fatal(err)
+	}
+	generated, err := os.ReadFile(filepath.Join(repo.Root, "assets", "muamba_gen.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(generated)
+	if !strings.Contains(text, `/1.0.0/runtime`) || !strings.Contains(text, digest) {
+		t.Fatalf("generated runtime registry =\n%s", text)
 	}
 }
 

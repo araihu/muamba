@@ -11,15 +11,18 @@ import (
 
 func (e *Engine) Verify(_ context.Context, selectors []string, allPlatforms bool) (Report, error) {
 	selections, err := e.selections(selectors)
+	if err != nil {
+		return Report{}, err
+	}
 	selected := make(map[string]struct{})
 	if allPlatforms {
 		for _, selection := range selections {
 			selected[selectionLabel(selection)] = struct{}{}
 		}
 		selections, err = e.allSelections(selectors)
-	}
-	if err != nil {
-		return Report{}, err
+		if err != nil {
+			return Report{}, err
+		}
 	}
 	report := Report{Warnings: append([]manifest.Warning(nil), e.warnings...)}
 	for _, selection := range selections {

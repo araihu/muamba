@@ -144,7 +144,9 @@ resources:
 
 func TestSyncUsesManifestSizeUnlessExplicitOverride(t *testing.T) {
 	body := strings.Repeat("x", 2048)
+	var requests atomic.Int64
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		requests.Add(1)
 		_, _ = w.Write([]byte(body))
 	}))
 	defer server.Close()
@@ -174,6 +176,13 @@ resources:
 	}
 	if _, err := overridden.Sync(context.Background(), nil); err != nil {
 		t.Fatal(err)
+	}
+	if requests.Load() != 2 {
+		t.Fatalf("requests = %d, want 2", requests.Load())
+	}
+	got, err := os.ReadFile(filepath.Join(repo.Root, ".tools", "tool"))
+	if err != nil || string(got) != body {
+		t.Fatalf("destination = %d bytes, %v", len(got), err)
 	}
 }
 
