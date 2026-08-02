@@ -22,8 +22,11 @@ test("landing uses Arai Hu color modes and Goshtoso controls", async () => {
 
   assert.match(html, /<html[^>]*data-theme="araihu"/);
   assert.match(html, /prefers-color-scheme: dark/);
+  assert.match(html, /window\.goshtosoStorageConsent=\{allowed:canStore\}/);
+  assert.match(html, /muamba:storage-probe/);
   assert.match(html, /src="\/assets\/js\/darkmode\.js"/);
   assert.match(html, /id="muamba-color-mode"/);
+  assert.match(html, /<nav[^>]*aria-label="Primary navigation"[^>]*x-data="\{\}"/);
   assert.match(html, /x-on:change="\$store\.darkMode\.toggle\(\)"/);
   assert.match(css, /--muamba-ink: var\(--color-on-surface-strong\)/);
   assert.match(css, /--muamba-accent: var\(--color-primary\)/);

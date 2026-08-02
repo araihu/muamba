@@ -42,7 +42,7 @@ func LandingPage() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templ.Raw(`<script>(()=>{let dark;try{const saved=localStorage.getItem("darkMode");dark=saved===null?matchMedia("(prefers-color-scheme: dark)").matches:saved==="true"}catch{dark=matchMedia("(prefers-color-scheme: dark)").matches}document.documentElement.classList.toggle("dark",dark)})();</script>`).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = templ.Raw(`<script>(()=>{const canStore=()=>{try{const storage=window.localStorage;if(!storage)return false;const key="muamba:storage-probe";storage.setItem(key,"1");storage.removeItem(key);return true}catch{return false}};window.goshtosoStorageConsent={allowed:canStore};let dark;try{const saved=localStorage.getItem("darkMode");dark=saved===null?matchMedia("(prefers-color-scheme: dark)").matches:saved==="true"}catch{dark=matchMedia("(prefers-color-scheme: dark)").matches}document.documentElement.classList.toggle("dark",dark)})();</script>`).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -54,7 +54,7 @@ func LandingPage() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<link rel=\"stylesheet\" href=\"/styles/site.css\"></head><body class=\"muamba-site bg-surface text-on-surface dark:bg-surface-dark dark:text-on-surface-dark\"><a class=\"muamba-skip\" href=\"#hero-content\">Skip to main content</a><main id=\"main-content\"><section id=\"hero\" class=\"muamba-hero\"><div class=\"muamba-container\"><header class=\"muamba-topbar\"><a class=\"muamba-brand\" href=\"/\" aria-label=\"Muamba home\"><img class=\"muamba-brand-mark\" src=\"/brand/muamba-mark.svg\" alt=\"\" aria-hidden=\"true\"> <span><strong>Muamba</strong><small>trusted remote assets</small></span></a><nav aria-label=\"Primary navigation\" class=\"muamba-nav\"><a href=\"/docs\">Docs</a> <a href=\"https://github.com/araihu/muamba\" target=\"_blank\" rel=\"noreferrer\">GitHub</a>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<link rel=\"stylesheet\" href=\"/styles/site.css\"></head><body class=\"muamba-site bg-surface text-on-surface dark:bg-surface-dark dark:text-on-surface-dark\"><a class=\"muamba-skip\" href=\"#hero-content\">Skip to main content</a><main id=\"main-content\"><section id=\"hero\" class=\"muamba-hero\"><div class=\"muamba-container\"><header class=\"muamba-topbar\"><a class=\"muamba-brand\" href=\"/\" aria-label=\"Muamba home\"><img class=\"muamba-brand-mark\" src=\"/brand/muamba-mark.svg\" alt=\"\" aria-hidden=\"true\"> <span><strong>Muamba</strong><small>trusted remote assets</small></span></a><nav aria-label=\"Primary navigation\" class=\"muamba-nav\" x-data=\"{}\"><a href=\"/docs\">Docs</a> <a href=\"https://github.com/araihu/muamba\" target=\"_blank\" rel=\"noreferrer\">GitHub</a>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
