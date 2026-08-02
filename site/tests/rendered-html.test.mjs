@@ -105,6 +105,36 @@ test("docs use Goshtoso componentdocshell and remain static", async () => {
   assert.doesNotMatch(html, /WebAssembly|wasm_exec|fetch\(["']\/api/);
 });
 
+test("docs keep the Arai Hu theme and one guide heading", async () => {
+  const html = await read("../app/_generated/docs/index.html");
+
+  assert.match(html, /&#34;theme&#34;:&#34;araihu&#34;/);
+  assert.doesNotMatch(html, /id="componentdocshell-theme-trigger"/);
+  assert.equal((html.match(/>Guide<\/h3>|>Guide<\/div>/g) ?? []).length, 1);
+});
+
+test("docs use explicit prose rhythm and Goshtoso inline code", async () => {
+  const [html, css] = await Promise.all([
+    read("../app/_generated/docs/index.html"),
+    read("../public/styles/site.css"),
+  ]);
+
+  assert.match(html, /class="muamba-docs-codeblock"/);
+  assert.match(html, /data-inline-code="version"/);
+  assert.match(html, /class="[^"]*muamba-trust-alert[^"]*"[^>]*role="alert"/);
+  assert.match(css, /\.muamba-docs-codeblock\s*\{[^}]*margin-top:\s*1rem/s);
+  assert.doesNotMatch(css, /\.muamba-docs \[data-code-block\]/);
+});
+
+test("docs footer links Muamba, Arai Hu, Goshtoso, and App Shells", async () => {
+  const html = await read("../app/_generated/docs/index.html");
+
+  assert.match(html, /<a href="\/">Muamba docs<\/a>/);
+  assert.match(html, /<a href="https:\/\/araihu\.com">Arai Hû<\/a>/);
+  assert.match(html, /<a href="https:\/\/goshtoso\.araihu\.com">Goshtoso<\/a>/);
+  assert.match(html, /<a href="https:\/\/github\.com\/araihu\/goshtoso-app-shells">App Shells<\/a>/);
+});
+
 test("generated pages have one main landmark and skip links", async () => {
   for (const path of ["../app/_generated/index.html", "../app/_generated/docs/index.html"]) {
     const html = await read(path);

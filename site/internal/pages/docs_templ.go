@@ -12,8 +12,8 @@ import (
 	"github.com/araihu/goshtoso-app-shells/componentdocshell"
 	"github.com/araihu/goshtoso/components/alert"
 	"github.com/araihu/goshtoso/components/codeblock"
+	"github.com/araihu/goshtoso/components/inlinecode"
 	"github.com/araihu/goshtoso/components/pageheader"
-	selectfield "github.com/araihu/goshtoso/components/select"
 	"github.com/araihu/goshtoso/components/sidebar"
 )
 
@@ -27,7 +27,7 @@ func DocsPage() templ.Component {
 		},
 		Navigation: componentdocshell.Navigation{
 			Items:         []sidebar.Item{{ID: "docs", Label: "Get started", Href: "/docs"}},
-			SectionsTitle: "Guide",
+			SectionsTitle: "",
 			Sections: []sidebar.Section{{Title: "Guide", Items: []sidebar.Item{
 				{ID: "manifest", Label: "Manifest", Href: "/docs#manifest"},
 				{ID: "workflow", Label: "Trust workflow", Href: "/docs#workflow"},
@@ -37,13 +37,9 @@ func DocsPage() templ.Component {
 			DisableSearch: true,
 		},
 		Appearance: componentdocshell.AppearanceConfig{
-			Themes: []selectfield.Option{
-				{Value: "araihu", Label: "Arai Hû"},
-				{Value: "goshtoso", Label: "Goshtoso"},
-				{Value: "minimal", Label: "Minimal"},
-			},
-			DefaultTheme:       "araihu",
-			InitialColorScheme: componentdocshell.ColorSchemeSystem,
+			DefaultTheme:         "araihu",
+			InitialColorScheme:   componentdocshell.ColorSchemeSystem,
+			DisableThemeSelector: true,
 		},
 		Interactions:  componentdocshell.InteractionConfig{LocalRuntime: true},
 		RepositoryURL: "https://github.com/araihu/muamba",
@@ -153,7 +149,7 @@ func docsContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = codeblock.CodeBlock(codeblock.Config{Language: "bash", Label: "Install", Code: `go get -tool github.com/araihu/muamba/cmd/muamba@latest
+		templ_7745c5c3_Err = docsCodeBlock(codeblock.Config{Language: "bash", Label: "Install", Code: `go get -tool github.com/araihu/muamba/cmd/muamba@latest
 go tool muamba help`}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -162,7 +158,7 @@ go tool muamba help`}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = codeblock.CodeBlock(codeblock.Config{Language: "yaml", Label: "muamba.yaml", Code: `schema: 1
+		templ_7745c5c3_Err = docsCodeBlock(codeblock.Config{Language: "yaml", Label: "muamba.yaml", Code: `schema: 1
 
 resources:
   bootstrap:
@@ -180,53 +176,61 @@ resources:
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<p><code>&#36;&#123;version&#125;</code> is the only template token. Strict mode rejects expanded URLs that do not contain the exact declared version.</p></section><section aria-labelledby=\"workflow\"><h2 id=\"workflow\" data-toc-heading>Establish and enforce trust</h2>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<p>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = alert.Alert(alert.Config{Title: "Trust is explicit", Description: "Review every source URL before lock. Muamba will verify later bytes against that decision, but it cannot decide whether a source is trustworthy for you.", Tone: alert.ToneWarning}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = inlinecode.InlineCode("${version}", inlinecode.WithRootAttrs(templ.Attributes{"data-inline-code": "version"})).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<h3 id=\"lock\">1. Lock reviewed sources</h3>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<span>is the only template token. Strict mode rejects expanded URLs that do not contain the exact declared version.</span></p></section><section aria-labelledby=\"workflow\"><h2 id=\"workflow\" data-toc-heading>Establish and enforce trust</h2>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = codeblock.CodeBlock(codeblock.Config{Language: "bash", Label: "First trust", Code: `go tool muamba lock --strict`}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = alert.Alert(alert.Config{Title: "Trust is explicit", Description: "Review every source URL before lock. Muamba will verify later bytes against that decision, but it cannot decide whether a source is trustworthy for you.", Tone: alert.ToneWarning, RootClass: "muamba-trust-alert"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<p>Lock downloads every unlocked URL and platform variant, stores verified bytes, and writes SHA-384 SRI values atomically.</p><h3 id=\"verify\">2. Verify offline</h3>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<h3 id=\"lock\">1. Lock reviewed sources</h3>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = codeblock.CodeBlock(codeblock.Config{Language: "bash", Label: "Read-only verification", Code: `go tool muamba verify --strict`}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = docsCodeBlock(codeblock.Config{Language: "bash", Label: "First trust", Code: `go tool muamba lock --strict`}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<p>Verification reads committed files and integrity cache blobs without network access.</p><h3 id=\"sync\">3. Restore known bytes</h3>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<p>Lock downloads every unlocked URL and platform variant, stores verified bytes, and writes SHA-384 SRI values atomically.</p><h3 id=\"verify\">2. Verify offline</h3>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = codeblock.CodeBlock(codeblock.Config{Language: "bash", Label: "Materialize", Code: `go tool muamba sync --strict`}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = docsCodeBlock(codeblock.Config{Language: "bash", Label: "Read-only verification", Code: `go tool muamba verify --strict`}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<p>Sync repairs missing or corrupt destinations only when cached or remote bytes match the lock.</p></section><section aria-labelledby=\"cache\"><h2 id=\"cache\" data-toc-heading>Use the integrity cache</h2><p>Cache identity is the parsed algorithm and digest—not URL, version, or resource name. Identical locked bytes deduplicate safely.</p>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<p>Verification reads committed files and integrity cache blobs without network access.</p><h3 id=\"sync\">3. Restore known bytes</h3>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = codeblock.CodeBlock(codeblock.Config{Language: "bash", Label: "CI", Code: `go tool muamba sync --strict \
+		templ_7745c5c3_Err = docsCodeBlock(codeblock.Config{Language: "bash", Label: "Materialize", Code: `go tool muamba sync --strict`}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<p>Sync repairs missing or corrupt destinations only when cached or remote bytes match the lock.</p></section><section aria-labelledby=\"cache\"><h2 id=\"cache\" data-toc-heading>Use the integrity cache</h2><p>Cache identity is the parsed algorithm and digest—not URL, version, or resource name. Identical locked bytes deduplicate safely.</p>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = docsCodeBlock(codeblock.Config{Language: "bash", Label: "CI", Code: `go tool muamba sync --strict \
   --target linux/amd64 \
   --cache-dir .cache/muamba`}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</section><section aria-labelledby=\"embedding\"><h2 id=\"embedding\" data-toc-heading>Generate a Go embed registry</h2><p>Generate one deterministic registry for each package that owns vendored files. The output exposes resources, files, original integrity, and normalized hashes.</p>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</section><section aria-labelledby=\"embedding\"><h2 id=\"embedding\" data-toc-heading>Generate a Go embed registry</h2><p>Generate one deterministic registry for each package that owns vendored files. The output exposes resources, files, original integrity, and normalized hashes.</p>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = codeblock.CodeBlock(codeblock.Config{Language: "bash", Label: "Generate", Code: `go tool muamba generate-go \
+		templ_7745c5c3_Err = docsCodeBlock(codeblock.Config{Language: "bash", Label: "Generate", Code: `go tool muamba generate-go \
   --strict \
   -f muamba.yaml \
   --dir assets \
@@ -234,7 +238,7 @@ resources:
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = codeblock.CodeBlock(codeblock.Config{Language: "go", Label: "Use", Code: `hash, ok := assets.MuambaHash("bootstrap", "core-css")
+		templ_7745c5c3_Err = docsCodeBlock(codeblock.Config{Language: "go", Label: "Use", Code: `hash, ok := assets.MuambaHash("bootstrap", "core-css")
 if !ok {
 	return errors.New("bootstrap/core-css is not embedded")
 }
@@ -242,7 +246,44 @@ stylesheetURL := "/assets/bootstrap.css?v=" + url.QueryEscape(hash)`}).Render(ct
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</section><section aria-labelledby=\"next\"><h2 id=\"next\" data-toc-heading>Continue</h2><p>Read the full command and manifest reference in the repository README, including platform maps, selectors, max sizes, updates, and failure guarantees.</p><p><a href=\"https://github.com/araihu/muamba#readme\">Open the complete reference on GitHub</a>.</p></section></article>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</section><section aria-labelledby=\"next\"><h2 id=\"next\" data-toc-heading>Continue</h2><p>Read the full command and manifest reference in the repository README, including platform maps, selectors, max sizes, updates, and failure guarantees.</p><p><a href=\"https://github.com/araihu/muamba#readme\">Open the complete reference on GitHub</a>.</p></section></article>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func docsCodeBlock(cfg codeblock.Config) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var4 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var4 == nil {
+			templ_7745c5c3_Var4 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<div class=\"muamba-docs-codeblock\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = codeblock.CodeBlock(cfg).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -266,12 +307,12 @@ func docsFooter() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var4 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var4 == nil {
-			templ_7745c5c3_Var4 = templ.NopComponent
+		templ_7745c5c3_Var5 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var5 == nil {
+			templ_7745c5c3_Var5 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<p>Muamba docs · static HTML rendered with Goshtoso App Shells.</p>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<p><a href=\"/\">Muamba docs</a> <span>· an </span> <a href=\"https://araihu.com\">Arai Hû</a> <span>project · built with </span> <a href=\"https://goshtoso.araihu.com\">Goshtoso</a> <span></span> <a href=\"https://github.com/araihu/goshtoso-app-shells\">App Shells</a> <span>.</span></p>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -75,12 +75,15 @@ a { color: inherit; }
 .muamba-footer a { color: var(--muamba-accent); text-underline-offset: .2rem; }
 
 .muamba-docs { color: var(--muamba-ink); }
-.muamba-docs section { margin-top: 3.5rem; scroll-margin-top: 6rem; }
+.muamba-docs section { margin-top: 2.75rem; scroll-margin-top: 6rem; }
 .muamba-docs h2 { margin: 0 0 1rem; color: var(--muamba-ink); font-size: 1.7rem; letter-spacing: -.025em; }
 .muamba-docs h3 { margin: 2.25rem 0 .75rem; color: var(--muamba-ink); font-size: 1.15rem; }
 .muamba-docs p { max-width: 48rem; color: var(--muamba-muted); line-height: 1.75; }
 .muamba-docs a { color: var(--muamba-accent); text-underline-offset: .2rem; }
-.muamba-docs [data-code-block] { margin-top: 1rem; }
+.muamba-docs-codeblock { margin-top: 1rem; }
+.muamba-docs .muamba-trust-alert { margin-top: 1rem; }
+.muamba-docs .muamba-trust-alert > div { align-items: flex-start; }
+.component-doc-shell__footer a { color: var(--muamba-accent); text-underline-offset: .2rem; }
 .component-doc-shell__brand-mark { border-radius: 0 !important; }
 .muamba-shell-mark { display: block; width: 2.25rem; height: 2.25rem; }
 
