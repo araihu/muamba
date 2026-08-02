@@ -16,7 +16,7 @@ type Document struct {
 	Dir      string
 	Manifest Manifest
 	root     yaml.Node
-	resolved map[string]Selection
+	resolved map[string]resolvedDownload
 }
 
 func Find(startDir, explicit string) (string, error) {
@@ -125,7 +125,9 @@ func (d *Document) SetVersion(resource, value string) error {
 	return nil
 }
 
-func (d *Document) SetIntegrity(resource, download, value string) error {
+func (d *Document) SetIntegrity(selection Selection, value string) error {
+	resource := selection.ResourceName
+	download := selection.DownloadName
 	r, ok := d.Manifest.Resources[resource]
 	if !ok {
 		return fmt.Errorf("unknown resource %q", resource)
@@ -143,16 +145,30 @@ func (d *Document) SetIntegrity(resource, download, value string) error {
 	if dnode == nil {
 		return fmt.Errorf("download node %q not found", download)
 	}
-	valueNode := mappingValue(dnode, "integrity")
+	typedIntegrity := &item.Integrity
+	integrityNode := dnode
+	if selection.Variant != "" {
+		variant, ok := item.Platforms[selection.Variant]
+		if !ok || variant == nil {
+			return fmt.Errorf("unknown platform %q in %s/%s", selection.Variant, resource, download)
+		}
+		platforms := mappingValue(dnode, "platforms")
+		integrityNode = mappingValue(platforms, selection.Variant)
+		if integrityNode == nil {
+			return fmt.Errorf("platform node %q not found in %s/%s", selection.Variant, resource, download)
+		}
+		typedIntegrity = &variant.Integrity
+	}
+	valueNode := mappingValue(integrityNode, "integrity")
 	if valueNode == nil {
-		dnode.Content = append(dnode.Content,
+		integrityNode.Content = append(integrityNode.Content,
 			&yaml.Node{Kind: yaml.ScalarNode, Tag: "!!str", Value: "integrity"},
 			&yaml.Node{Kind: yaml.ScalarNode, Tag: "!!str", Value: value},
 		)
 	} else {
 		valueNode.Value, valueNode.Tag = value, "!!str"
 	}
-	item.Integrity = value
+	*typedIntegrity = value
 	d.resolved = nil
 	return nil
 }

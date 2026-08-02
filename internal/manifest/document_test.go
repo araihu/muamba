@@ -79,7 +79,7 @@ resources:
 	if err := doc.SetVersion("alpine", "3.15.0"); err != nil {
 		t.Fatal(err)
 	}
-	if err := doc.SetIntegrity("alpine", "core-js", "sha384-abc"); err != nil {
+	if err := doc.SetIntegrity(Selection{ResourceName: "alpine", DownloadName: "core-js"}, "sha384-abc"); err != nil {
 		t.Fatal(err)
 	}
 	b, err := doc.Marshal()
@@ -94,5 +94,50 @@ resources:
 	}
 	if strings.Index(got, "path:") > strings.Index(got, "integrity:") {
 		t.Fatalf("integrity inserted before existing path:\n%s", got)
+	}
+}
+
+func TestMutationPreservesPlatformCommentsAndOrder(t *testing.T) {
+	path := writeManifest(t, `schema: 1
+resources:
+  tailwind:
+    version: "4.3.3" # shared version
+    downloads:
+      cli: # standalone binary
+        path: .tools/tailwindcss
+        platforms: # release assets
+          linux/amd64:
+            url: https://example.com/v${version}/tailwindcss-linux-x64 # Linux
+            integrity: sha384-b2xk
+          darwin/arm64:
+            url: https://example.com/v${version}/tailwindcss-macos-arm64 # Darwin
+`)
+	doc, err := Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	selection := Selection{ResourceName: "tailwind", DownloadName: "cli", Variant: "darwin/arm64"}
+	if err := doc.SetIntegrity(selection, "sha384-platform"); err != nil {
+		t.Fatal(err)
+	}
+	b, err := doc.Marshal()
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := string(b)
+	for _, want := range []string{"# shared version", "# standalone binary", "# release assets", "# Linux", "# Darwin", "integrity: sha384-b2xk", "integrity: sha384-platform"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("marshaled YAML missing %q:\n%s", want, got)
+		}
+	}
+	if strings.Index(got, "url: https://example.com/v${version}/tailwindcss-macos-arm64") > strings.Index(got, "integrity: sha384-platform") {
+		t.Fatalf("platform integrity inserted before URL:\n%s", got)
+	}
+	if doc.Manifest.Resources["tailwind"].Downloads["cli"].Platforms["darwin/arm64"].Integrity != "sha384-platform" {
+		t.Fatalf("typed manifest not updated: %#v", doc.Manifest.Resources["tailwind"].Downloads["cli"].Platforms)
+	}
+	unknown := Selection{ResourceName: "tailwind", DownloadName: "cli", Variant: "windows/amd64"}
+	if err := doc.SetIntegrity(unknown, "sha384-unknown"); err == nil || !strings.Contains(err.Error(), "unknown platform") {
+		t.Fatalf("SetIntegrity unknown platform error = %v", err)
 	}
 }

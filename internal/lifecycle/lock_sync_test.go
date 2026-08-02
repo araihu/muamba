@@ -7,7 +7,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/araihu/muamba/internal/testrepo"
 	"github.com/araihu/muamba/internal/transport"
@@ -25,7 +27,8 @@ resources:
         url: `+server.URL+`/library-1.0.0.js
         path: vendor/library.js # destination
 `)
-	engine, err := New(repo.Manifest, Options{Strict: true, Transport: transport.Options{AllowHTTP: true}})
+	cacheDir := filepath.Join(t.TempDir(), "cache")
+	engine, err := New(repo.Manifest, Options{Strict: true, CacheDir: cacheDir, Transport: transport.Options{AllowHTTP: true}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -53,7 +56,8 @@ func TestSyncRepairsOnlyAfterRemoteMatchesLock(t *testing.T) {
 	defer server.Close()
 	repo := testrepo.New(t, lockedManifest(server.URL+"/library-1.0.0.js", sri(t, "expected")))
 	target := repo.Write(t, "vendor/library.js", []byte("corrupt"))
-	engine, err := New(repo.Manifest, Options{Strict: true, Transport: transport.Options{AllowHTTP: true}})
+	cacheDir := filepath.Join(t.TempDir(), "cache")
+	engine, err := New(repo.Manifest, Options{Strict: true, CacheDir: cacheDir, Transport: transport.Options{AllowHTTP: true}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -69,11 +73,86 @@ func TestSyncRepairsOnlyAfterRemoteMatchesLock(t *testing.T) {
 	if err := os.WriteFile(target, []byte("local corrupt"), 0o644); err != nil {
 		t.Fatal(err)
 	}
+	if err := os.RemoveAll(cacheDir); err != nil {
+		t.Fatal(err)
+	}
 	if _, err := engine.Sync(context.Background(), nil); err == nil {
 		t.Fatal("expected remote integrity failure")
 	}
 	got, _ = os.ReadFile(target)
 	if string(got) != "local corrupt" {
 		t.Fatalf("failed sync replaced target with %q", got)
+	}
+}
+
+func TestConcurrentEnginesReloadManifestAfterMutationLock(t *testing.T) {
+	var requests atomic.Int64
+	firstRequest := make(chan struct{})
+	releaseFirst := make(chan struct{})
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		if requests.Add(1) == 1 {
+			close(firstRequest)
+			<-releaseFirst
+		}
+		_, _ = w.Write([]byte("trusted"))
+	}))
+	defer server.Close()
+	repo := testrepo.New(t, `schema: 1
+resources:
+  library:
+    version: "1.0.0"
+    downloads:
+      script:
+        url: `+server.URL+`/library-1.0.0.js
+        path: vendor/library.js
+`)
+	options := Options{
+		Strict:      true,
+		CacheDir:    filepath.Join(t.TempDir(), "cache"),
+		LockTimeout: 2 * time.Second,
+		Transport:   transport.Options{AllowHTTP: true},
+	}
+	first, err := New(repo.Manifest, options)
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := New(repo.Manifest, options)
+	if err != nil {
+		t.Fatal(err)
+	}
+	type result struct {
+		report Report
+		err    error
+	}
+	firstDone := make(chan result, 1)
+	go func() {
+		report, lockErr := first.Lock(context.Background(), nil)
+		firstDone <- result{report: report, err: lockErr}
+	}()
+	select {
+	case <-firstRequest:
+	case <-time.After(time.Second):
+		t.Fatal("first lock did not reach upstream")
+	}
+	secondStarted := make(chan struct{})
+	secondDone := make(chan result, 1)
+	go func() {
+		close(secondStarted)
+		report, lockErr := second.Lock(context.Background(), nil)
+		secondDone <- result{report: report, err: lockErr}
+	}()
+	<-secondStarted
+	time.Sleep(50 * time.Millisecond)
+	close(releaseFirst)
+	firstResult := <-firstDone
+	secondResult := <-secondDone
+	if firstResult.err != nil || secondResult.err != nil {
+		t.Fatalf("locks failed: first=%v second=%v", firstResult.err, secondResult.err)
+	}
+	if requests.Load() != 1 {
+		t.Fatalf("upstream requests = %d, want 1", requests.Load())
+	}
+	if len(firstResult.report.Changed) != 1 || len(secondResult.report.Changed) != 0 {
+		t.Fatalf("reports: first=%#v second=%#v", firstResult.report, secondResult.report)
 	}
 }

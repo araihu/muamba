@@ -18,7 +18,7 @@ func TestHelp(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("Run(help) code = %d, stderr = %q", code, stderr.String())
 	}
-	for _, command := range []string{"lock", "sync", "verify", "update", "generate-go"} {
+	for _, command := range []string{"lock", "sync", "verify", "update", "generate-go", "--target", "--cache-dir", "--all-platforms", "MUAMBA_CACHE_DIR"} {
 		if !strings.Contains(stdout.String(), command) {
 			t.Errorf("help missing %q", command)
 		}

@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"net/url"
 	"os"
@@ -70,7 +71,10 @@ func New(options Options) (*Client, error) {
 	return client, nil
 }
 
-func (c *Client) Fetch(ctx context.Context, rawURL string, destination io.Writer) (int64, error) {
+func (c *Client) Fetch(ctx context.Context, rawURL string, destination io.Writer, maxBytes int64) (int64, error) {
+	if maxBytes <= 0 {
+		maxBytes = c.options.MaxBytes
+	}
 	parsed, err := url.Parse(rawURL)
 	if err != nil {
 		return 0, fmt.Errorf("parse URL: %w", err)
@@ -90,12 +94,16 @@ func (c *Client) Fetch(ctx context.Context, rawURL string, destination io.Writer
 	if response.StatusCode != http.StatusOK {
 		return 0, fmt.Errorf("GET %s: status %d", parsed.Host, response.StatusCode)
 	}
-	written, err := io.Copy(destination, io.LimitReader(response.Body, c.options.MaxBytes+1))
+	readLimit := maxBytes
+	if readLimit < math.MaxInt64 {
+		readLimit++
+	}
+	written, err := io.Copy(destination, io.LimitReader(response.Body, readLimit))
 	if err != nil {
 		return written, fmt.Errorf("read response from %s: %w", parsed.Host, err)
 	}
-	if written > c.options.MaxBytes {
-		return written, fmt.Errorf("response from %s exceeds %d bytes", parsed.Host, c.options.MaxBytes)
+	if written > maxBytes {
+		return written, fmt.Errorf("response from %s exceeds %d bytes", parsed.Host, maxBytes)
 	}
 	return written, nil
 }

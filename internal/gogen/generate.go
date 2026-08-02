@@ -22,6 +22,7 @@ type Options struct {
 	Package string
 	Check   bool
 	Strict  bool
+	Target  manifest.Target
 }
 
 type embeddedDownload struct {
@@ -51,7 +52,11 @@ func Generate(document *manifest.Document, options Options) error {
 			return err
 		}
 	}
-	selections, err := document.Select(nil)
+	target := options.Target
+	if target == (manifest.Target{}) {
+		target = manifest.RuntimeTarget()
+	}
+	selections, err := selectionsForDirectory(document, targetDir, target)
 	if err != nil {
 		return err
 	}
@@ -103,6 +108,49 @@ func Generate(document *manifest.Document, options Options) error {
 		return nil
 	}
 	return writeAtomic(outputPath, source)
+}
+
+func selectionsForDirectory(document *manifest.Document, targetDir string, target manifest.Target) ([]manifest.Selection, error) {
+	allSelections, err := document.SelectAll(nil)
+	if err != nil {
+		return nil, err
+	}
+	selectorSet := make(map[string]struct{})
+	for _, selection := range allSelections {
+		inside, insideErr := pathInsideDirectory(document.Dir, targetDir, selection.Path)
+		if insideErr != nil {
+			return nil, insideErr
+		}
+		if inside {
+			selectorSet[selection.ResourceName+"/"+selection.DownloadName] = struct{}{}
+		}
+	}
+	selectors := make([]string, 0, len(selectorSet))
+	for selector := range selectorSet {
+		selectors = append(selectors, selector)
+	}
+	sort.Strings(selectors)
+	selections := make([]manifest.Selection, 0, len(selectors))
+	for _, selector := range selectors {
+		selected, selectErr := document.SelectTarget([]string{selector}, target)
+		if selectErr != nil {
+			return nil, selectErr
+		}
+		selections = append(selections, selected...)
+	}
+	return selections, nil
+}
+
+func pathInsideDirectory(root, targetDir, path string) (bool, error) {
+	fullPath, err := safepath.Resolve(root, path)
+	if err != nil {
+		return false, err
+	}
+	relative, err := filepath.Rel(targetDir, fullPath)
+	if err != nil {
+		return false, err
+	}
+	return relative != ".." && !strings.HasPrefix(relative, ".."+string(filepath.Separator)), nil
 }
 
 func generationDir(root, relative string) (string, error) {

@@ -10,10 +10,19 @@ type Resource struct {
 	Downloads map[string]*Download `yaml:"downloads"`
 }
 
-type Download struct {
+type PlatformDownload struct {
 	URL       string `yaml:"url"`
-	Path      string `yaml:"path"`
 	Integrity string `yaml:"integrity,omitempty"`
+}
+
+type Download struct {
+	URL        string                       `yaml:"url,omitempty"`
+	Path       string                       `yaml:"path"`
+	Integrity  string                       `yaml:"integrity,omitempty"`
+	Platform   string                       `yaml:"platform,omitempty"`
+	Executable bool                         `yaml:"executable,omitempty"`
+	MaxSize    string                       `yaml:"max_size,omitempty"`
+	Platforms  map[string]*PlatformDownload `yaml:"platforms,omitempty"`
 }
 
 type Warning struct {
@@ -29,4 +38,21 @@ type Selection struct {
 	URL          string
 	Path         string
 	Integrity    string
+	Variant      string
+	Platform     string
+	Executable   bool
+	MaxBytes     int64
+}
+
+type resolvedDownload struct {
+	ResourceName string
+	DownloadName string
+	Version      string
+	Path         string
+	URL          string
+	Integrity    string
+	Platform     string
+	Executable   bool
+	MaxBytes     int64
+	Platforms    map[string]PlatformDownload
 }

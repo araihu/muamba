@@ -14,15 +14,16 @@ func (e *Engine) UpdateResource(ctx context.Context, resource, version string) (
 	if version == "" {
 		return Report{}, fmt.Errorf("version must not be empty")
 	}
-	oldSelections, err := e.selections([]string{resource})
-	if err != nil {
-		return Report{}, err
-	}
-	report := Report{Warnings: append([]manifest.Warning(nil), e.warnings...)}
-	err = e.withMutationLock(ctx, func() error {
+	report := Report{}
+	err := e.withMutationLock(ctx, func() error {
+		report.Warnings = append([]manifest.Warning(nil), e.warnings...)
+		oldSelections, selectErr := e.selections([]string{resource})
+		if selectErr != nil {
+			return selectErr
+		}
 		for _, selection := range oldSelections {
 			if err := e.verifyFile(selection); err != nil {
-				return fmt.Errorf("preflight old %s/%s: %w", selection.ResourceName, selection.DownloadName, err)
+				return fmt.Errorf("preflight old %s: %w", selectionLabel(selection), err)
 			}
 		}
 		candidate, cloneErr := e.document.Clone()
@@ -32,11 +33,11 @@ func (e *Engine) UpdateResource(ctx context.Context, resource, version string) (
 		if err := candidate.SetVersion(resource, version); err != nil {
 			return err
 		}
-		warnings, validateErr := candidate.Validate(e.options.Strict)
+		_, validateErr := candidate.Validate(e.options.Strict)
 		if validateErr != nil {
 			return validateErr
 		}
-		newSelections, selectErr := candidate.Select([]string{resource})
+		allSelections, selectErr := candidate.SelectAll([]string{resource})
 		if selectErr != nil {
 			return selectErr
 		}
@@ -44,20 +45,30 @@ func (e *Engine) UpdateResource(ctx context.Context, resource, version string) (
 		if clientErr != nil {
 			return clientErr
 		}
-		var staged []stagedDownload
-		defer func() { cleanupStaged(staged, e.document.Dir) }()
-		for _, selection := range newSelections {
-			item, stageErr := e.stage(ctx, client, selection)
-			if stageErr != nil {
-				return stageErr
-			}
-			staged = append(staged, item)
+		trusted, trustErr := e.retrustSelections(ctx, client, allSelections)
+		if trustErr != nil {
+			return trustErr
 		}
-		for _, item := range staged {
-			if err := candidate.SetIntegrity(item.selection.ResourceName, item.selection.DownloadName, item.integrity); err != nil {
+		var changed []string
+		for _, selection := range trusted {
+			if err := candidate.SetIntegrity(selection, selection.Integrity); err != nil {
 				return err
 			}
+			changed = append(changed, selectionLabel(selection))
 		}
+		warnings, validateErr := candidate.Validate(e.options.Strict)
+		if validateErr != nil {
+			return validateErr
+		}
+		selected, selectErr := candidate.SelectTarget([]string{resource}, e.targetOS)
+		if selectErr != nil {
+			return selectErr
+		}
+		staged, stageErr := e.stageSelections(selected)
+		if stageErr != nil {
+			return stageErr
+		}
+		defer cleanupStaged(staged, e.document.Dir)
 		manifestBytes, marshalErr := candidate.Marshal()
 		if marshalErr != nil {
 			return marshalErr
@@ -65,10 +76,11 @@ func (e *Engine) UpdateResource(ctx context.Context, resource, version string) (
 		if err := commitStaged(staged, candidate.Path, manifestBytes); err != nil {
 			return err
 		}
+		report.Changed = append(report.Changed, changed...)
+		e.document, e.warnings = candidate, warnings
 		newTargets := make(map[string]struct{}, len(staged))
 		for _, item := range staged {
 			newTargets[item.target] = struct{}{}
-			report.Changed = append(report.Changed, item.selection.ResourceName+"/"+item.selection.DownloadName)
 		}
 		for _, old := range oldSelections {
 			target, targetErr := e.target(old)
@@ -83,45 +95,65 @@ func (e *Engine) UpdateResource(ctx context.Context, resource, version string) (
 			}
 			removeEmptyParents(filepath.Dir(target), e.document.Dir)
 		}
-		e.document, e.warnings = candidate, warnings
 		return nil
 	})
 	return sortedReport(report), err
 }
 
 func (e *Engine) UpdateDownload(ctx context.Context, resource, download string) (Report, error) {
-	selections, err := e.selections([]string{resource + "/" + download})
-	if err != nil {
-		return Report{}, err
-	}
-	selection := selections[0]
-	report := Report{Warnings: append([]manifest.Warning(nil), e.warnings...)}
-	err = e.withMutationLock(ctx, func() error {
-		client, clientErr := transport.New(e.options.Transport)
-		if clientErr != nil {
-			return clientErr
-		}
-		item, stageErr := e.stage(ctx, client, selection)
-		if stageErr != nil {
-			return stageErr
-		}
-		defer cleanupStaged([]stagedDownload{item}, e.document.Dir)
+	selector := resource + "/" + download
+	report := Report{}
+	err := e.withMutationLock(ctx, func() error {
+		report.Warnings = append([]manifest.Warning(nil), e.warnings...)
 		candidate, cloneErr := e.document.Clone()
 		if cloneErr != nil {
 			return cloneErr
 		}
-		if err := candidate.SetIntegrity(resource, download, item.integrity); err != nil {
-			return err
+		_, validateErr := candidate.Validate(e.options.Strict)
+		if validateErr != nil {
+			return validateErr
 		}
+		allSelections, selectErr := candidate.SelectAll([]string{selector})
+		if selectErr != nil {
+			return selectErr
+		}
+		client, clientErr := transport.New(e.options.Transport)
+		if clientErr != nil {
+			return clientErr
+		}
+		trusted, trustErr := e.retrustSelections(ctx, client, allSelections)
+		if trustErr != nil {
+			return trustErr
+		}
+		var changed []string
+		for _, selection := range trusted {
+			if err := candidate.SetIntegrity(selection, selection.Integrity); err != nil {
+				return err
+			}
+			changed = append(changed, selectionLabel(selection))
+		}
+		warnings, validateErr := candidate.Validate(e.options.Strict)
+		if validateErr != nil {
+			return validateErr
+		}
+		selected, selectErr := candidate.SelectTarget([]string{selector}, e.targetOS)
+		if selectErr != nil {
+			return selectErr
+		}
+		staged, stageErr := e.stageSelections(selected)
+		if stageErr != nil {
+			return stageErr
+		}
+		defer cleanupStaged(staged, e.document.Dir)
 		manifestBytes, marshalErr := candidate.Marshal()
 		if marshalErr != nil {
 			return marshalErr
 		}
-		if err := commitStaged([]stagedDownload{item}, candidate.Path, manifestBytes); err != nil {
+		if err := commitStaged(staged, candidate.Path, manifestBytes); err != nil {
 			return err
 		}
-		e.document = candidate
-		report.Changed = append(report.Changed, resource+"/"+download)
+		report.Changed = append(report.Changed, changed...)
+		e.document, e.warnings = candidate, warnings
 		return nil
 	})
 	return sortedReport(report), err
