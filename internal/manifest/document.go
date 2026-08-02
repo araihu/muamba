@@ -16,7 +16,7 @@ type Document struct {
 	Dir      string
 	Manifest Manifest
 	root     yaml.Node
-	resolved map[string]Selection
+	resolved map[string]resolvedDownload
 }
 
 func Find(startDir, explicit string) (string, error) {
