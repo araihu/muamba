@@ -21,7 +21,7 @@ func TestHTTPRequiresExplicitAllowance(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := client.Fetch(context.Background(), server.URL, &bytes.Buffer{}); err == nil || !strings.Contains(err.Error(), "HTTP requires") {
+	if _, err := client.Fetch(context.Background(), server.URL, &bytes.Buffer{}, 0); err == nil || !strings.Contains(err.Error(), "HTTP requires") {
 		t.Fatalf("Fetch error = %v", err)
 	}
 	client, err = New(Options{AllowHTTP: true})
@@ -29,7 +29,7 @@ func TestHTTPRequiresExplicitAllowance(t *testing.T) {
 		t.Fatal(err)
 	}
 	var out bytes.Buffer
-	if _, err := client.Fetch(context.Background(), server.URL, &out); err != nil || out.String() != "ok" {
+	if _, err := client.Fetch(context.Background(), server.URL, &out, 0); err != nil || out.String() != "ok" {
 		t.Fatalf("Fetch = %q, %v", out.String(), err)
 	}
 }
@@ -38,7 +38,7 @@ func TestTLSRequiresTrustOrExplicitBypass(t *testing.T) {
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { _, _ = w.Write([]byte("secure")) }))
 	defer server.Close()
 	client, _ := New(Options{})
-	if _, err := client.Fetch(context.Background(), server.URL, &bytes.Buffer{}); err == nil {
+	if _, err := client.Fetch(context.Background(), server.URL, &bytes.Buffer{}, 0); err == nil {
 		t.Fatal("expected untrusted certificate error")
 	}
 
@@ -51,14 +51,14 @@ func TestTLSRequiresTrustOrExplicitBypass(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := trusted.Fetch(context.Background(), server.URL, &bytes.Buffer{}); err != nil {
+	if _, err := trusted.Fetch(context.Background(), server.URL, &bytes.Buffer{}, 0); err != nil {
 		t.Fatal(err)
 	}
 	insecure, err := New(Options{InsecureSkipTLSVerify: true})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := insecure.Fetch(context.Background(), server.URL, &bytes.Buffer{}); err != nil {
+	if _, err := insecure.Fetch(context.Background(), server.URL, &bytes.Buffer{}, 0); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -74,10 +74,10 @@ func TestFetchEnforcesSizeAndHidesResponseBody(t *testing.T) {
 	}))
 	defer server.Close()
 	client, _ := New(Options{AllowHTTP: true, MaxBytes: 4})
-	if _, err := client.Fetch(context.Background(), server.URL, &bytes.Buffer{}); err == nil || !strings.Contains(err.Error(), "exceeds") {
+	if _, err := client.Fetch(context.Background(), server.URL, &bytes.Buffer{}, 0); err == nil || !strings.Contains(err.Error(), "exceeds") {
 		t.Fatalf("size error = %v", err)
 	}
-	_, err := client.Fetch(context.Background(), server.URL+"/error", &bytes.Buffer{})
+	_, err := client.Fetch(context.Background(), server.URL+"/error", &bytes.Buffer{}, 0)
 	if err == nil || strings.Contains(err.Error(), "SECRET") {
 		t.Fatalf("status error = %v", err)
 	}
@@ -90,7 +90,7 @@ func TestFetchHonorsTimeout(t *testing.T) {
 	}))
 	defer server.Close()
 	client, _ := New(Options{AllowHTTP: true, Timeout: 10 * time.Millisecond})
-	if _, err := client.Fetch(context.Background(), server.URL, &bytes.Buffer{}); err == nil {
+	if _, err := client.Fetch(context.Background(), server.URL, &bytes.Buffer{}, 0); err == nil {
 		t.Fatal("expected timeout")
 	}
 }
@@ -103,7 +103,25 @@ func TestFetchLimitsRedirects(t *testing.T) {
 	}))
 	defer server.Close()
 	client, _ := New(Options{AllowHTTP: true})
-	if _, err := client.Fetch(context.Background(), server.URL+"/0", &bytes.Buffer{}); err == nil || !strings.Contains(err.Error(), "redirect") {
+	if _, err := client.Fetch(context.Background(), server.URL+"/0", &bytes.Buffer{}, 0); err == nil || !strings.Contains(err.Error(), "redirect") {
 		t.Fatalf("redirect error = %v", err)
+	}
+}
+
+func TestFetchUsesPerRequestSizeLimit(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("12345"))
+	}))
+	defer server.Close()
+	client, err := New(Options{AllowHTTP: true, MaxBytes: 10})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := client.Fetch(context.Background(), server.URL, &bytes.Buffer{}, 4); err == nil || !strings.Contains(err.Error(), "exceeds 4 bytes") {
+		t.Fatalf("Fetch limit error = %v", err)
+	}
+	var out bytes.Buffer
+	if _, err := client.Fetch(context.Background(), server.URL, &out, 5); err != nil || out.String() != "12345" {
+		t.Fatalf("Fetch = %q, %v", out.String(), err)
 	}
 }

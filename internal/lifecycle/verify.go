@@ -9,8 +9,12 @@ import (
 	"github.com/araihu/muamba/internal/manifest"
 )
 
-func (e *Engine) Verify(_ context.Context, selectors []string) (Report, error) {
+func (e *Engine) Verify(_ context.Context, selectors []string, allPlatforms ...bool) (Report, error) {
+	all := len(allPlatforms) > 0 && allPlatforms[0]
 	selections, err := e.selections(selectors)
+	if all {
+		selections, err = e.allSelections(selectors)
+	}
 	if err != nil {
 		return Report{}, err
 	}
@@ -19,10 +23,18 @@ func (e *Engine) Verify(_ context.Context, selectors []string) (Report, error) {
 		if selection.Integrity == "" {
 			return Report{}, fmt.Errorf("%s/%s is unlocked", selection.ResourceName, selection.DownloadName)
 		}
-		if err := e.verifyFile(selection); err != nil {
+		if all {
+			digest, parseErr := integrity.Parse(selection.Integrity)
+			if parseErr != nil {
+				return Report{}, fmt.Errorf("%s: %w", selectionLabel(selection), parseErr)
+			}
+			if verifyErr := e.cache.Verify(digest); verifyErr != nil {
+				return Report{}, fmt.Errorf("%s: %w", selectionLabel(selection), verifyErr)
+			}
+		} else if err := e.verifyFile(selection); err != nil {
 			return Report{}, err
 		}
-		report.Verified = append(report.Verified, selection.ResourceName+"/"+selection.DownloadName)
+		report.Verified = append(report.Verified, selectionLabel(selection))
 	}
 	return sortedReport(report), nil
 }

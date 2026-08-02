@@ -25,7 +25,8 @@ resources:
         url: `+server.URL+`/library-1.0.0.js
         path: vendor/library.js # destination
 `)
-	engine, err := New(repo.Manifest, Options{Strict: true, Transport: transport.Options{AllowHTTP: true}})
+	cacheDir := filepath.Join(t.TempDir(), "cache")
+	engine, err := New(repo.Manifest, Options{Strict: true, CacheDir: cacheDir, Transport: transport.Options{AllowHTTP: true}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -53,7 +54,8 @@ func TestSyncRepairsOnlyAfterRemoteMatchesLock(t *testing.T) {
 	defer server.Close()
 	repo := testrepo.New(t, lockedManifest(server.URL+"/library-1.0.0.js", sri(t, "expected")))
 	target := repo.Write(t, "vendor/library.js", []byte("corrupt"))
-	engine, err := New(repo.Manifest, Options{Strict: true, Transport: transport.Options{AllowHTTP: true}})
+	cacheDir := filepath.Join(t.TempDir(), "cache")
+	engine, err := New(repo.Manifest, Options{Strict: true, CacheDir: cacheDir, Transport: transport.Options{AllowHTTP: true}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -67,6 +69,9 @@ func TestSyncRepairsOnlyAfterRemoteMatchesLock(t *testing.T) {
 
 	body = "upstream drift"
 	if err := os.WriteFile(target, []byte("local corrupt"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.RemoveAll(cacheDir); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := engine.Sync(context.Background(), nil); err == nil {

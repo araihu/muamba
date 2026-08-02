@@ -54,7 +54,7 @@ func (e *Engine) UpdateResource(ctx context.Context, resource, version string) (
 			staged = append(staged, item)
 		}
 		for _, item := range staged {
-			if err := candidate.SetIntegrity(item.selection.ResourceName, item.selection.DownloadName, item.integrity); err != nil {
+			if err := candidate.SetIntegrity(item.selection, item.integrity); err != nil {
 				return err
 			}
 		}
@@ -110,7 +110,7 @@ func (e *Engine) UpdateDownload(ctx context.Context, resource, download string) 
 		if cloneErr != nil {
 			return cloneErr
 		}
-		if err := candidate.SetIntegrity(resource, download, item.integrity); err != nil {
+		if err := candidate.SetIntegrity(item.selection, item.integrity); err != nil {
 			return err
 		}
 		manifestBytes, marshalErr := candidate.Marshal()

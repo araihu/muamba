@@ -44,7 +44,7 @@ func (e *Engine) Lock(ctx context.Context, selectors []string) (Report, error) {
 			staged = append(staged, item)
 		}
 		for _, item := range staged {
-			if setErr := e.document.SetIntegrity(item.selection.ResourceName, item.selection.DownloadName, item.integrity); setErr != nil {
+			if setErr := e.document.SetIntegrity(item.selection, item.integrity); setErr != nil {
 				return setErr
 			}
 		}
@@ -56,7 +56,7 @@ func (e *Engine) Lock(ctx context.Context, selectors []string) (Report, error) {
 			if renameErr := os.Rename(item.temporary, item.target); renameErr != nil {
 				return renameErr
 			}
-			report.Changed = append(report.Changed, item.selection.ResourceName+"/"+item.selection.DownloadName)
+			report.Changed = append(report.Changed, selectionLabel(item.selection))
 		}
 		return writeAtomic(e.document.Path, manifestBytes, 0o644)
 	})
@@ -78,34 +78,15 @@ func (e *Engine) Sync(ctx context.Context, selectors []string) (Report, error) {
 			if selection.Integrity == "" {
 				return fmt.Errorf("%s/%s is unlocked", selection.ResourceName, selection.DownloadName)
 			}
-			if e.verifyFile(selection) == nil {
-				report.Verified = append(report.Verified, selection.ResourceName+"/"+selection.DownloadName)
-				continue
+			changed, restoreErr := e.restoreLocked(ctx, client, selection)
+			if restoreErr != nil {
+				return restoreErr
 			}
-			item, stageErr := e.stage(ctx, client, selection)
-			if stageErr != nil {
-				return stageErr
+			if changed {
+				report.Changed = append(report.Changed, selectionLabel(selection))
+			} else {
+				report.Verified = append(report.Verified, selectionLabel(selection))
 			}
-			expected, parseErr := integrity.Parse(selection.Integrity)
-			if parseErr != nil {
-				_ = os.Remove(item.temporary)
-				return parseErr
-			}
-			file, openErr := os.Open(item.temporary)
-			if openErr != nil {
-				return openErr
-			}
-			_, verifyErr := integrity.Verify(file, expected)
-			_ = file.Close()
-			if verifyErr != nil {
-				_ = os.Remove(item.temporary)
-				return fmt.Errorf("%s/%s remote bytes: %w", selection.ResourceName, selection.DownloadName, verifyErr)
-			}
-			if renameErr := os.Rename(item.temporary, item.target); renameErr != nil {
-				_ = os.Remove(item.temporary)
-				return renameErr
-			}
-			report.Changed = append(report.Changed, selection.ResourceName+"/"+selection.DownloadName)
 		}
 		return nil
 	})
@@ -133,7 +114,7 @@ func (e *Engine) stage(ctx context.Context, client *transport.Client, selection 
 			removeEmptyParents(filepath.Dir(target), e.document.Dir)
 		}
 	}()
-	if _, err := client.Fetch(ctx, selection.URL, temporary); err != nil {
+	if _, err := client.Fetch(ctx, selection.URL, temporary, e.effectiveMaxBytes(selection)); err != nil {
 		return stagedDownload{}, fmt.Errorf("%s/%s: %w", selection.ResourceName, selection.DownloadName, err)
 	}
 	if _, err := temporary.Seek(0, io.SeekStart); err != nil {
@@ -143,13 +124,17 @@ func (e *Engine) stage(ctx context.Context, client *transport.Client, selection 
 	if err != nil {
 		return stagedDownload{}, err
 	}
-	if err := temporary.Chmod(0o644); err != nil {
+	if err := temporary.Chmod(selectionMode(selection)); err != nil {
 		return stagedDownload{}, err
 	}
 	if err := temporary.Sync(); err != nil {
 		return stagedDownload{}, err
 	}
 	if err := temporary.Close(); err != nil {
+		return stagedDownload{}, err
+	}
+	digest := integrity.Digest{Algorithm: crypto.SHA384, Sum: sum}
+	if err := e.cache.Seed(temporaryPath, digest); err != nil {
 		return stagedDownload{}, err
 	}
 	ok = true
