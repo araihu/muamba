@@ -22,9 +22,8 @@ test("landing uses Arai Hu color modes and Goshtoso controls", async () => {
 
   assert.match(html, /<html[^>]*data-theme="araihu"/);
   assert.match(html, /prefers-color-scheme: dark/);
-  assert.match(html, /window\.goshtosoStorageConsent=\{allowed:canStore\}/);
-  assert.match(html, /muamba:storage-probe/);
-  assert.match(html, /src="\/assets\/js\/darkmode\.js"/);
+  assert.match(html, /src="\/scripts\/theme\.js"/);
+  assert.doesNotMatch(html, /src="\/assets\/js\/darkmode\.js"/);
   assert.match(html, /id="muamba-color-mode"/);
   assert.match(html, /<nav[^>]*aria-label="Primary navigation"[^>]*x-data="\{\}"/);
   assert.match(html, /x-on:change="\$store\.darkMode\.toggle\(\)"/);
@@ -55,8 +54,8 @@ test("landing footer identifies linked Muamba and Arai Hu projects", async () =>
   assert.match(html, /<a href="\/">Muamba<\/a> · an <a href="https:\/\/araihu\.com">Arai Hû<\/a> project/);
 });
 
-test("Goshtoso dark-mode runtime follows system preference and toggles persistently", async () => {
-  const source = await read("../public/assets/js/darkmode.js");
+test("landing dark-mode store follows system preference and toggles persistently", async () => {
+  const source = await read("../public/scripts/theme.js");
   const listeners = new Map();
   const stores = new Map();
   const classes = new Set();
@@ -68,6 +67,7 @@ test("Goshtoso dark-mode runtime follows system preference and toggles persisten
         classList: {
           add: (name) => classes.add(name),
           remove: (name) => classes.delete(name),
+          toggle: (name, force) => force ? classes.add(name) : classes.delete(name),
         },
       },
     },
@@ -95,7 +95,7 @@ test("Goshtoso dark-mode runtime follows system preference and toggles persisten
   darkMode.toggle();
   assert.equal(darkMode.on, false);
   assert.equal(classes.has("dark"), false);
-  assert.equal(storage.get("darkMode"), false);
+  assert.equal(storage.get("darkMode"), "false");
 });
 
 test("docs use Goshtoso componentdocshell and remain static", async () => {

@@ -25,8 +25,8 @@ templ LandingPage() {
 			<meta property="og:image" content="https://muamba.araihu.com/og.png"/>
 			<meta name="twitter:card" content="summary_large_image"/>
 			<link rel="icon" href="/brand/muamba-mark.svg" type="image/svg+xml"/>
-			@templ.Raw(`<script>(()=>{const canStore=()=>{try{const storage=window.localStorage;if(!storage)return false;const key="muamba:storage-probe";storage.setItem(key,"1");storage.removeItem(key);return true}catch{return false}};window.goshtosoStorageConsent={allowed:canStore};let dark;try{const saved=localStorage.getItem("darkMode");dark=saved===null?matchMedia("(prefers-color-scheme: dark)").matches:saved==="true"}catch{dark=matchMedia("(prefers-color-scheme: dark)").matches}document.documentElement.classList.toggle("dark",dark)})();</script>`)
-			<script defer src="/assets/js/darkmode.js"></script>
+			@templ.Raw(`<script>(()=>{let dark;try{const saved=localStorage.getItem("darkMode");dark=saved===null?matchMedia("(prefers-color-scheme: dark)").matches:saved==="true"}catch{dark=matchMedia("(prefers-color-scheme: dark)").matches}document.documentElement.classList.toggle("dark",dark)})();</script>`)
+			<script defer src="/scripts/theme.js"></script>
 			@head.Dependencies(head.WithLocalRuntime())
 			<link rel="stylesheet" href="/styles/site.css"/>
 		</head>

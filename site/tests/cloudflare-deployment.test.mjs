@@ -25,7 +25,7 @@ test("Wrangler owns an assets-only Muamba production deployment", async () => {
   assert.match(buildScript, /app\/_generated\/docs\/index\.html/);
   assert.doesNotMatch(JSON.stringify(pkg), /vinext|next|react|vite/i);
 
-  for (const path of ["../worker/index.ts", "../app/route.ts", "../app/docs/route.ts", "../.openai/hosting.json"]) {
+  for (const path of ["../worker/index.ts", "../app/route.ts", "../app/docs/route.ts", "../public/assets/js/darkmode.js", "../.openai/hosting.json"]) {
     await assert.rejects(access(new URL(path, import.meta.url)), { code: "ENOENT" });
   }
 });

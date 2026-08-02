@@ -42,11 +42,11 @@ func LandingPage() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templ.Raw(`<script>(()=>{const canStore=()=>{try{const storage=window.localStorage;if(!storage)return false;const key="muamba:storage-probe";storage.setItem(key,"1");storage.removeItem(key);return true}catch{return false}};window.goshtosoStorageConsent={allowed:canStore};let dark;try{const saved=localStorage.getItem("darkMode");dark=saved===null?matchMedia("(prefers-color-scheme: dark)").matches:saved==="true"}catch{dark=matchMedia("(prefers-color-scheme: dark)").matches}document.documentElement.classList.toggle("dark",dark)})();</script>`).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = templ.Raw(`<script>(()=>{let dark;try{const saved=localStorage.getItem("darkMode");dark=saved===null?matchMedia("(prefers-color-scheme: dark)").matches:saved==="true"}catch{dark=matchMedia("(prefers-color-scheme: dark)").matches}document.documentElement.classList.toggle("dark",dark)})();</script>`).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<script defer src=\"/assets/js/darkmode.js\"></script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<script defer src=\"/scripts/theme.js\"></script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

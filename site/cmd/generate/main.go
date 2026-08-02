@@ -41,9 +41,6 @@ func run() error {
 			}
 		}
 	}
-	if err := extract(assets.Handler(), "public", assets.DarkModeURL); err != nil {
-		return err
-	}
 	for _, assetURL := range []string{
 		shellassets.StylesheetURL(""),
 		shellassets.ScriptURL(""),

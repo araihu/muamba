@@ -18,7 +18,8 @@
 - `codeblock.CodeBlock` has no compact density option in the pinned API. Keep
   the component's semantics and copy behavior, then scope density and rhythm
   through a consumer wrapper until Goshtoso exposes that option.
-- Goshtoso's standalone dark-mode store assumes that `localStorage` is
-  available when no consent adapter exists. Muamba publishes a capability
-  probe through `goshtosoStorageConsent`; unavailable storage falls back to
-  system preference and a session-only toggle instead of breaking Alpine init.
+- Goshtoso's pinned standalone dark-mode store still touches `localStorage`
+  when its consent adapter reports storage unavailable. Muamba keeps the
+  Goshtoso toggle component but owns an exception-safe Alpine store;
+  unavailable storage falls back to system preference and a session-only
+  toggle instead of breaking color-mode interaction.

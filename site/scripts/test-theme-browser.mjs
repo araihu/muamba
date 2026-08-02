@@ -7,6 +7,7 @@ import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const dist = fileURLToPath(new URL("../dist/", import.meta.url));
+const storageDisabled = process.env.MUAMBA_DISABLE_STORAGE === "1";
 const chromeCandidates = [
   process.env.CHROME_BIN,
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
@@ -125,6 +126,15 @@ try {
   const { sessionId } = await send("Target.attachToTarget", { targetId, flatten: true });
   await send("Page.enable", {}, sessionId);
   await send("Runtime.enable", {}, sessionId);
+  await send("Log.enable", {}, sessionId);
+  if (storageDisabled) {
+    await send("Page.addScriptToEvaluateOnNewDocument", {
+      source: `Object.defineProperty(window, "localStorage", {
+        configurable: true,
+        get() { throw new DOMException("storage denied", "SecurityError") }
+      })`,
+    }, sessionId);
+  }
 
   const evaluate = async (expression) => {
     const result = await send("Runtime.evaluate", { expression, returnByValue: true, awaitPromise: true }, sessionId);
@@ -134,7 +144,8 @@ try {
   const state = () => evaluate(`(() => ({
     dark: document.documentElement.classList.contains("dark"),
     checked: document.querySelector("#muamba-color-mode").checked,
-    saved: localStorage.getItem("darkMode")
+    store: Alpine.store("darkMode").on,
+    saved: (() => { try { return localStorage.getItem("darkMode") } catch { return "unavailable" } })()
   }))()`);
   const loadWithScheme = async (scheme) => {
     await send("Emulation.setEmulatedMedia", {
@@ -147,22 +158,53 @@ try {
   };
 
   await loadWithScheme("dark");
-  assert.deepEqual(await state(), { dark: true, checked: true, saved: null });
-  await evaluate(`document.querySelector('label[for="muamba-color-mode"]').click()`);
-  await new Promise((resolve) => setTimeout(resolve, 50));
-  assert.deepEqual(await state(), { dark: false, checked: false, saved: "false" });
+  if (storageDisabled) {
+    assert.deepEqual(await state(), { dark: true, checked: true, store: true, saved: "unavailable" });
+    await evaluate(`document.querySelector('label[for="muamba-color-mode"]').click()`);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    assert.deepEqual(await state(), { dark: false, checked: false, store: false, saved: "unavailable" });
 
-  await evaluate("localStorage.clear()");
-  await loadWithScheme("light");
-  assert.deepEqual(await state(), { dark: false, checked: false, saved: null });
-  await evaluate(`document.querySelector('label[for="muamba-color-mode"]').click()`);
-  await new Promise((resolve) => setTimeout(resolve, 50));
-  assert.deepEqual(await state(), { dark: true, checked: true, saved: "true" });
+    await loadWithScheme("light");
+    assert.deepEqual(await state(), { dark: false, checked: false, store: false, saved: "unavailable" });
+    await evaluate(`document.querySelector('label[for="muamba-color-mode"]').click()`);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    assert.deepEqual(await state(), { dark: true, checked: true, store: true, saved: "unavailable" });
+  } else {
+    assert.deepEqual(await state(), { dark: true, checked: true, store: true, saved: null });
+    await evaluate(`document.querySelector('label[for="muamba-color-mode"]').click()`);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    assert.deepEqual(await state(), { dark: false, checked: false, store: false, saved: "false" });
+
+    await evaluate("localStorage.clear()");
+    await loadWithScheme("light");
+    assert.deepEqual(await state(), { dark: false, checked: false, store: false, saved: null });
+    await evaluate(`document.querySelector('label[for="muamba-color-mode"]').click()`);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    assert.deepEqual(await state(), { dark: true, checked: true, store: true, saved: "true" });
+  }
+
+  assert.deepEqual(
+    events.filter((event) => event.method === "Runtime.exceptionThrown" ||
+      (event.method === "Log.entryAdded" && event.params?.entry?.level === "error")),
+    [],
+    "browser page emitted an exception or error log",
+  );
 
   socket.close();
-  console.log("theme browser test passed for dark and light system preferences");
+  console.log(storageDisabled
+    ? "theme browser test passed with localStorage throwing SecurityError"
+    : "theme browser test passed for dark and light system preferences");
 } finally {
   chrome.kill("SIGTERM");
   server.close();
   await rm(profile, { force: true, recursive: true });
+}
+
+if (!storageDisabled) {
+  const denied = spawn(process.execPath, [fileURLToPath(import.meta.url)], {
+    env: { ...process.env, MUAMBA_DISABLE_STORAGE: "1" },
+    stdio: "inherit",
+  });
+  const code = await new Promise((resolve) => denied.once("exit", resolve));
+  assert.equal(code, 0, "storage-disabled browser test failed");
 }
