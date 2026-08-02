@@ -2,13 +2,10 @@ package lifecycle
 
 import (
 	"context"
-	"crypto"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 
-	"github.com/araihu/muamba/internal/integrity"
 	"github.com/araihu/muamba/internal/manifest"
 	"github.com/araihu/muamba/internal/transport"
 )
@@ -21,7 +18,7 @@ type stagedDownload struct {
 }
 
 func (e *Engine) Lock(ctx context.Context, selectors []string) (Report, error) {
-	selections, err := e.selections(selectors)
+	selections, err := e.allSelections(selectors)
 	if err != nil {
 		return Report{}, err
 	}
@@ -31,34 +28,62 @@ func (e *Engine) Lock(ctx context.Context, selectors []string) (Report, error) {
 		if clientErr != nil {
 			return clientErr
 		}
-		var staged []stagedDownload
-		defer func() { removeStaged(staged) }()
+		candidate, cloneErr := e.document.Clone()
+		if cloneErr != nil {
+			return cloneErr
+		}
+		acquired := make(map[string]struct{})
 		for _, selection := range selections {
 			if selection.Integrity != "" {
 				continue
 			}
-			item, stageErr := e.stage(ctx, client, selection)
+			downloaded, downloadErr := e.download(ctx, client, selection, nil)
+			if downloadErr != nil {
+				return downloadErr
+			}
+			if seedErr := e.cache.Seed(downloaded.path, downloaded.digest); seedErr != nil {
+				_ = os.Remove(downloaded.path)
+				return seedErr
+			}
+			_ = os.Remove(downloaded.path)
+			if setErr := candidate.SetIntegrity(selection, downloaded.integrity); setErr != nil {
+				return setErr
+			}
+			acquired[selectionLabel(selection)] = struct{}{}
+			report.Changed = append(report.Changed, selectionLabel(selection))
+		}
+		if len(acquired) == 0 {
+			return nil
+		}
+		warnings, validateErr := candidate.Validate(e.options.Strict)
+		if validateErr != nil {
+			return validateErr
+		}
+		selected, selectErr := candidate.SelectTarget(selectors, e.targetOS)
+		if selectErr != nil {
+			return selectErr
+		}
+		var staged []stagedDownload
+		defer func() { cleanupStaged(staged, e.document.Dir) }()
+		for _, selection := range selected {
+			if _, ok := acquired[selectionLabel(selection)]; !ok {
+				continue
+			}
+			item, stageErr := e.stageCached(selection)
 			if stageErr != nil {
 				return stageErr
 			}
 			staged = append(staged, item)
 		}
-		for _, item := range staged {
-			if setErr := e.document.SetIntegrity(item.selection, item.integrity); setErr != nil {
-				return setErr
-			}
-		}
-		manifestBytes, marshalErr := e.document.Marshal()
+		manifestBytes, marshalErr := candidate.Marshal()
 		if marshalErr != nil {
 			return marshalErr
 		}
-		for _, item := range staged {
-			if renameErr := os.Rename(item.temporary, item.target); renameErr != nil {
-				return renameErr
-			}
-			report.Changed = append(report.Changed, selectionLabel(item.selection))
+		if commitErr := commitStaged(staged, candidate.Path, manifestBytes); commitErr != nil {
+			return commitErr
 		}
-		return writeAtomic(e.document.Path, manifestBytes, 0o644)
+		e.document, e.warnings = candidate, warnings
+		return nil
 	})
 	return sortedReport(report), err
 }
@@ -91,60 +116,6 @@ func (e *Engine) Sync(ctx context.Context, selectors []string) (Report, error) {
 		return nil
 	})
 	return sortedReport(report), err
-}
-
-func (e *Engine) stage(ctx context.Context, client *transport.Client, selection manifest.Selection) (stagedDownload, error) {
-	target, err := e.target(selection)
-	if err != nil {
-		return stagedDownload{}, err
-	}
-	if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
-		return stagedDownload{}, err
-	}
-	temporary, err := os.CreateTemp(filepath.Dir(target), ".muamba-download-*")
-	if err != nil {
-		return stagedDownload{}, err
-	}
-	temporaryPath := temporary.Name()
-	ok := false
-	defer func() {
-		_ = temporary.Close()
-		if !ok {
-			_ = os.Remove(temporaryPath)
-			removeEmptyParents(filepath.Dir(target), e.document.Dir)
-		}
-	}()
-	if _, err := client.Fetch(ctx, selection.URL, temporary, e.effectiveMaxBytes(selection)); err != nil {
-		return stagedDownload{}, fmt.Errorf("%s/%s: %w", selection.ResourceName, selection.DownloadName, err)
-	}
-	if _, err := temporary.Seek(0, io.SeekStart); err != nil {
-		return stagedDownload{}, err
-	}
-	sum, err := integrity.Compute(temporary, crypto.SHA384)
-	if err != nil {
-		return stagedDownload{}, err
-	}
-	if err := temporary.Chmod(selectionMode(selection)); err != nil {
-		return stagedDownload{}, err
-	}
-	if err := temporary.Sync(); err != nil {
-		return stagedDownload{}, err
-	}
-	if err := temporary.Close(); err != nil {
-		return stagedDownload{}, err
-	}
-	digest := integrity.Digest{Algorithm: crypto.SHA384, Sum: sum}
-	if err := e.cache.Seed(temporaryPath, digest); err != nil {
-		return stagedDownload{}, err
-	}
-	ok = true
-	return stagedDownload{selection: selection, target: target, temporary: temporaryPath, integrity: integrity.FormatSRI(crypto.SHA384, sum)}, nil
-}
-
-func removeStaged(items []stagedDownload) {
-	for _, item := range items {
-		_ = os.Remove(item.temporary)
-	}
 }
 
 func writeAtomic(path string, contents []byte, mode os.FileMode) error {

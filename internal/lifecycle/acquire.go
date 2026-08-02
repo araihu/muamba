@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/araihu/muamba/internal/integrity"
 	"github.com/araihu/muamba/internal/manifest"
@@ -16,6 +17,37 @@ type downloadedFile struct {
 	path      string
 	digest    integrity.Digest
 	integrity string
+}
+
+func (e *Engine) stageCached(selection manifest.Selection) (stagedDownload, error) {
+	expected, err := integrity.Parse(selection.Integrity)
+	if err != nil {
+		return stagedDownload{}, fmt.Errorf("%s: %w", selectionLabel(selection), err)
+	}
+	target, err := e.target(selection)
+	if err != nil {
+		return stagedDownload{}, err
+	}
+	if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+		return stagedDownload{}, err
+	}
+	temporary, err := os.CreateTemp(filepath.Dir(target), ".muamba-stage-*")
+	if err != nil {
+		return stagedDownload{}, err
+	}
+	temporaryPath := temporary.Name()
+	if err := temporary.Close(); err != nil {
+		_ = os.Remove(temporaryPath)
+		return stagedDownload{}, err
+	}
+	if err := os.Remove(temporaryPath); err != nil {
+		return stagedDownload{}, err
+	}
+	if err := e.cache.Materialize(expected, temporaryPath, selectionMode(selection)); err != nil {
+		_ = os.Remove(temporaryPath)
+		return stagedDownload{}, err
+	}
+	return stagedDownload{selection: selection, target: target, temporary: temporaryPath, integrity: selection.Integrity}, nil
 }
 
 func (e *Engine) download(ctx context.Context, client *transport.Client, selection manifest.Selection, expected *integrity.Digest) (downloadedFile, error) {
@@ -61,6 +93,40 @@ func (e *Engine) download(ctx context.Context, client *transport.Client, selecti
 	}
 	ok = true
 	return downloadedFile{path: path, digest: digest, integrity: integrity.FormatSRI(digest.Algorithm, digest.Sum)}, nil
+}
+
+func (e *Engine) trustSelections(ctx context.Context, client *transport.Client, selections []manifest.Selection, onlyUnlocked bool) ([]manifest.Selection, error) {
+	trusted := make([]manifest.Selection, 0, len(selections))
+	for _, selection := range selections {
+		if onlyUnlocked && selection.Integrity != "" {
+			continue
+		}
+		downloaded, err := e.download(ctx, client, selection, nil)
+		if err != nil {
+			return nil, err
+		}
+		if err := e.cache.Seed(downloaded.path, downloaded.digest); err != nil {
+			_ = os.Remove(downloaded.path)
+			return nil, err
+		}
+		_ = os.Remove(downloaded.path)
+		selection.Integrity = downloaded.integrity
+		trusted = append(trusted, selection)
+	}
+	return trusted, nil
+}
+
+func (e *Engine) stageSelections(selections []manifest.Selection) ([]stagedDownload, error) {
+	staged := make([]stagedDownload, 0, len(selections))
+	for _, selection := range selections {
+		item, err := e.stageCached(selection)
+		if err != nil {
+			cleanupStaged(staged, e.document.Dir)
+			return nil, err
+		}
+		staged = append(staged, item)
+	}
+	return staged, nil
 }
 
 func (e *Engine) restoreLocked(ctx context.Context, client *transport.Client, selection manifest.Selection) (bool, error) {
