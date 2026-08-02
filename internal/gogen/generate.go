@@ -22,6 +22,7 @@ type Options struct {
 	Package string
 	Check   bool
 	Strict  bool
+	Target  manifest.Target
 }
 
 type embeddedDownload struct {
@@ -51,7 +52,11 @@ func Generate(document *manifest.Document, options Options) error {
 			return err
 		}
 	}
-	selections, err := document.Select(nil)
+	target := options.Target
+	if target == (manifest.Target{}) {
+		target = manifest.RuntimeTarget()
+	}
+	selections, err := document.SelectTarget(nil, target)
 	if err != nil {
 		return err
 	}

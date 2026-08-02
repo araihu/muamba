@@ -149,3 +149,59 @@ func TestGenerateRequiresPackageForEmptyDirectory(t *testing.T) {
 		t.Fatalf("Generate error = %v", err)
 	}
 }
+
+func TestGenerateSelectsExplicitPlatformTarget(t *testing.T) {
+	linuxIntegrity := digestFor(t, "linux bytes")
+	darwinIntegrity := digestFor(t, "darwin bytes")
+	repo := testrepo.New(t, `schema: 1
+resources:
+  tool:
+    version: "1.0.0"
+    downloads:
+      cli:
+        path: assets/vendor/tool
+        platforms:
+          linux/amd64:
+            url: https://example.com/${version}/linux
+            integrity: `+linuxIntegrity+`
+          darwin/arm64:
+            url: https://example.com/${version}/darwin
+            integrity: `+darwinIntegrity+`
+`)
+	repo.Write(t, "assets/vendor/tool", []byte("linux bytes"))
+	repo.Write(t, "assets/doc.go", []byte("package assets\n"))
+	doc, err := manifest.Load(repo.Manifest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	options := Options{
+		Dir:    "assets",
+		Output: "muamba_gen.go",
+		Strict: true,
+		Target: manifest.Target{GOOS: "linux", GOARCH: "amd64"},
+	}
+	if err := Generate(doc, options); err != nil {
+		t.Fatal(err)
+	}
+	generated, err := os.ReadFile(filepath.Join(repo.Root, "assets", "muamba_gen.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(generated)
+	if !strings.Contains(text, `/1.0.0/linux`) || !strings.Contains(text, linuxIntegrity) {
+		t.Fatalf("generated Linux registry =\n%s", text)
+	}
+	options.Target = manifest.Target{GOOS: "darwin", GOARCH: "arm64"}
+	if err := Generate(doc, options); err == nil || !strings.Contains(err.Error(), "integrity mismatch") {
+		t.Fatalf("Darwin generation error = %v", err)
+	}
+}
+
+func digestFor(t *testing.T, contents string) string {
+	t.Helper()
+	sum, err := integrity.Compute(strings.NewReader(contents), crypto.SHA384)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return integrity.FormatSRI(crypto.SHA384, sum)
+}

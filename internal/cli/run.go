@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -34,6 +35,12 @@ Common options:
   --ca-file FILE                 Add trusted PEM certificates
   --timeout DURATION             Download timeout (default: 1m)
   --max-size BYTES               Maximum response size (default: 104857600)
+  --target GOOS/GOARCH           Materialization target (default: runtime)
+  --cache-dir DIR                Integrity cache (default: MUAMBA_CACHE_DIR or OS cache)
+  --all-platforms                Verify every cached variant (verify only)
+
+Environment:
+  MUAMBA_CACHE_DIR               Default integrity cache directory
 `
 
 type commonFlags struct {
@@ -43,7 +50,31 @@ type commonFlags struct {
 	insecureSkipTLSVerify bool
 	caFile                string
 	timeout               time.Duration
-	maxSize               int64
+	targetRaw             string
+	target                manifest.Target
+	cacheDir              string
+	maxSize               optionalInt64
+}
+
+type optionalInt64 struct {
+	value int64
+	set   bool
+}
+
+func (value *optionalInt64) Set(raw string) error {
+	parsed, err := strconv.ParseInt(raw, 10, 64)
+	if err != nil || parsed <= 0 {
+		return fmt.Errorf("max-size must be a positive byte count")
+	}
+	value.value, value.set = parsed, true
+	return nil
+}
+
+func (value *optionalInt64) String() string {
+	if !value.set {
+		return ""
+	}
+	return strconv.FormatInt(value.value, 10)
 }
 
 func Run(args []string, stdout io.Writer, stderr io.Writer) int {
@@ -79,7 +110,15 @@ func runLifecycle(command string, args []string, stdout, stderr io.Writer) int {
 	flags := flag.NewFlagSet(command, flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	common := addCommonFlags(flags)
+	allPlatforms := false
+	if command == "verify" {
+		flags.BoolVar(&allPlatforms, "all-platforms", false, "verify every cached platform variant")
+	}
 	if err := flags.Parse(args); err != nil {
+		return 2
+	}
+	if err := common.resolveTarget(); err != nil {
+		_, _ = fmt.Fprintf(stderr, "%s: %v\n", command, err)
 		return 2
 	}
 	engine, err := newEngine(common)
@@ -93,7 +132,7 @@ func runLifecycle(command string, args []string, stdout, stderr io.Writer) int {
 	case "sync":
 		report, err = engine.Sync(context.Background(), flags.Args())
 	case "verify":
-		report, err = engine.Verify(context.Background(), flags.Args())
+		report, err = engine.Verify(context.Background(), flags.Args(), allPlatforms)
 	}
 	emitReport(report, stdout, stderr)
 	if err != nil {
@@ -113,6 +152,10 @@ func runUpdate(args []string, stdout, stderr io.Writer) int {
 	common := addCommonFlags(flags)
 	version := flags.String("version", "", "new resource version")
 	if err := flags.Parse(args[1:]); err != nil {
+		return 2
+	}
+	if err := common.resolveTarget(); err != nil {
+		_, _ = fmt.Fprintf(stderr, "update: %v\n", err)
 		return 2
 	}
 	if flags.NArg() != 0 {
@@ -160,6 +203,10 @@ func runGenerate(args []string, stdout, stderr io.Writer) int {
 	if err := flags.Parse(args); err != nil {
 		return 2
 	}
+	if err := common.resolveTarget(); err != nil {
+		_, _ = fmt.Fprintf(stderr, "generate-go: %v\n", err)
+		return 2
+	}
 	if flags.NArg() != 0 {
 		_, _ = fmt.Fprintf(stderr, "generate-go: unexpected arguments: %s\n", strings.Join(flags.Args(), " "))
 		return 2
@@ -182,7 +229,7 @@ func runGenerate(args []string, stdout, stderr io.Writer) int {
 	}
 	emitWarnings(warnings, stderr)
 	err = gogen.Generate(document, gogen.Options{
-		Dir: *dir, Output: *output, Package: *packageName, Check: *check, Strict: common.strict,
+		Dir: *dir, Output: *output, Package: *packageName, Check: *check, Strict: common.strict, Target: common.target,
 	})
 	if err != nil {
 		return operationError("generate-go", err, stderr)
@@ -201,8 +248,23 @@ func addCommonFlags(flags *flag.FlagSet) *commonFlags {
 	flags.BoolVar(&common.insecureSkipTLSVerify, "insecure-skip-tls-verify", false, "skip TLS certificate verification")
 	flags.StringVar(&common.caFile, "ca-file", "", "trusted PEM certificate file")
 	flags.DurationVar(&common.timeout, "timeout", time.Minute, "download timeout")
-	flags.Int64Var(&common.maxSize, "max-size", 100<<20, "maximum response size in bytes")
+	flags.Var(&common.maxSize, "max-size", "maximum response size in bytes")
+	flags.StringVar(&common.targetRaw, "target", "", "materialization target GOOS/GOARCH")
+	flags.StringVar(&common.cacheDir, "cache-dir", "", "integrity cache directory")
 	return common
+}
+
+func (common *commonFlags) resolveTarget() error {
+	if common.targetRaw == "" {
+		common.target = manifest.RuntimeTarget()
+		return nil
+	}
+	target, err := manifest.ParseTarget(common.targetRaw)
+	if err != nil {
+		return err
+	}
+	common.target = target
+	return nil
 }
 
 func newEngine(common *commonFlags) (*lifecycle.Engine, error) {
@@ -211,13 +273,16 @@ func newEngine(common *commonFlags) (*lifecycle.Engine, error) {
 		return nil, err
 	}
 	return lifecycle.New(path, lifecycle.Options{
-		Strict: common.strict,
+		Strict:      common.strict,
+		Target:      common.target,
+		CacheDir:    common.cacheDir,
+		MaxBytes:    common.maxSize.value,
+		MaxBytesSet: common.maxSize.set,
 		Transport: transport.Options{
 			AllowHTTP:             common.allowHTTP,
 			InsecureSkipTLSVerify: common.insecureSkipTLSVerify,
 			CAFile:                common.caFile,
 			Timeout:               common.timeout,
-			MaxBytes:              common.maxSize,
 		},
 	})
 }
