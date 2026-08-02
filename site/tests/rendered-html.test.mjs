@@ -13,6 +13,44 @@ test("landing explains Muamba and links to documentation", async () => {
   assert.match(html, /data-muamba-workflow/);
 });
 
+test("landing uses Arai Hu color modes and Goshtoso controls", async () => {
+  const [html, css] = await Promise.all([
+    read("../app/_generated/index.html"),
+    read("../public/styles/site.css"),
+  ]);
+
+  assert.match(html, /<html[^>]*data-theme="araihu"/);
+  assert.match(html, /prefers-color-scheme: dark/);
+  assert.match(html, /src="\/assets\/js\/darkmode\.js"/);
+  assert.match(html, /id="muamba-color-mode"/);
+  assert.match(html, /x-on:change="\$store\.darkMode\.toggle\(\)"/);
+  assert.match(css, /--muamba-ink: var\(--color-on-surface-strong\)/);
+  assert.match(css, /--muamba-accent: var\(--color-primary\)/);
+  assert.doesNotMatch(css, /--muamba-accent: #[0-9a-f]+/i);
+});
+
+test("landing keeps navigation links and install command inside Goshtoso components", async () => {
+  const html = await read("../app/_generated/index.html");
+  const primaryCTA = html.match(/<a[^>]*data-primary-cta="true"[^>]*>/)?.[0] ?? "";
+  const finalCTA = html.match(/<a[^>]*data-final-cta="true"[^>]*>/)?.[0] ?? "";
+
+  assert.match(html, /Language-agnostic TOFU vendoring/);
+  assert.doesNotMatch(html, /TOFU vendoring for Go/);
+  assert.match(primaryCTA, /text-primary/);
+  assert.doesNotMatch(primaryCTA, /bg-primary/);
+  assert.match(finalCTA, /text-primary/);
+  assert.doesNotMatch(finalCTA, /bg-primary/);
+  assert.match(html, /data-install-codeblock="compact"/);
+  assert.match(html, /aria-label="Copy Install Muamba code"/);
+  assert.doesNotMatch(html, /class="muamba-install"/);
+});
+
+test("landing footer identifies linked Muamba and Arai Hu projects", async () => {
+  const html = await read("../app/_generated/index.html");
+
+  assert.match(html, /<a href="\/">Muamba<\/a> · an <a href="https:\/\/araihu\.com">Arai Hû<\/a> project/);
+});
+
 test("docs use Goshtoso componentdocshell and remain static", async () => {
   const html = await read("../app/_generated/docs/index.html");
 

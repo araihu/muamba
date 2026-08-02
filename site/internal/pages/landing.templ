@@ -6,6 +6,7 @@ import (
 	"github.com/araihu/goshtoso/components/head"
 	"github.com/araihu/goshtoso/components/link"
 	"github.com/araihu/goshtoso/components/panel"
+	"github.com/araihu/goshtoso/components/toggle"
 )
 
 templ LandingPage() {
@@ -15,7 +16,7 @@ templ LandingPage() {
 			<meta charset="utf-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1"/>
 			<title>Muamba · Trust remote files once</title>
-			<meta name="description" content="TOFU vendoring, integrity verification, and package-scoped Go embedding for remote build assets."/>
+			<meta name="description" content="Language-agnostic TOFU vendoring and integrity verification for remote build assets."/>
 			<link rel="canonical" href="https://muamba.araihu.com/"/>
 			<meta property="og:type" content="website"/>
 			<meta property="og:title" content="Muamba · Trust remote files once"/>
@@ -24,6 +25,8 @@ templ LandingPage() {
 			<meta property="og:image" content="https://muamba.araihu.com/og.png"/>
 			<meta name="twitter:card" content="summary_large_image"/>
 			<link rel="icon" href="/brand/muamba-mark.svg" type="image/svg+xml"/>
+			@templ.Raw(`<script>(()=>{let dark;try{const saved=localStorage.getItem("darkMode");dark=saved===null?matchMedia("(prefers-color-scheme: dark)").matches:saved==="true"}catch{dark=matchMedia("(prefers-color-scheme: dark)").matches}document.documentElement.classList.toggle("dark",dark)})();</script>`)
+			<script defer src="/assets/js/darkmode.js"></script>
 			@head.Dependencies(head.WithLocalRuntime())
 			<link rel="stylesheet" href="/styles/site.css"/>
 		</head>
@@ -40,24 +43,32 @@ templ LandingPage() {
 							<nav aria-label="Primary navigation" class="muamba-nav">
 								<a href="/docs">Docs</a>
 								<a href="https://github.com/araihu/muamba" target="_blank" rel="noreferrer">GitHub</a>
+								@toggle.Toggle(toggle.Config{
+									ID: "muamba-color-mode",
+									Label: "Dark mode",
+									Tone: toggle.TonePrimary,
+									RootClass: "muamba-mode-toggle",
+									InputAttrs: templ.Attributes{
+										"x-bind:checked": "$store.darkMode.on",
+										"x-on:change": "$store.darkMode.toggle()",
+									},
+								})
 							</nav>
 						</header>
 						<div id="hero-content" class="muamba-hero-grid" tabindex="-1">
 							<div class="muamba-hero-copy">
-								@badge.Badge(badge.Config{Label: "TOFU vendoring for Go", Tone: badge.ToneSuccess, Appearance: badge.AppearanceSoft, Indicator: true})
+								@badge.Badge(badge.Config{Label: "Language-agnostic TOFU vendoring", Tone: badge.ToneSuccess, Appearance: badge.AppearanceSoft, Indicator: true})
 								<h1>Trust remote files once. Verify them forever.</h1>
 								<p class="muamba-lede">Muamba vendors JavaScript, CSS, licenses, source maps, executables, and other opaque release artifacts. Review the source once, lock SHA-384 integrity, then build and test without network access.</p>
 								<div class="muamba-actions">
-									@link.Link("/docs", link.WithAppearance(link.AppearanceButton), link.WithSize(link.SizeLarge), link.WithAttrs(templ.Attributes{"data-primary-cta": "true"})) {
+									@link.Link("/docs", link.WithAppearance(link.AppearanceText), link.WithRootClass("muamba-cta-link"), link.WithAttrs(templ.Attributes{"data-primary-cta": "true"})) {
 										Read the docs <span aria-hidden="true">→</span>
 									}
 									@link.Link("https://github.com/araihu/muamba", link.WithAppearance(link.AppearanceText), link.WithTarget("_blank"), link.WithRel("noreferrer")) {
 										View source
 									}
 								</div>
-								<div class="muamba-install" aria-label="Install Muamba">
-									<span>$</span><code>go get -tool github.com/araihu/muamba/cmd/muamba@latest</code>
-								</div>
+								@landingCompactCommand("Install Muamba", `go get -tool github.com/araihu/muamba/cmd/muamba@latest`, templ.Attributes{"data-install-codeblock": "compact"})
 							</div>
 							<div class="muamba-manifest-preview">
 								@panel.Panel(panel.Config{
@@ -79,9 +90,9 @@ templ LandingPage() {
 							<p>Muamba never decides that changed bytes are trustworthy. Your manifest records the decision; every later command enforces it.</p>
 						</div>
 						<ol class="muamba-steps">
-							<li><span>01</span><h3>Lock</h3><p>Review every URL, fetch each artifact, and write its SHA-384 integrity once.</p><code>go tool muamba lock --strict</code></li>
-							<li><span>02</span><h3>Verify</h3><p>Check committed files and cache blobs offline. Different bytes fail closed.</p><code>go tool muamba verify --strict</code></li>
-							<li><span>03</span><h3>Sync</h3><p>Restore only missing or corrupt files whose remote bytes still match the lock.</p><code>go tool muamba sync --strict</code></li>
+							<li><span>01</span><h3>Lock</h3><p>Review every URL, fetch each artifact, and write its SHA-384 integrity once.</p>@landingCompactCommand("Lock", `go tool muamba lock --strict`, nil)</li>
+							<li><span>02</span><h3>Verify</h3><p>Check committed files and cache blobs offline. Different bytes fail closed.</p>@landingCompactCommand("Verify", `go tool muamba verify --strict`, nil)</li>
+							<li><span>03</span><h3>Sync</h3><p>Restore only missing or corrupt files whose remote bytes still match the lock.</p>@landingCompactCommand("Sync", `go tool muamba sync --strict`, nil)</li>
 						</ol>
 					</div>
 				</section>
@@ -102,15 +113,21 @@ templ LandingPage() {
 				<section class="muamba-section">
 					<div class="muamba-container muamba-final">
 						<div><p class="muamba-eyebrow">Start with one dependency</p><h2>Make the network optional after review.</h2></div>
-						@link.Link("/docs", link.WithAppearance(link.AppearanceButton), link.WithSize(link.SizeLarge)) {
+						@link.Link("/docs", link.WithAppearance(link.AppearanceText), link.WithRootClass("muamba-cta-link"), link.WithAttrs(templ.Attributes{"data-final-cta": "true"})) {
 							Create your first manifest <span aria-hidden="true">→</span>
 						}
 					</div>
 				</section>
 			</main>
-			<footer class="muamba-footer"><div class="muamba-container"><span>Muamba · an Arai Hû project</span><a href="https://github.com/araihu/muamba">GitHub</a></div></footer>
+			<footer class="muamba-footer"><div class="muamba-container"><span><a href="/">Muamba</a> · an <a href="https://araihu.com">Arai Hû</a> project</span><a href="https://github.com/araihu/muamba">GitHub</a></div></footer>
 		</body>
 	</html>
+}
+
+templ landingCompactCommand(label string, command string, attrs templ.Attributes) {
+	<div class="muamba-codeblock-compact" { attrs... }>
+		@codeblock.CodeBlock(codeblock.Config{Language: "bash", Label: label, Code: command})
+	</div>
 }
 
 templ landingManifestHeader() {

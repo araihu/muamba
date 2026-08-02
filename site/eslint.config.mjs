@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Generated, version-pinned Goshtoso and third-party runtime assets.
+    "public/assets/**",
+    "public/componentdocshell/assets/**",
   ]),
 ]);
 

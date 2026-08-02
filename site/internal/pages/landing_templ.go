@@ -14,6 +14,7 @@ import (
 	"github.com/araihu/goshtoso/components/head"
 	"github.com/araihu/goshtoso/components/link"
 	"github.com/araihu/goshtoso/components/panel"
+	"github.com/araihu/goshtoso/components/toggle"
 )
 
 func LandingPage() templ.Component {
@@ -37,7 +38,15 @@ func LandingPage() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!doctype html><html lang=\"en\" data-theme=\"araihu\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>Muamba · Trust remote files once</title><meta name=\"description\" content=\"TOFU vendoring, integrity verification, and package-scoped Go embedding for remote build assets.\"><link rel=\"canonical\" href=\"https://muamba.araihu.com/\"><meta property=\"og:type\" content=\"website\"><meta property=\"og:title\" content=\"Muamba · Trust remote files once\"><meta property=\"og:description\" content=\"Vendor opaque remote files, lock their integrity, and keep builds offline.\"><meta property=\"og:url\" content=\"https://muamba.araihu.com/\"><meta property=\"og:image\" content=\"https://muamba.araihu.com/og.png\"><meta name=\"twitter:card\" content=\"summary_large_image\"><link rel=\"icon\" href=\"/brand/muamba-mark.svg\" type=\"image/svg+xml\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!doctype html><html lang=\"en\" data-theme=\"araihu\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>Muamba · Trust remote files once</title><meta name=\"description\" content=\"Language-agnostic TOFU vendoring and integrity verification for remote build assets.\"><link rel=\"canonical\" href=\"https://muamba.araihu.com/\"><meta property=\"og:type\" content=\"website\"><meta property=\"og:title\" content=\"Muamba · Trust remote files once\"><meta property=\"og:description\" content=\"Vendor opaque remote files, lock their integrity, and keep builds offline.\"><meta property=\"og:url\" content=\"https://muamba.araihu.com/\"><meta property=\"og:image\" content=\"https://muamba.araihu.com/og.png\"><meta name=\"twitter:card\" content=\"summary_large_image\"><link rel=\"icon\" href=\"/brand/muamba-mark.svg\" type=\"image/svg+xml\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templ.Raw(`<script>(()=>{let dark;try{const saved=localStorage.getItem("darkMode");dark=saved===null?matchMedia("(prefers-color-scheme: dark)").matches:saved==="true"}catch{dark=matchMedia("(prefers-color-scheme: dark)").matches}document.documentElement.classList.toggle("dark",dark)})();</script>`).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<script defer src=\"/assets/js/darkmode.js\"></script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -45,15 +54,32 @@ func LandingPage() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<link rel=\"stylesheet\" href=\"/styles/site.css\"></head><body class=\"muamba-site bg-surface text-on-surface dark:bg-surface-dark dark:text-on-surface-dark\"><a class=\"muamba-skip\" href=\"#hero-content\">Skip to main content</a><main id=\"main-content\"><section id=\"hero\" class=\"muamba-hero\"><div class=\"muamba-container\"><header class=\"muamba-topbar\"><a class=\"muamba-brand\" href=\"/\" aria-label=\"Muamba home\"><img class=\"muamba-brand-mark\" src=\"/brand/muamba-mark.svg\" alt=\"\" aria-hidden=\"true\"> <span><strong>Muamba</strong><small>trusted remote assets</small></span></a><nav aria-label=\"Primary navigation\" class=\"muamba-nav\"><a href=\"/docs\">Docs</a> <a href=\"https://github.com/araihu/muamba\" target=\"_blank\" rel=\"noreferrer\">GitHub</a></nav></header><div id=\"hero-content\" class=\"muamba-hero-grid\" tabindex=\"-1\"><div class=\"muamba-hero-copy\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<link rel=\"stylesheet\" href=\"/styles/site.css\"></head><body class=\"muamba-site bg-surface text-on-surface dark:bg-surface-dark dark:text-on-surface-dark\"><a class=\"muamba-skip\" href=\"#hero-content\">Skip to main content</a><main id=\"main-content\"><section id=\"hero\" class=\"muamba-hero\"><div class=\"muamba-container\"><header class=\"muamba-topbar\"><a class=\"muamba-brand\" href=\"/\" aria-label=\"Muamba home\"><img class=\"muamba-brand-mark\" src=\"/brand/muamba-mark.svg\" alt=\"\" aria-hidden=\"true\"> <span><strong>Muamba</strong><small>trusted remote assets</small></span></a><nav aria-label=\"Primary navigation\" class=\"muamba-nav\"><a href=\"/docs\">Docs</a> <a href=\"https://github.com/araihu/muamba\" target=\"_blank\" rel=\"noreferrer\">GitHub</a>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = badge.Badge(badge.Config{Label: "TOFU vendoring for Go", Tone: badge.ToneSuccess, Appearance: badge.AppearanceSoft, Indicator: true}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = toggle.Toggle(toggle.Config{
+			ID:        "muamba-color-mode",
+			Label:     "Dark mode",
+			Tone:      toggle.TonePrimary,
+			RootClass: "muamba-mode-toggle",
+			InputAttrs: templ.Attributes{
+				"x-bind:checked": "$store.darkMode.on",
+				"x-on:change":    "$store.darkMode.toggle()",
+			},
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<h1>Trust remote files once. Verify them forever.</h1><p class=\"muamba-lede\">Muamba vendors JavaScript, CSS, licenses, source maps, executables, and other opaque release artifacts. Review the source once, lock SHA-384 integrity, then build and test without network access.</p><div class=\"muamba-actions\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</nav></header><div id=\"hero-content\" class=\"muamba-hero-grid\" tabindex=\"-1\"><div class=\"muamba-hero-copy\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = badge.Badge(badge.Config{Label: "Language-agnostic TOFU vendoring", Tone: badge.ToneSuccess, Appearance: badge.AppearanceSoft, Indicator: true}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<h1>Trust remote files once. Verify them forever.</h1><p class=\"muamba-lede\">Muamba vendors JavaScript, CSS, licenses, source maps, executables, and other opaque release artifacts. Review the source once, lock SHA-384 integrity, then build and test without network access.</p><div class=\"muamba-actions\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -69,13 +95,13 @@ func LandingPage() templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "Read the docs <span aria-hidden=\"true\">→</span>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "Read the docs <span aria-hidden=\"true\">→</span>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = link.Link("/docs", link.WithAppearance(link.AppearanceButton), link.WithSize(link.SizeLarge), link.WithAttrs(templ.Attributes{"data-primary-cta": "true"})).Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = link.Link("/docs", link.WithAppearance(link.AppearanceText), link.WithRootClass("muamba-cta-link"), link.WithAttrs(templ.Attributes{"data-primary-cta": "true"})).Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -91,7 +117,7 @@ func LandingPage() templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "View source")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "View source")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -101,7 +127,15 @@ func LandingPage() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div><div class=\"muamba-install\" aria-label=\"Install Muamba\"><span>$</span><code>go get -tool github.com/araihu/muamba/cmd/muamba@latest</code></div></div><div class=\"muamba-manifest-preview\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = landingCompactCommand("Install Muamba", `go get -tool github.com/araihu/muamba/cmd/muamba@latest`, templ.Attributes{"data-install-codeblock": "compact"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div><div class=\"muamba-manifest-preview\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -115,7 +149,31 @@ func LandingPage() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</div></div></div></section><section class=\"muamba-section\" data-muamba-workflow><div class=\"muamba-container\"><div class=\"muamba-section-heading\"><p class=\"muamba-eyebrow\">One manifest, explicit trust</p><h2>A small workflow with a hard boundary.</h2><p>Muamba never decides that changed bytes are trustworthy. Your manifest records the decision; every later command enforces it.</p></div><ol class=\"muamba-steps\"><li><span>01</span><h3>Lock</h3><p>Review every URL, fetch each artifact, and write its SHA-384 integrity once.</p><code>go tool muamba lock --strict</code></li><li><span>02</span><h3>Verify</h3><p>Check committed files and cache blobs offline. Different bytes fail closed.</p><code>go tool muamba verify --strict</code></li><li><span>03</span><h3>Sync</h3><p>Restore only missing or corrupt files whose remote bytes still match the lock.</p><code>go tool muamba sync --strict</code></li></ol></div></section><section class=\"muamba-section muamba-section-muted\"><div class=\"muamba-container muamba-proof-grid\"><div class=\"muamba-section-heading\"><p class=\"muamba-eyebrow\">Designed for reproducible builds</p><h2>Remote convenience, local certainty.</h2></div><div class=\"muamba-proof-list\"><article><h3>Opaque by design</h3><p>No package-manager assumptions. Muamba treats every download as bytes plus a reviewed source and integrity lock.</p></article><article><h3>Atomic updates</h3><p>Grouped dependencies stage every declared artifact before the manifest or visible files change.</p></article><article><h3>Package-scoped embedding</h3><p>Generate deterministic Go registries for vendored files, including normalized hashes for cache busting.</p></article><article><h3>Platform-aware tools</h3><p>Pin exact GOOS/GOARCH executables with shared destinations, size limits, modes, and per-target locks.</p></article></div></div></section><section class=\"muamba-section\"><div class=\"muamba-container muamba-final\"><div><p class=\"muamba-eyebrow\">Start with one dependency</p><h2>Make the network optional after review.</h2></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</div></div></div></section><section class=\"muamba-section\" data-muamba-workflow><div class=\"muamba-container\"><div class=\"muamba-section-heading\"><p class=\"muamba-eyebrow\">One manifest, explicit trust</p><h2>A small workflow with a hard boundary.</h2><p>Muamba never decides that changed bytes are trustworthy. Your manifest records the decision; every later command enforces it.</p></div><ol class=\"muamba-steps\"><li><span>01</span><h3>Lock</h3><p>Review every URL, fetch each artifact, and write its SHA-384 integrity once.</p>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = landingCompactCommand("Lock", `go tool muamba lock --strict`, nil).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</li><li><span>02</span><h3>Verify</h3><p>Check committed files and cache blobs offline. Different bytes fail closed.</p>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = landingCompactCommand("Verify", `go tool muamba verify --strict`, nil).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</li><li><span>03</span><h3>Sync</h3><p>Restore only missing or corrupt files whose remote bytes still match the lock.</p>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = landingCompactCommand("Sync", `go tool muamba sync --strict`, nil).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</li></ol></div></section><section class=\"muamba-section muamba-section-muted\"><div class=\"muamba-container muamba-proof-grid\"><div class=\"muamba-section-heading\"><p class=\"muamba-eyebrow\">Designed for reproducible builds</p><h2>Remote convenience, local certainty.</h2></div><div class=\"muamba-proof-list\"><article><h3>Opaque by design</h3><p>No package-manager assumptions. Muamba treats every download as bytes plus a reviewed source and integrity lock.</p></article><article><h3>Atomic updates</h3><p>Grouped dependencies stage every declared artifact before the manifest or visible files change.</p></article><article><h3>Package-scoped embedding</h3><p>Generate deterministic Go registries for vendored files, including normalized hashes for cache busting.</p></article><article><h3>Platform-aware tools</h3><p>Pin exact GOOS/GOARCH executables with shared destinations, size limits, modes, and per-target locks.</p></article></div></div></section><section class=\"muamba-section\"><div class=\"muamba-container muamba-final\"><div><p class=\"muamba-eyebrow\">Start with one dependency</p><h2>Make the network optional after review.</h2></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -131,17 +189,62 @@ func LandingPage() templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "Create your first manifest <span aria-hidden=\"true\">→</span>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "Create your first manifest <span aria-hidden=\"true\">→</span>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = link.Link("/docs", link.WithAppearance(link.AppearanceButton), link.WithSize(link.SizeLarge)).Render(templ.WithChildren(ctx, templ_7745c5c3_Var4), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = link.Link("/docs", link.WithAppearance(link.AppearanceText), link.WithRootClass("muamba-cta-link"), link.WithAttrs(templ.Attributes{"data-final-cta": "true"})).Render(templ.WithChildren(ctx, templ_7745c5c3_Var4), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div></section></main><footer class=\"muamba-footer\"><div class=\"muamba-container\"><span>Muamba · an Arai Hû project</span><a href=\"https://github.com/araihu/muamba\">GitHub</a></div></footer></body></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</div></section></main><footer class=\"muamba-footer\"><div class=\"muamba-container\"><span><a href=\"/\">Muamba</a> · an <a href=\"https://araihu.com\">Arai Hû</a> project</span><a href=\"https://github.com/araihu/muamba\">GitHub</a></div></footer></body></html>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func landingCompactCommand(label string, command string, attrs templ.Attributes) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var5 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var5 == nil {
+			templ_7745c5c3_Var5 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<div class=\"muamba-codeblock-compact\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templ.RenderAttributes(ctx, templ_7745c5c3_Buffer, attrs)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, ">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = codeblock.CodeBlock(codeblock.Config{Language: "bash", Label: label, Code: command}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -165,12 +268,12 @@ func landingManifestHeader() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var5 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var5 == nil {
-			templ_7745c5c3_Var5 = templ.NopComponent
+		templ_7745c5c3_Var6 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var6 == nil {
+			templ_7745c5c3_Var6 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<div class=\"muamba-panel-heading\"><span>muamba.yaml</span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<div class=\"muamba-panel-heading\"><span>muamba.yaml</span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -178,7 +281,7 @@ func landingManifestHeader() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -202,9 +305,9 @@ func landingManifestBody() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var6 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var6 == nil {
-			templ_7745c5c3_Var6 = templ.NopComponent
+		templ_7745c5c3_Var7 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var7 == nil {
+			templ_7745c5c3_Var7 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
 		templ_7745c5c3_Err = codeblock.CodeBlock(codeblock.Config{Language: "yaml", Label: "Manifest", Code: `schema: 1
@@ -240,12 +343,12 @@ func landingManifestFooter() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var7 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var7 == nil {
-			templ_7745c5c3_Var7 = templ.NopComponent
+		templ_7745c5c3_Var8 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var8 == nil {
+			templ_7745c5c3_Var8 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<p>Typed manifest in. Verified bytes out.</p>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<p>Typed manifest in. Verified bytes out.</p>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
