@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -111,6 +112,9 @@ func TestSyncNeverMaterializesCorruptCache(t *testing.T) {
 }
 
 func TestSyncRepairsExecutableModeWithoutNetwork(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Windows does not expose Unix executable permission semantics")
+	}
 	repo := testrepo.New(t, `schema: 1
 resources:
   tool:

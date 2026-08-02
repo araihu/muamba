@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"net/url"
 	"os"
@@ -93,7 +94,11 @@ func (c *Client) Fetch(ctx context.Context, rawURL string, destination io.Writer
 	if response.StatusCode != http.StatusOK {
 		return 0, fmt.Errorf("GET %s: status %d", parsed.Host, response.StatusCode)
 	}
-	written, err := io.Copy(destination, io.LimitReader(response.Body, maxBytes+1))
+	readLimit := maxBytes
+	if readLimit < math.MaxInt64 {
+		readLimit++
+	}
+	written, err := io.Copy(destination, io.LimitReader(response.Body, readLimit))
 	if err != nil {
 		return written, fmt.Errorf("read response from %s: %w", parsed.Host, err)
 	}

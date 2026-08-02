@@ -110,6 +110,57 @@ func TestLockAllPlatformsCachesBothAndMaterializesSelectedTarget(t *testing.T) {
 	}
 }
 
+func TestLockAcquiresOnlyUnlockedPlatformVariant(t *testing.T) {
+	var requests atomic.Int64
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests.Add(1)
+		if !strings.HasSuffix(r.URL.Path, "/linux") {
+			http.Error(w, "unexpected platform", http.StatusBadRequest)
+			return
+		}
+		_, _ = w.Write([]byte("linux binary"))
+	}))
+	defer server.Close()
+	darwinLock := sri(t, "darwin locked")
+	repo := testrepo.New(t, platformManifest(server.URL, "4.3.3", "", darwinLock))
+	engine, err := New(repo.Manifest, Options{
+		Strict:    true,
+		CacheDir:  filepath.Join(t.TempDir(), "cache"),
+		Target:    manifest.Target{GOOS: "linux", GOARCH: "amd64"},
+		Transport: transport.Options{AllowHTTP: true},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	report, err := engine.Lock(context.Background(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if requests.Load() != 1 {
+		t.Fatalf("requests = %d, want 1", requests.Load())
+	}
+	if len(report.Changed) != 1 || report.Changed[0] != "tailwind/cli[linux/amd64]" {
+		t.Fatalf("report = %#v", report)
+	}
+	got, err := os.ReadFile(filepath.Join(repo.Root, ".tools", "tailwindcss"))
+	if err != nil || string(got) != "linux binary" {
+		t.Fatalf("target = %q, %v", got, err)
+	}
+	document, err := manifest.Load(repo.Manifest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	all, err := document.SelectAll(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, selection := range all {
+		if selection.Variant == "darwin/arm64" && selection.Integrity != darwinLock {
+			t.Fatalf("Darwin integrity = %q, want %q", selection.Integrity, darwinLock)
+		}
+	}
+}
+
 func assertCachedSelections(t *testing.T, cacheDir string, selections []manifest.Selection) {
 	t.Helper()
 	store, err := blobcache.New(cacheDir)

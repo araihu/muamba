@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/pem"
 	"fmt"
+	"math"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -124,6 +125,14 @@ func TestFetchUsesPerRequestSizeLimit(t *testing.T) {
 	if _, err := client.Fetch(context.Background(), server.URL, &out, 5); err != nil || out.String() != "12345" {
 		t.Fatalf("Fetch = %q, %v", out.String(), err)
 	}
+	strict, err := New(Options{AllowHTTP: true, MaxBytes: 2})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var loosened bytes.Buffer
+	if _, err := strict.Fetch(context.Background(), server.URL, &loosened, 5); err != nil || loosened.String() != "12345" {
+		t.Fatalf("per-request limit did not override client limit: %q, %v", loosened.String(), err)
+	}
 }
 
 func TestFetchUsesDefaultLimitWhenBothLimitsAreUnset(t *testing.T) {
@@ -137,6 +146,21 @@ func TestFetchUsesDefaultLimitWhenBothLimitsAreUnset(t *testing.T) {
 	}
 	var out bytes.Buffer
 	if _, err := client.Fetch(context.Background(), server.URL, &out, 0); err != nil || out.String() != "complete response" {
+		t.Fatalf("Fetch = %q, %v", out.String(), err)
+	}
+}
+
+func TestFetchHandlesMaximumSizeLimitWithoutOverflow(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("complete response"))
+	}))
+	defer server.Close()
+	client, err := New(Options{AllowHTTP: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var out bytes.Buffer
+	if _, err := client.Fetch(context.Background(), server.URL, &out, math.MaxInt64); err != nil || out.String() != "complete response" {
 		t.Fatalf("Fetch = %q, %v", out.String(), err)
 	}
 }

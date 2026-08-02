@@ -136,4 +136,8 @@ resources:
 	if doc.Manifest.Resources["tailwind"].Downloads["cli"].Platforms["darwin/arm64"].Integrity != "sha384-platform" {
 		t.Fatalf("typed manifest not updated: %#v", doc.Manifest.Resources["tailwind"].Downloads["cli"].Platforms)
 	}
+	unknown := Selection{ResourceName: "tailwind", DownloadName: "cli", Variant: "windows/amd64"}
+	if err := doc.SetIntegrity(unknown, "sha384-unknown"); err == nil || !strings.Contains(err.Error(), "unknown platform") {
+		t.Fatalf("SetIntegrity unknown platform error = %v", err)
+	}
 }

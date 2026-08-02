@@ -76,6 +76,7 @@ func (e *Engine) UpdateResource(ctx context.Context, resource, version string) (
 			return err
 		}
 		report.Changed = append(report.Changed, changed...)
+		e.document, e.warnings = candidate, warnings
 		newTargets := make(map[string]struct{}, len(staged))
 		for _, item := range staged {
 			newTargets[item.target] = struct{}{}
@@ -93,7 +94,6 @@ func (e *Engine) UpdateResource(ctx context.Context, resource, version string) (
 			}
 			removeEmptyParents(filepath.Dir(target), e.document.Dir)
 		}
-		e.document, e.warnings = candidate, warnings
 		return nil
 	})
 	return sortedReport(report), err

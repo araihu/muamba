@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -36,7 +37,7 @@ func TestVerifyIsOfflineAndReadOnly(t *testing.T) {
 	repo := testrepo.New(t, lockedManifest("https://127.0.0.1:1/library-1.0.0.js", sri(t, "locked")))
 	repo.Write(t, "vendor/library.js", []byte("locked"))
 	before, _ := os.ReadFile(repo.Manifest)
-	engine, err := New(repo.Manifest, Options{Strict: true})
+	engine, err := New(repo.Manifest, Options{Strict: true, CacheDir: filepath.Join(t.TempDir(), "cache")})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -68,7 +69,7 @@ func TestVerifyRejectsMissingMismatchedAndUnlocked(t *testing.T) {
 			if test.file != nil {
 				repo.Write(t, "vendor/library.js", []byte(*test.file))
 			}
-			engine, err := New(repo.Manifest, Options{Strict: true})
+			engine, err := New(repo.Manifest, Options{Strict: true, CacheDir: filepath.Join(t.TempDir(), "cache")})
 			if err != nil {
 				t.Fatal(err)
 			}

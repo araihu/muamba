@@ -6,6 +6,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -56,7 +57,7 @@ func TestStoreSeedsVerifiesAndMaterializes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if info.Mode().Perm() != 0o755 {
+	if runtime.GOOS != "windows" && info.Mode().Perm() != 0o755 {
 		t.Fatalf("mode = %v", info.Mode().Perm())
 	}
 }
@@ -83,7 +84,7 @@ func TestStoreMaterializeStripsSpecialModeBits(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if special := info.Mode() & (os.ModeSetuid | os.ModeSetgid | os.ModeSticky); special != 0 {
+	if special := info.Mode() & (os.ModeSetuid | os.ModeSetgid | os.ModeSticky); runtime.GOOS != "windows" && special != 0 {
 		t.Fatalf("materialized special mode bits = %v", special)
 	}
 }
@@ -149,17 +150,17 @@ func TestStoreConcurrentSeedPublishesOneCompleteBlob(t *testing.T) {
 	digest := testDigest(t, contents)
 
 	var wait sync.WaitGroup
-	errors := make(chan error, 16)
+	results := make(chan error, 16)
 	for range 16 {
 		wait.Add(1)
 		go func() {
 			defer wait.Done()
-			errors <- store.Seed(source, digest)
+			results <- store.Seed(source, digest)
 		}()
 	}
 	wait.Wait()
-	close(errors)
-	for err := range errors {
+	close(results)
+	for err := range results {
 		if err != nil {
 			t.Errorf("Seed = %v", err)
 		}
@@ -213,6 +214,7 @@ func TestStoreRepairNeverMakesBlobPathDisappear(t *testing.T) {
 				if err := store.Verify(digest); errors.Is(err, os.ErrNotExist) {
 					t.Fatalf("cache path disappeared during repair: %v", err)
 				}
+				runtime.Gosched()
 			}
 		}
 	}
