@@ -129,10 +129,35 @@ package directory.
 The generated API is deliberately small:
 
 ```go
+type MuambaDownload struct {
+	Name      string
+	URL       string
+	Path      string
+	Integrity string
+	Hash      string
+}
+
 func MuambaResources() []MuambaResource
 func MuambaResourceByName(name string) (MuambaResource, bool)
+func MuambaHash(resource, download string) (string, bool)
 func MuambaOpen(resource, download string) (fs.File, error)
 ```
+
+`Integrity` preserves the manifest's original SRI or hexadecimal spelling.
+`Hash` is the same full digest normalized as
+`sha256|sha384|sha512:<lowercase-hex>`, independent of the manifest encoding.
+Consumers can use the field or direct lookup for cache busting:
+
+```go
+hash, ok := MuambaHash("bootstrap", "core-css")
+if !ok {
+	return errors.New("bootstrap/core-css is not embedded")
+}
+stylesheetURL := "/assets/bootstrap.css?v=" + url.QueryEscape(hash)
+```
+
+Muamba exposes the complete digest and leaves URL shape, query names, and cache
+headers to the consumer.
 
 Generated resource/download constants and the embedded filesystem stay
 private. Projects needing several package directories run `generate-go` once

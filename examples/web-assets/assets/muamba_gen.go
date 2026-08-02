@@ -29,13 +29,14 @@ type MuambaDownload struct {
 	URL       string
 	Path      string
 	Integrity string
+	Hash      string
 }
 
 var muambaResources = []MuambaResource{
 	{Name: "bootstrap", Version: "5.3.8", Downloads: []MuambaDownload{
-		{Name: "bundle-js", URL: "https://unpkg.com/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js", Path: "assets/vendor/bootstrap/5.3.8/bootstrap.bundle.min.js", Integrity: "sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"},
-		{Name: "core-css", URL: "https://unpkg.com/bootstrap@5.3.8/dist/css/bootstrap.min.css", Path: "assets/vendor/bootstrap/5.3.8/bootstrap.min.css", Integrity: "sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"},
-		{Name: "license", URL: "https://unpkg.com/bootstrap@5.3.8/LICENSE", Path: "assets/vendor/bootstrap/5.3.8/LICENSE", Integrity: "sha384-WyeULmOarnkxIWJQ6Byifrdakj+J3Z1ONoIjyqqdmUvfwML66D4izPruHb7zDZbG"},
+		{Name: "bundle-js", URL: "https://unpkg.com/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js", Path: "assets/vendor/bootstrap/5.3.8/bootstrap.bundle.min.js", Integrity: "sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI", Hash: "sha384:14aca8105a2b086972bf0c7d1e3d3d25c627de7bfbc223d5973ed863026b5957172bf0669d50f133e0f6b1c41b213c48"},
+		{Name: "core-css", URL: "https://unpkg.com/bootstrap@5.3.8/dist/css/bootstrap.min.css", Path: "assets/vendor/bootstrap/5.3.8/bootstrap.min.css", Integrity: "sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB", Hash: "sha384:b11225e24c482c5bd8e3b275e9cafd670074eef3f827cf8b1fba8a427baa92e200bcd58bcde37cb44e5806e8d9a892c1"},
+		{Name: "license", URL: "https://unpkg.com/bootstrap@5.3.8/LICENSE", Path: "assets/vendor/bootstrap/5.3.8/LICENSE", Integrity: "sha384-WyeULmOarnkxIWJQ6Byifrdakj+J3Z1ONoIjyqqdmUvfwML66D4izPruHb7zDZbG", Hash: "sha384:5b27942e639aae7931216250e81ca27eb75a923f89dd9d4e368223caaa9d994bdfc0c2fae83e22ccfaee1dbef30d96c6"},
 	}},
 }
 
@@ -43,6 +44,12 @@ var muambaEmbeddedPaths = map[string]string{
 	"bootstrap\x00bundle-js": "vendor/bootstrap/5.3.8/bootstrap.bundle.min.js",
 	"bootstrap\x00core-css":  "vendor/bootstrap/5.3.8/bootstrap.min.css",
 	"bootstrap\x00license":   "vendor/bootstrap/5.3.8/LICENSE",
+}
+
+var muambaHashes = map[string]string{
+	"bootstrap\x00bundle-js": "sha384:14aca8105a2b086972bf0c7d1e3d3d25c627de7bfbc223d5973ed863026b5957172bf0669d50f133e0f6b1c41b213c48",
+	"bootstrap\x00core-css":  "sha384:b11225e24c482c5bd8e3b275e9cafd670074eef3f827cf8b1fba8a427baa92e200bcd58bcde37cb44e5806e8d9a892c1",
+	"bootstrap\x00license":   "sha384:5b27942e639aae7931216250e81ca27eb75a923f89dd9d4e368223caaa9d994bdfc0c2fae83e22ccfaee1dbef30d96c6",
 }
 
 func MuambaResources() []MuambaResource {
@@ -61,6 +68,11 @@ func MuambaResourceByName(name string) (MuambaResource, bool) {
 		}
 	}
 	return MuambaResource{}, false
+}
+
+func MuambaHash(resource, download string) (string, bool) {
+	hash, ok := muambaHashes[resource+"\x00"+download]
+	return hash, ok
 }
 
 func MuambaOpen(resource, download string) (fs.File, error) {
