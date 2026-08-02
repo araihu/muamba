@@ -30,3 +30,20 @@ test("generated pages have one main landmark and skip links", async () => {
     assert.match(html, /href="#main-content"|href="#hero-content"/);
   }
 });
+
+test("brand uses the project-local Muamba crate mark", async () => {
+  const [landing, docs, mark, logo] = await Promise.all([
+    read("../app/_generated/index.html"),
+    read("../app/_generated/docs/index.html"),
+    read("../public/brand/muamba-mark.svg"),
+    read("../public/brand/muamba-logo.svg"),
+  ]);
+
+  assert.match(landing, /href="\/brand\/muamba-mark\.svg"/);
+  assert.match(landing, /src="\/brand\/muamba-mark\.svg"/);
+  assert.doesNotMatch(landing, />M<\/span>/);
+  assert.match(docs, /src="\/brand\/muamba-mark\.svg"/);
+  assert.match(mark, /data-muamba-crate/);
+  assert.match(logo, /data-muamba-crate/);
+  assert.match(logo, />MUAMBA<\/text>/);
+});

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="muamba-mark-title">
+  <title id="muamba-mark-title">Muamba crate</title>
+  <g data-muamba-crate="" fill="none" stroke="#07111f" stroke-width="3" stroke-linejoin="miter">
+    <path fill="#f3f2e9" d="M8 19 32 7l24 12-24 13z"/>
+    <path fill="#173b72" d="M8 19l24 13v25L8 44z"/>
+    <path fill="#f3f2e9" d="m32 32 24-13v25L32 57z"/>
+    <path fill="#c7ff4a" d="m26 10 8-4 24 12-8 4z"/>
+    <path fill="#c7ff4a" d="m26 29 8 4v25l-8-5z"/>
+    <path d="m15 31 10 6m14 7 10-6"/>
+  </g>
+</svg>

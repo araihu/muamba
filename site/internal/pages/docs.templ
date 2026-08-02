@@ -11,7 +11,12 @@ import (
 
 func DocsPage() templ.Component {
 	cfg := componentdocshell.Config{
-		Brand: componentdocshell.Brand{Name: "Muamba", HomeURL: "/"},
+		Brand: componentdocshell.Brand{
+			Name:       "Muamba",
+			HomeURL:    "/",
+			Logo:       muambaBrandMark(),
+			FaviconURL: "/brand/muamba-mark.svg",
+		},
 		Navigation: componentdocshell.Navigation{
 			Items: []sidebar.Item{{ID: "docs", Label: "Get started", Href: "/docs"}},
 			SectionsTitle: "Guide",
@@ -47,6 +52,10 @@ func DocsPage() templ.Component {
 		EnableTOC: true,
 	}
 	return componentdocshell.Layout(cfg, page)
+}
+
+templ muambaBrandMark() {
+	<img class="muamba-shell-mark" src="/brand/muamba-mark.svg" alt="" aria-hidden="true"/>
 }
 
 templ docsHead() {

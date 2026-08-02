@@ -7,3 +7,4 @@
 - Docs direction: Goshtoso `componentdocshell` with Muamba-owned navigation and content; static pre-rendered HTML with local runtime assets.
 - Responsive rule: one navigation trigger at mobile widths, readable code, no horizontal page scroll.
 - Runtime boundary: no API and no WebAssembly. Add WASM only if future docs must parse user-provided manifests in-browser.
+- Brand boundary: project-local crate mark and wordmark under `site/public/brand`; no Arai Hû asset-pipeline integration.

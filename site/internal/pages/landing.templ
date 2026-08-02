@@ -23,6 +23,7 @@ templ LandingPage() {
 			<meta property="og:url" content="https://muamba.araihu.com/"/>
 			<meta property="og:image" content="https://muamba.araihu.com/og.png"/>
 			<meta name="twitter:card" content="summary_large_image"/>
+			<link rel="icon" href="/brand/muamba-mark.svg" type="image/svg+xml"/>
 			@head.Dependencies(head.WithLocalRuntime())
 			<link rel="stylesheet" href="/styles/site.css"/>
 		</head>
@@ -33,7 +34,7 @@ templ LandingPage() {
 					<div class="muamba-container">
 						<header class="muamba-topbar">
 							<a class="muamba-brand" href="/" aria-label="Muamba home">
-								<span class="muamba-brand-mark" aria-hidden="true">M</span>
+								<img class="muamba-brand-mark" src="/brand/muamba-mark.svg" alt="" aria-hidden="true"/>
 								<span><strong>Muamba</strong><small>trusted remote assets</small></span>
 							</a>
 							<nav aria-label="Primary navigation" class="muamba-nav">
