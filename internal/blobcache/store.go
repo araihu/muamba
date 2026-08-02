@@ -72,9 +72,6 @@ func (s *Store) Seed(source string, expected integrity.Digest) error {
 	if err := verifyFile(temporary, expected); err != nil {
 		return fmt.Errorf("verify staged cache blob: %w", err)
 	}
-	if err := os.Remove(target); err != nil && !os.IsNotExist(err) {
-		return err
-	}
 	if err := os.Rename(temporary, target); err != nil {
 		return fmt.Errorf("publish cache blob: %w", err)
 	}

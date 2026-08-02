@@ -44,15 +44,16 @@ func (e *Engine) UpdateResource(ctx context.Context, resource, version string) (
 		if clientErr != nil {
 			return clientErr
 		}
-		trusted, trustErr := e.trustSelections(ctx, client, allSelections, false)
+		trusted, trustErr := e.retrustSelections(ctx, client, allSelections)
 		if trustErr != nil {
 			return trustErr
 		}
+		var changed []string
 		for _, selection := range trusted {
 			if err := candidate.SetIntegrity(selection, selection.Integrity); err != nil {
 				return err
 			}
-			report.Changed = append(report.Changed, selectionLabel(selection))
+			changed = append(changed, selectionLabel(selection))
 		}
 		warnings, validateErr := candidate.Validate(e.options.Strict)
 		if validateErr != nil {
@@ -74,6 +75,7 @@ func (e *Engine) UpdateResource(ctx context.Context, resource, version string) (
 		if err := commitStaged(staged, candidate.Path, manifestBytes); err != nil {
 			return err
 		}
+		report.Changed = append(report.Changed, changed...)
 		newTargets := make(map[string]struct{}, len(staged))
 		for _, item := range staged {
 			newTargets[item.target] = struct{}{}
@@ -120,15 +122,16 @@ func (e *Engine) UpdateDownload(ctx context.Context, resource, download string) 
 		if clientErr != nil {
 			return clientErr
 		}
-		trusted, trustErr := e.trustSelections(ctx, client, allSelections, false)
+		trusted, trustErr := e.retrustSelections(ctx, client, allSelections)
 		if trustErr != nil {
 			return trustErr
 		}
+		var changed []string
 		for _, selection := range trusted {
 			if err := candidate.SetIntegrity(selection, selection.Integrity); err != nil {
 				return err
 			}
-			report.Changed = append(report.Changed, selectionLabel(selection))
+			changed = append(changed, selectionLabel(selection))
 		}
 		warnings, validateErr := candidate.Validate(e.options.Strict)
 		if validateErr != nil {
@@ -150,6 +153,7 @@ func (e *Engine) UpdateDownload(ctx context.Context, resource, download string) 
 		if err := commitStaged(staged, candidate.Path, manifestBytes); err != nil {
 			return err
 		}
+		report.Changed = append(report.Changed, changed...)
 		e.document, e.warnings = candidate, warnings
 		return nil
 	})

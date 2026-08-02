@@ -130,3 +130,40 @@ resources:
 		t.Fatalf("flag cache blobs = %d", blobs)
 	}
 }
+
+func TestCacheDirectoryUsesEnvironmentWithoutFlag(t *testing.T) {
+	environmentCache := filepath.Join(t.TempDir(), "environment-cache")
+	t.Setenv("MUAMBA_CACHE_DIR", environmentCache)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("payload"))
+	}))
+	defer server.Close()
+	root := t.TempDir()
+	manifestPath := filepath.Join(root, "muamba.yaml")
+	writeTestFile(t, manifestPath, fmt.Sprintf(`schema: 1
+resources:
+  lib:
+    version: "1"
+    downloads:
+      core:
+        url: %s/lib-1
+        path: vendor/lib
+`, server.URL))
+	var stdout, stderr bytes.Buffer
+	code := Run([]string{"lock", "--strict", "--allow-http", "-f", manifestPath}, &stdout, &stderr)
+	if code != 0 {
+		t.Fatalf("lock code = %d, stderr = %q", code, stderr.String())
+	}
+	var blobs int
+	if err := filepath.WalkDir(environmentCache, func(_ string, entry os.DirEntry, err error) error {
+		if err == nil && !entry.IsDir() && !strings.HasSuffix(entry.Name(), ".lock") {
+			blobs++
+		}
+		return err
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if blobs != 1 {
+		t.Fatalf("environment cache blobs = %d", blobs)
+	}
+}

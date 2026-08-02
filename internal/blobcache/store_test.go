@@ -3,6 +3,7 @@ package blobcache
 import (
 	"crypto"
 	"encoding/hex"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -147,6 +148,46 @@ func TestStoreConcurrentSeedPublishesOneCompleteBlob(t *testing.T) {
 		if strings.HasPrefix(entry.Name(), ".muamba-") {
 			t.Errorf("temporary file remains: %s", entry.Name())
 		}
+	}
+}
+
+func TestStoreRepairNeverMakesBlobPathDisappear(t *testing.T) {
+	store, err := New(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	contents := strings.Repeat("verified payload", 8192)
+	source := filepath.Join(t.TempDir(), "source")
+	if err := os.WriteFile(source, []byte(contents), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	digest := testDigest(t, contents)
+	if err := store.Seed(source, digest); err != nil {
+		t.Fatal(err)
+	}
+	for range 20 {
+		if err := os.WriteFile(store.Path(digest), []byte("corrupt"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		done := make(chan error, 1)
+		go func() { done <- store.Seed(source, digest) }()
+		for {
+			select {
+			case err := <-done:
+				if err != nil {
+					t.Fatal(err)
+				}
+				if err := store.Verify(digest); err != nil {
+					t.Fatal(err)
+				}
+				goto repaired
+			default:
+				if err := store.Verify(digest); errors.Is(err, os.ErrNotExist) {
+					t.Fatalf("cache path disappeared during repair: %v", err)
+				}
+			}
+		}
+	repaired:
 	}
 }
 

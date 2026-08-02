@@ -212,6 +212,7 @@ resources:
 	if err != nil {
 		t.Fatal(err)
 	}
+	repo.Write(t, ".tools/tool", []byte("linux"))
 	if _, err := engine.Verify(context.Background(), nil, true); err == nil || !strings.Contains(err.Error(), "darwin/arm64") {
 		t.Fatalf("Verify(all) error = %v", err)
 	}
@@ -222,5 +223,16 @@ resources:
 	}
 	if _, err := engine.Verify(context.Background(), nil, true); err != nil {
 		t.Fatal(err)
+	}
+	repo.Write(t, ".tools/tool", []byte("corrupt selected target"))
+	if _, err := engine.Verify(context.Background(), nil, true); err == nil || !strings.Contains(err.Error(), ".tools/tool") {
+		t.Fatalf("Verify(all) accepted corrupt selected target: %v", err)
+	}
+}
+
+func TestNewRejectsExplicitZeroMaxBytes(t *testing.T) {
+	repo := testrepo.New(t, lockedManifest("https://example.com/library-1.0.0.js", sri(t, "expected")))
+	if _, err := New(repo.Manifest, Options{CacheDir: t.TempDir(), MaxBytesSet: true}); err == nil || !strings.Contains(err.Error(), "MaxBytes") {
+		t.Fatalf("New error = %v", err)
 	}
 }

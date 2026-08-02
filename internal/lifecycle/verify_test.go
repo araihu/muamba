@@ -40,7 +40,7 @@ func TestVerifyIsOfflineAndReadOnly(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	report, err := engine.Verify(context.Background(), nil)
+	report, err := engine.Verify(context.Background(), nil, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -72,7 +72,7 @@ func TestVerifyRejectsMissingMismatchedAndUnlocked(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if _, err := engine.Verify(context.Background(), nil); err == nil {
+			if _, err := engine.Verify(context.Background(), nil, false); err == nil {
 				t.Fatal("expected verify failure")
 			}
 		})

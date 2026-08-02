@@ -9,10 +9,13 @@ import (
 	"github.com/araihu/muamba/internal/manifest"
 )
 
-func (e *Engine) Verify(_ context.Context, selectors []string, allPlatforms ...bool) (Report, error) {
-	all := len(allPlatforms) > 0 && allPlatforms[0]
+func (e *Engine) Verify(_ context.Context, selectors []string, allPlatforms bool) (Report, error) {
 	selections, err := e.selections(selectors)
-	if all {
+	selected := make(map[string]struct{})
+	if allPlatforms {
+		for _, selection := range selections {
+			selected[selectionLabel(selection)] = struct{}{}
+		}
 		selections, err = e.allSelections(selectors)
 	}
 	if err != nil {
@@ -21,15 +24,20 @@ func (e *Engine) Verify(_ context.Context, selectors []string, allPlatforms ...b
 	report := Report{Warnings: append([]manifest.Warning(nil), e.warnings...)}
 	for _, selection := range selections {
 		if selection.Integrity == "" {
-			return Report{}, fmt.Errorf("%s/%s is unlocked", selection.ResourceName, selection.DownloadName)
+			return Report{}, fmt.Errorf("%s is unlocked", selectionLabel(selection))
 		}
-		if all {
+		if allPlatforms {
 			digest, parseErr := integrity.Parse(selection.Integrity)
 			if parseErr != nil {
 				return Report{}, fmt.Errorf("%s: %w", selectionLabel(selection), parseErr)
 			}
 			if verifyErr := e.cache.Verify(digest); verifyErr != nil {
 				return Report{}, fmt.Errorf("%s: %w", selectionLabel(selection), verifyErr)
+			}
+			if _, materialized := selected[selectionLabel(selection)]; materialized {
+				if err := e.verifyFile(selection); err != nil {
+					return Report{}, err
+				}
 			}
 		} else if err := e.verifyFile(selection); err != nil {
 			return Report{}, err
@@ -42,19 +50,19 @@ func (e *Engine) Verify(_ context.Context, selectors []string, allPlatforms ...b
 func (e *Engine) verifyFile(selection manifest.Selection) error {
 	digest, err := integrity.Parse(selection.Integrity)
 	if err != nil {
-		return fmt.Errorf("%s/%s: %w", selection.ResourceName, selection.DownloadName, err)
+		return fmt.Errorf("%s: %w", selectionLabel(selection), err)
 	}
 	target, err := e.target(selection)
 	if err != nil {
-		return fmt.Errorf("%s/%s: %w", selection.ResourceName, selection.DownloadName, err)
+		return fmt.Errorf("%s: %w", selectionLabel(selection), err)
 	}
 	file, err := os.Open(target)
 	if err != nil {
-		return fmt.Errorf("%s/%s at %s: %w", selection.ResourceName, selection.DownloadName, target, err)
+		return fmt.Errorf("%s at %s: %w", selectionLabel(selection), target, err)
 	}
 	defer func() { _ = file.Close() }()
 	if _, err := integrity.Verify(file, digest); err != nil {
-		return fmt.Errorf("%s/%s at %s: %w", selection.ResourceName, selection.DownloadName, target, err)
+		return fmt.Errorf("%s at %s: %w", selectionLabel(selection), target, err)
 	}
 	return nil
 }

@@ -42,6 +42,9 @@ type Engine struct {
 }
 
 func New(manifestPath string, options Options) (*Engine, error) {
+	if options.MaxBytesSet && options.MaxBytes <= 0 {
+		return nil, fmt.Errorf("MaxBytes must be positive when explicitly set")
+	}
 	document, err := manifest.Load(manifestPath)
 	if err != nil {
 		return nil, err

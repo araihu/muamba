@@ -33,6 +33,7 @@ func (e *Engine) Lock(ctx context.Context, selectors []string) (Report, error) {
 			return cloneErr
 		}
 		acquired := make(map[string]struct{})
+		var changed []string
 		for _, selection := range selections {
 			if selection.Integrity != "" {
 				continue
@@ -50,7 +51,7 @@ func (e *Engine) Lock(ctx context.Context, selectors []string) (Report, error) {
 				return setErr
 			}
 			acquired[selectionLabel(selection)] = struct{}{}
-			report.Changed = append(report.Changed, selectionLabel(selection))
+			changed = append(changed, selectionLabel(selection))
 		}
 		if len(acquired) == 0 {
 			return nil
@@ -82,6 +83,7 @@ func (e *Engine) Lock(ctx context.Context, selectors []string) (Report, error) {
 		if commitErr := commitStaged(staged, candidate.Path, manifestBytes); commitErr != nil {
 			return commitErr
 		}
+		report.Changed = append(report.Changed, changed...)
 		e.document, e.warnings = candidate, warnings
 		return nil
 	})

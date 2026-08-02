@@ -95,12 +95,9 @@ func (e *Engine) download(ctx context.Context, client *transport.Client, selecti
 	return downloadedFile{path: path, digest: digest, integrity: integrity.FormatSRI(digest.Algorithm, digest.Sum)}, nil
 }
 
-func (e *Engine) trustSelections(ctx context.Context, client *transport.Client, selections []manifest.Selection, onlyUnlocked bool) ([]manifest.Selection, error) {
+func (e *Engine) retrustSelections(ctx context.Context, client *transport.Client, selections []manifest.Selection) ([]manifest.Selection, error) {
 	trusted := make([]manifest.Selection, 0, len(selections))
 	for _, selection := range selections {
-		if onlyUnlocked && selection.Integrity != "" {
-			continue
-		}
 		downloaded, err := e.download(ctx, client, selection, nil)
 		if err != nil {
 			return nil, err
@@ -142,8 +139,10 @@ func (e *Engine) restoreLocked(ctx context.Context, client *transport.Client, se
 		if err := os.Chmod(target, selectionMode(selection)); err != nil {
 			return false, err
 		}
-		if err := e.cache.Seed(target, expected); err != nil {
-			return false, err
+		if err := e.cache.Verify(expected); err != nil {
+			if err := e.cache.Seed(target, expected); err != nil {
+				return false, err
+			}
 		}
 		return false, nil
 	}

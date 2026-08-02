@@ -171,10 +171,11 @@ resources:
             url: https://example.com/${version}/linux-x64
 `
 	tests := map[string]string{
-		"missing acquisition": strings.Replace(base, "        platforms:\n          linux/amd64:\n            url: https://example.com/${version}/linux-x64\n", "", 1),
-		"invalid platform":    strings.Replace(base, "linux/amd64", "macos/arm64", 1),
-		"missing variant URL": strings.Replace(base, "            url: https://example.com/${version}/linux-x64\n", "", 1),
-		"invalid max size":    strings.Replace(base, "        platforms:\n", "        max_size: 128MB\n        platforms:\n", 1),
+		"missing acquisition":            strings.Replace(base, "        platforms:\n          linux/amd64:\n            url: https://example.com/${version}/linux-x64\n", "", 1),
+		"invalid platform":               strings.Replace(base, "linux/amd64", "macos/arm64", 1),
+		"missing variant URL":            strings.Replace(base, "            url: https://example.com/${version}/linux-x64\n", "", 1),
+		"invalid max size":               strings.Replace(base, "        platforms:\n", "        max_size: 128MB\n        platforms:\n", 1),
+		"base platform without base URL": strings.Replace(base, "        platforms:\n", "        platform: linux/amd64\n        platforms:\n", 1),
 	}
 	for name, body := range tests {
 		t.Run(name, func(t *testing.T) {

@@ -125,3 +125,18 @@ func TestFetchUsesPerRequestSizeLimit(t *testing.T) {
 		t.Fatalf("Fetch = %q, %v", out.String(), err)
 	}
 }
+
+func TestFetchUsesDefaultLimitWhenBothLimitsAreUnset(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("complete response"))
+	}))
+	defer server.Close()
+	client, err := New(Options{AllowHTTP: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var out bytes.Buffer
+	if _, err := client.Fetch(context.Background(), server.URL, &out, 0); err != nil || out.String() != "complete response" {
+		t.Fatalf("Fetch = %q, %v", out.String(), err)
+	}
+}

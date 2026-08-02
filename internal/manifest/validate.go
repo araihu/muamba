@@ -69,6 +69,9 @@ func validateDownload(resourceName, downloadName string, resource *Resource, dow
 	if download.URL == "" && download.Integrity != "" {
 		return resolvedDownload{}, nil, fmt.Errorf("%s/%s integrity requires base url", resourceName, downloadName)
 	}
+	if download.URL == "" && download.Platform != "" {
+		return resolvedDownload{}, nil, fmt.Errorf("%s/%s platform requires base url", resourceName, downloadName)
+	}
 	platform, err := validateBasePlatform(resourceName, downloadName, download.Platform)
 	if err != nil {
 		return resolvedDownload{}, nil, err

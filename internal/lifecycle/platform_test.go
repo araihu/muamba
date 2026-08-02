@@ -129,7 +129,7 @@ func assertCachedSelections(t *testing.T, cacheDir string, selections []manifest
 
 func TestLockPlatformFailurePreservesManifestAndDestination(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasSuffix(r.URL.Path, "/darwin") {
+		if strings.HasSuffix(r.URL.Path, "/linux") {
 			http.Error(w, "failed", http.StatusBadGateway)
 			return
 		}
@@ -148,8 +148,12 @@ func TestLockPlatformFailurePreservesManifestAndDestination(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := engine.Lock(context.Background(), nil); err == nil {
+	report, err := engine.Lock(context.Background(), nil)
+	if err == nil {
 		t.Fatal("Lock succeeded")
+	}
+	if len(report.Changed) != 0 {
+		t.Fatalf("failed lock report = %#v", report)
 	}
 	after, _ := os.ReadFile(repo.Manifest)
 	if string(after) != string(before) {
@@ -159,12 +163,15 @@ func TestLockPlatformFailurePreservesManifestAndDestination(t *testing.T) {
 	if err != nil || string(got) != "old local" {
 		t.Fatalf("failed lock changed target to %q, %v", got, err)
 	}
+	assertNoMuambaTemporaryFiles(t, repo.Root)
 }
 
 func TestUpdateResourceRelocksAllPlatformsAndMaterializesSelectedTarget(t *testing.T) {
 	var requests atomic.Int64
+	requestPaths := make(chan string, 2)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requests.Add(1)
+		requestPaths <- r.URL.Path
 		switch {
 		case strings.HasSuffix(r.URL.Path, "/linux"):
 			_, _ = w.Write([]byte("linux new"))
@@ -192,6 +199,12 @@ func TestUpdateResourceRelocksAllPlatformsAndMaterializesSelectedTarget(t *testi
 	}
 	if requests.Load() != 2 {
 		t.Fatalf("requests = %d, want 2", requests.Load())
+	}
+	close(requestPaths)
+	for path := range requestPaths {
+		if !strings.Contains(path, "/v2.0.0/") {
+			t.Errorf("update request path = %q", path)
+		}
 	}
 	if len(report.Changed) != 2 {
 		t.Fatalf("report = %#v", report)
@@ -228,7 +241,7 @@ func TestUpdateResourceRelocksAllPlatformsAndMaterializesSelectedTarget(t *testi
 
 func TestUpdateResourcePlatformFailurePreservesOldState(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasSuffix(r.URL.Path, "/darwin") {
+		if strings.HasSuffix(r.URL.Path, "/linux") {
 			http.Error(w, "failed", http.StatusBadGateway)
 			return
 		}
@@ -247,8 +260,12 @@ func TestUpdateResourcePlatformFailurePreservesOldState(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := engine.UpdateResource(context.Background(), "tailwind", "2.0.0"); err == nil {
+	report, err := engine.UpdateResource(context.Background(), "tailwind", "2.0.0")
+	if err == nil {
 		t.Fatal("UpdateResource succeeded")
+	}
+	if len(report.Changed) != 0 {
+		t.Fatalf("failed update report = %#v", report)
 	}
 	after, _ := os.ReadFile(repo.Manifest)
 	if string(after) != string(before) {
@@ -258,6 +275,7 @@ func TestUpdateResourcePlatformFailurePreservesOldState(t *testing.T) {
 	if err != nil || string(got) != "linux old" {
 		t.Fatalf("failed update changed target to %q, %v", got, err)
 	}
+	assertNoMuambaTemporaryFiles(t, repo.Root)
 }
 
 func TestUpdateDownloadRetrustsAllPlatformsOnly(t *testing.T) {
@@ -324,5 +342,55 @@ func TestUpdateDownloadRetrustsAllPlatformsOnly(t *testing.T) {
 		if _, err := integrity.Verify(strings.NewReader(wants[selection.Variant]), digest); err != nil {
 			t.Fatalf("platform %s lock: %v", selection.Variant, err)
 		}
+	}
+}
+
+func TestUpdateDownloadStagingFailureReportsNoChanges(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/linux") {
+			_, _ = w.Write([]byte("linux replacement"))
+			return
+		}
+		_, _ = w.Write([]byte("darwin replacement"))
+	}))
+	defer server.Close()
+	repo := testrepo.New(t, platformManifest(server.URL, "1.0.0", sri(t, "linux old"), sri(t, "darwin old")))
+	before, _ := os.ReadFile(repo.Manifest)
+	engine, err := New(repo.Manifest, Options{
+		Strict:    true,
+		CacheDir:  filepath.Join(t.TempDir(), "cache"),
+		Target:    manifest.Target{GOOS: "linux", GOARCH: "amd64"},
+		Transport: transport.Options{AllowHTTP: true},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	repo.Write(t, ".tools", []byte("blocks destination directory"))
+	report, err := engine.UpdateDownload(context.Background(), "tailwind", "cli")
+	if err == nil {
+		t.Fatal("UpdateDownload succeeded")
+	}
+	if len(report.Changed) != 0 {
+		t.Fatalf("failed update report = %#v", report)
+	}
+	after, _ := os.ReadFile(repo.Manifest)
+	if string(after) != string(before) {
+		t.Fatal("failed update changed manifest")
+	}
+	assertNoMuambaTemporaryFiles(t, repo.Root)
+}
+
+func assertNoMuambaTemporaryFiles(t *testing.T, root string) {
+	t.Helper()
+	if err := filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !entry.IsDir() && strings.HasPrefix(entry.Name(), ".muamba-") {
+			t.Errorf("temporary file remains: %s", path)
+		}
+		return nil
+	}); err != nil {
+		t.Fatal(err)
 	}
 }
