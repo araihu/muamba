@@ -14,12 +14,13 @@ func (e *Engine) UpdateResource(ctx context.Context, resource, version string) (
 	if version == "" {
 		return Report{}, fmt.Errorf("version must not be empty")
 	}
-	oldSelections, err := e.selections([]string{resource})
-	if err != nil {
-		return Report{}, err
-	}
-	report := Report{Warnings: append([]manifest.Warning(nil), e.warnings...)}
-	err = e.withMutationLock(ctx, func() error {
+	report := Report{}
+	err := e.withMutationLock(ctx, func() error {
+		report.Warnings = append([]manifest.Warning(nil), e.warnings...)
+		oldSelections, selectErr := e.selections([]string{resource})
+		if selectErr != nil {
+			return selectErr
+		}
 		for _, selection := range oldSelections {
 			if err := e.verifyFile(selection); err != nil {
 				return fmt.Errorf("preflight old %s: %w", selectionLabel(selection), err)
@@ -101,11 +102,9 @@ func (e *Engine) UpdateResource(ctx context.Context, resource, version string) (
 
 func (e *Engine) UpdateDownload(ctx context.Context, resource, download string) (Report, error) {
 	selector := resource + "/" + download
-	if _, err := e.selections([]string{selector}); err != nil {
-		return Report{}, err
-	}
-	report := Report{Warnings: append([]manifest.Warning(nil), e.warnings...)}
+	report := Report{}
 	err := e.withMutationLock(ctx, func() error {
+		report.Warnings = append([]manifest.Warning(nil), e.warnings...)
 		candidate, cloneErr := e.document.Clone()
 		if cloneErr != nil {
 			return cloneErr

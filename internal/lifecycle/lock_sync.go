@@ -18,12 +18,13 @@ type stagedDownload struct {
 }
 
 func (e *Engine) Lock(ctx context.Context, selectors []string) (Report, error) {
-	selections, err := e.allSelections(selectors)
-	if err != nil {
-		return Report{}, err
-	}
-	report := Report{Warnings: append([]manifest.Warning(nil), e.warnings...)}
-	err = e.withMutationLock(ctx, func() error {
+	report := Report{}
+	err := e.withMutationLock(ctx, func() error {
+		report.Warnings = append([]manifest.Warning(nil), e.warnings...)
+		selections, selectErr := e.allSelections(selectors)
+		if selectErr != nil {
+			return selectErr
+		}
 		client, clientErr := transport.New(e.options.Transport)
 		if clientErr != nil {
 			return clientErr
@@ -91,12 +92,13 @@ func (e *Engine) Lock(ctx context.Context, selectors []string) (Report, error) {
 }
 
 func (e *Engine) Sync(ctx context.Context, selectors []string) (Report, error) {
-	selections, err := e.selections(selectors)
-	if err != nil {
-		return Report{}, err
-	}
-	report := Report{Warnings: append([]manifest.Warning(nil), e.warnings...)}
-	err = e.withMutationLock(ctx, func() error {
+	report := Report{}
+	err := e.withMutationLock(ctx, func() error {
+		report.Warnings = append([]manifest.Warning(nil), e.warnings...)
+		selections, selectErr := e.selections(selectors)
+		if selectErr != nil {
+			return selectErr
+		}
 		client, clientErr := transport.New(e.options.Transport)
 		if clientErr != nil {
 			return clientErr

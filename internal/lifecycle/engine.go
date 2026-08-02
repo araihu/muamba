@@ -120,6 +120,26 @@ func (e *Engine) target(selection manifest.Selection) (string, error) {
 	return safepath.Resolve(e.document.Dir, selection.Path)
 }
 
+func (e *Engine) reloadDocument() error {
+	document, err := manifest.Load(e.document.Path)
+	if err != nil {
+		return err
+	}
+	warnings, err := document.Validate(e.options.Strict)
+	if err != nil {
+		return err
+	}
+	selections, err := document.SelectTarget(nil, e.targetOS)
+	if err != nil {
+		return err
+	}
+	if err := safepath.ValidateUnique(document.Dir, selections); err != nil {
+		return err
+	}
+	e.document, e.warnings = document, warnings
+	return nil
+}
+
 func (e *Engine) withMutationLock(ctx context.Context, operation func() error) error {
 	digest := sha256.Sum256([]byte(e.document.Path))
 	lockDir := filepath.Join(os.TempDir(), "muamba-locks")
@@ -137,6 +157,9 @@ func (e *Engine) withMutationLock(ctx context.Context, operation func() error) e
 		return fmt.Errorf("lock manifest %s: timed out", e.document.Path)
 	}
 	defer func() { _ = lock.Unlock() }()
+	if err := e.reloadDocument(); err != nil {
+		return err
+	}
 	return operation()
 }
 
