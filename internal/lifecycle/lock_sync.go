@@ -130,6 +130,7 @@ func (e *Engine) stage(ctx context.Context, client *transport.Client, selection 
 		_ = temporary.Close()
 		if !ok {
 			_ = os.Remove(temporaryPath)
+			removeEmptyParents(filepath.Dir(target), e.document.Dir)
 		}
 	}()
 	if _, err := client.Fetch(ctx, selection.URL, temporary); err != nil {

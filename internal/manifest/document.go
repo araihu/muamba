@@ -61,24 +61,36 @@ func Load(path string) (*Document, error) {
 	if err != nil {
 		return nil, fmt.Errorf("read manifest %s: %w", abs, err)
 	}
+	return loadBytes(abs, b)
+}
+
+func loadBytes(path string, b []byte) (*Document, error) {
 	var typed Manifest
 	decoder := yaml.NewDecoder(bytes.NewReader(b))
 	decoder.KnownFields(true)
 	if err := decoder.Decode(&typed); err != nil {
-		return nil, fmt.Errorf("parse manifest %s: %w", abs, err)
+		return nil, fmt.Errorf("parse manifest %s: %w", path, err)
 	}
 	var extra any
 	if err := decoder.Decode(&extra); !errors.Is(err, io.EOF) {
 		if err == nil {
-			return nil, fmt.Errorf("parse manifest %s: multiple YAML documents", abs)
+			return nil, fmt.Errorf("parse manifest %s: multiple YAML documents", path)
 		}
-		return nil, fmt.Errorf("parse manifest %s: %w", abs, err)
+		return nil, fmt.Errorf("parse manifest %s: %w", path, err)
 	}
 	var root yaml.Node
 	if err := yaml.Unmarshal(b, &root); err != nil {
-		return nil, fmt.Errorf("parse manifest nodes %s: %w", abs, err)
+		return nil, fmt.Errorf("parse manifest nodes %s: %w", path, err)
 	}
-	return &Document{Path: abs, Dir: filepath.Dir(abs), Manifest: typed, root: root}, nil
+	return &Document{Path: path, Dir: filepath.Dir(path), Manifest: typed, root: root}, nil
+}
+
+func (d *Document) Clone() (*Document, error) {
+	b, err := d.Marshal()
+	if err != nil {
+		return nil, err
+	}
+	return loadBytes(d.Path, b)
 }
 
 func (d *Document) Marshal() ([]byte, error) {
