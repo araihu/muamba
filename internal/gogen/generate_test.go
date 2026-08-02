@@ -29,12 +29,17 @@ resources:
         url: https://cdn.example/web-lib@${version}/core.js
         path: assets/vendor/core.js
         integrity: `+digest+`
+      package-copy:
+        url: https://cdn.example/web-lib@${version}/copy.js
+        path: assets/vendor/copy.js
+        integrity: `+digest+`
       site-copy:
         url: https://cdn.example/web-lib@${version}/site.js
         path: site/static/site.js
         integrity: `+digest+`
 `)
 	repo.Write(t, "assets/vendor/core.js", []byte("script"))
+	repo.Write(t, "assets/vendor/copy.js", []byte("script"))
 	repo.Write(t, "site/static/site.js", []byte("script"))
 	repo.Write(t, "assets/doc.go", []byte("package assets\n"))
 	doc, err := manifest.Load(repo.Manifest)
@@ -56,7 +61,7 @@ func TestGenerateSelectsPackageDownloadsAndIsDeterministic(t *testing.T) {
 		t.Fatal(err)
 	}
 	text := string(first)
-	for _, want := range []string{"package assets", "//go:embed vendor/core.js", "muambaResourceWebLib", "muambaDownloadWebLibCoreJs", "func MuambaOpen"} {
+	for _, want := range []string{"package assets", "//go:embed vendor/copy.js vendor/core.js", "muambaResourceWebLib", "muambaDownloadWebLibCoreJs", "func MuambaOpen"} {
 		if !strings.Contains(text, want) {
 			t.Errorf("generated source missing %q:\n%s", want, text)
 		}
