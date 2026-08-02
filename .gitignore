@@ -1,1 +1,5 @@
 .worktrees/
+bin/
+.coverage/
+coverage.out
+/muamba
