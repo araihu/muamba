@@ -61,6 +61,33 @@ func TestStoreSeedsVerifiesAndMaterializes(t *testing.T) {
 	}
 }
 
+func TestStoreMaterializeStripsSpecialModeBits(t *testing.T) {
+	store, err := New(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	source := filepath.Join(t.TempDir(), "source")
+	if err := os.WriteFile(source, []byte("payload"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	digest := testDigest(t, "payload")
+	if err := store.Seed(source, digest); err != nil {
+		t.Fatal(err)
+	}
+	destination := filepath.Join(t.TempDir(), "tool")
+	mode := os.FileMode(0o755) | os.ModeSetuid | os.ModeSetgid | os.ModeSticky
+	if err := store.Materialize(digest, destination, mode); err != nil {
+		t.Fatal(err)
+	}
+	info, err := os.Stat(destination)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if special := info.Mode() & (os.ModeSetuid | os.ModeSetgid | os.ModeSticky); special != 0 {
+		t.Fatalf("materialized special mode bits = %v", special)
+	}
+}
+
 func TestStoreRepairsCorruptBlobFromVerifiedSource(t *testing.T) {
 	store, err := New(t.TempDir())
 	if err != nil {
@@ -171,6 +198,7 @@ func TestStoreRepairNeverMakesBlobPathDisappear(t *testing.T) {
 		}
 		done := make(chan error, 1)
 		go func() { done <- store.Seed(source, digest) }()
+	repairLoop:
 		for {
 			select {
 			case err := <-done:
@@ -180,14 +208,13 @@ func TestStoreRepairNeverMakesBlobPathDisappear(t *testing.T) {
 				if err := store.Verify(digest); err != nil {
 					t.Fatal(err)
 				}
-				goto repaired
+				break repairLoop
 			default:
 				if err := store.Verify(digest); errors.Is(err, os.ErrNotExist) {
 					t.Fatalf("cache path disappeared during repair: %v", err)
 				}
 			}
 		}
-	repaired:
 	}
 }
 

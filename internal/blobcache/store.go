@@ -131,7 +131,7 @@ func copyTemporary(source, directory string, mode os.FileMode) (string, error) {
 	if _, err := io.Copy(output, input); err != nil {
 		return "", err
 	}
-	if err := output.Chmod(mode); err != nil {
+	if err := output.Chmod(mode.Perm()); err != nil {
 		return "", err
 	}
 	if err := output.Sync(); err != nil {

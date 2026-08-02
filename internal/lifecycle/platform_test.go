@@ -128,6 +128,8 @@ func assertCachedSelections(t *testing.T, cacheDir string, selections []manifest
 }
 
 func TestLockPlatformFailurePreservesManifestAndDestination(t *testing.T) {
+	downloadTemp := t.TempDir()
+	t.Setenv("TMPDIR", downloadTemp)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasSuffix(r.URL.Path, "/linux") {
 			http.Error(w, "failed", http.StatusBadGateway)
@@ -163,7 +165,7 @@ func TestLockPlatformFailurePreservesManifestAndDestination(t *testing.T) {
 	if err != nil || string(got) != "old local" {
 		t.Fatalf("failed lock changed target to %q, %v", got, err)
 	}
-	assertNoMuambaTemporaryFiles(t, repo.Root)
+	assertNoMuambaTemporaryFiles(t, repo.Root, downloadTemp)
 }
 
 func TestUpdateResourceRelocksAllPlatformsAndMaterializesSelectedTarget(t *testing.T) {
@@ -243,6 +245,8 @@ func TestUpdateResourceRelocksAllPlatformsAndMaterializesSelectedTarget(t *testi
 }
 
 func TestUpdateResourcePlatformFailurePreservesOldState(t *testing.T) {
+	downloadTemp := t.TempDir()
+	t.Setenv("TMPDIR", downloadTemp)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasSuffix(r.URL.Path, "/linux") {
 			http.Error(w, "failed", http.StatusBadGateway)
@@ -278,7 +282,7 @@ func TestUpdateResourcePlatformFailurePreservesOldState(t *testing.T) {
 	if err != nil || string(got) != "linux old" {
 		t.Fatalf("failed update changed target to %q, %v", got, err)
 	}
-	assertNoMuambaTemporaryFiles(t, repo.Root)
+	assertNoMuambaTemporaryFiles(t, repo.Root, downloadTemp)
 }
 
 func TestUpdateDownloadRetrustsAllPlatformsOnly(t *testing.T) {
@@ -349,6 +353,8 @@ func TestUpdateDownloadRetrustsAllPlatformsOnly(t *testing.T) {
 }
 
 func TestUpdateDownloadStagingFailureReportsNoChanges(t *testing.T) {
+	downloadTemp := t.TempDir()
+	t.Setenv("TMPDIR", downloadTemp)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasSuffix(r.URL.Path, "/linux") {
 			_, _ = w.Write([]byte("linux replacement"))
@@ -380,20 +386,55 @@ func TestUpdateDownloadStagingFailureReportsNoChanges(t *testing.T) {
 	if string(after) != string(before) {
 		t.Fatal("failed update changed manifest")
 	}
-	assertNoMuambaTemporaryFiles(t, repo.Root)
+	assertNoMuambaTemporaryFiles(t, repo.Root, downloadTemp)
 }
 
-func assertNoMuambaTemporaryFiles(t *testing.T, root string) {
+func TestCommitStagedRollsBackEarlierDestination(t *testing.T) {
+	root := t.TempDir()
+	manifestPath := filepath.Join(root, "muamba.yaml")
+	firstTarget := filepath.Join(root, "first")
+	firstTemporary := filepath.Join(root, ".muamba-stage-first")
+	secondTemporary := filepath.Join(root, ".muamba-stage-second")
+	for path, contents := range map[string]string{
+		manifestPath:    "old manifest",
+		firstTarget:     "old first",
+		firstTemporary:  "new first",
+		secondTemporary: "new second",
+	} {
+		if err := os.WriteFile(path, []byte(contents), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	items := []stagedDownload{
+		{target: firstTarget, temporary: firstTemporary},
+		{target: filepath.Join(root, "missing", "second"), temporary: secondTemporary},
+	}
+	if err := commitStaged(items, manifestPath, []byte("new manifest")); err == nil {
+		t.Fatal("commitStaged succeeded")
+	}
+	cleanupStaged(items, root)
+	for path, want := range map[string]string{firstTarget: "old first", manifestPath: "old manifest"} {
+		got, err := os.ReadFile(path)
+		if err != nil || string(got) != want {
+			t.Fatalf("%s = %q, %v; want %q", path, got, err, want)
+		}
+	}
+	assertNoMuambaTemporaryFiles(t, root)
+}
+
+func assertNoMuambaTemporaryFiles(t *testing.T, roots ...string) {
 	t.Helper()
-	if err := filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
-		if err != nil {
-			return err
+	for _, root := range roots {
+		if err := filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			if !entry.IsDir() && strings.HasPrefix(entry.Name(), ".muamba-") {
+				t.Errorf("temporary file remains: %s", path)
+			}
+			return nil
+		}); err != nil {
+			t.Fatal(err)
 		}
-		if !entry.IsDir() && strings.HasPrefix(entry.Name(), ".muamba-") {
-			t.Errorf("temporary file remains: %s", path)
-		}
-		return nil
-	}); err != nil {
-		t.Fatal(err)
 	}
 }
