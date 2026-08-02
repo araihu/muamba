@@ -32,7 +32,7 @@ func (e *Engine) UpdateResource(ctx context.Context, resource, version string) (
 		if err := candidate.SetVersion(resource, version); err != nil {
 			return err
 		}
-		warnings, validateErr := candidate.Validate(e.options.Strict)
+		_, validateErr := candidate.Validate(e.options.Strict)
 		if validateErr != nil {
 			return validateErr
 		}
@@ -54,7 +54,7 @@ func (e *Engine) UpdateResource(ctx context.Context, resource, version string) (
 			}
 			report.Changed = append(report.Changed, selectionLabel(selection))
 		}
-		warnings, validateErr = candidate.Validate(e.options.Strict)
+		warnings, validateErr := candidate.Validate(e.options.Strict)
 		if validateErr != nil {
 			return validateErr
 		}
@@ -108,7 +108,7 @@ func (e *Engine) UpdateDownload(ctx context.Context, resource, download string) 
 		if cloneErr != nil {
 			return cloneErr
 		}
-		warnings, validateErr := candidate.Validate(e.options.Strict)
+		_, validateErr := candidate.Validate(e.options.Strict)
 		if validateErr != nil {
 			return validateErr
 		}
@@ -130,7 +130,7 @@ func (e *Engine) UpdateDownload(ctx context.Context, resource, download string) 
 			}
 			report.Changed = append(report.Changed, selectionLabel(selection))
 		}
-		warnings, validateErr = candidate.Validate(e.options.Strict)
+		warnings, validateErr := candidate.Validate(e.options.Strict)
 		if validateErr != nil {
 			return validateErr
 		}

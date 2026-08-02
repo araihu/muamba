@@ -103,11 +103,20 @@ func TestLockAllPlatformsCachesBothAndMaterializesSelectedTarget(t *testing.T) {
 	if len(all) != 2 || all[0].Integrity == "" || all[1].Integrity == "" {
 		t.Fatalf("locked selections = %#v", all)
 	}
+	assertCachedSelections(t, cacheDir, all)
+	manifestBytes, _ := os.ReadFile(repo.Manifest)
+	if strings.Count(string(manifestBytes), "integrity: sha384-") != 2 || !strings.Contains(string(manifestBytes), "# shared version") {
+		t.Fatalf("manifest =\n%s", manifestBytes)
+	}
+}
+
+func assertCachedSelections(t *testing.T, cacheDir string, selections []manifest.Selection) {
+	t.Helper()
 	store, err := blobcache.New(cacheDir)
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, selection := range all {
+	for _, selection := range selections {
 		digest, err := integrity.Parse(selection.Integrity)
 		if err != nil {
 			t.Fatal(err)
@@ -115,10 +124,6 @@ func TestLockAllPlatformsCachesBothAndMaterializesSelectedTarget(t *testing.T) {
 		if err := store.Verify(digest); err != nil {
 			t.Fatalf("cache %s: %v", selection.Variant, err)
 		}
-	}
-	manifestBytes, _ := os.ReadFile(repo.Manifest)
-	if strings.Count(string(manifestBytes), "integrity: sha384-") != 2 || !strings.Contains(string(manifestBytes), "# shared version") {
-		t.Fatalf("manifest =\n%s", manifestBytes)
 	}
 }
 
