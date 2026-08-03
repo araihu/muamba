@@ -14,6 +14,8 @@ github.com/araihu/goshtoso-app-shells v0.1.2-0.20260802235521-feb42f837d9d h1:MQ
 github.com/araihu/goshtoso-app-shells v0.1.2-0.20260802235521-feb42f837d9d/go.mod h1:Nw6QAzP/ufjO4roQqTW2MePEG7annlRmlt7FQHA3ka0=
 github.com/araihu/goshtoso-app-shells v0.1.2-0.20260803001558-cd07acb2ea57 h1:Y90aaYGIfLc5ELGomX1/kBghDbxYxvQCryNbb2Ctq1M=
 github.com/araihu/goshtoso-app-shells v0.1.2-0.20260803001558-cd07acb2ea57/go.mod h1:Nw6QAzP/ufjO4roQqTW2MePEG7annlRmlt7FQHA3ka0=
+github.com/araihu/goshtoso-app-shells v0.1.2 h1:K/QQ0bno1Gf+hRba7qRUooWTSvmVBFbvu0xIHUbEtWM=
+github.com/araihu/goshtoso-app-shells v0.1.2/go.mod h1:Nw6QAzP/ufjO4roQqTW2MePEG7annlRmlt7FQHA3ka0=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1VwoXQT9A3Wy9MM3WgvqSxFWenqJduM=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/dlclark/regexp2 v1.12.0 h1:0j4c5qQmnC6XOWNjP3PIXURXN2gWx76rd3KvgdPkCz8=
