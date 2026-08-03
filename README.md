@@ -8,10 +8,12 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT" /></a>
 </p>
 
-Muamba vendors remote files using trust on first use (TOFU). You review each source
-URL, then `lock` records its SHA-384 digest in `muamba.yaml`. `verify` checks
-committed files offline. `sync` restores missing or corrupt files only when
-available bytes match the lock.
+Muamba vendors remote files using trust on first use (TOFU). Running `lock`
+accepts the first response returned by each reviewed URL and records its
+SHA-384 digest in `muamba.yaml`. The digest detects later changes; it does not
+authenticate the publisher or content. `verify` checks materialized files
+offline. `sync` restores missing or corrupt files only when available bytes
+match the lock.
 
 Muamba treats every download as opaque bytes. It works with JavaScript, CSS,
 licenses, notices, source maps, executables, and other release files without
@@ -32,8 +34,8 @@ Use `go run ./cmd/muamba` when working in this repository.
 
 ## Manifest
 
-Each resource groups related downloads under one version. Every download names its
-source URL and destination path:
+Each resource groups related downloads under one version. Every download names
+a destination path and either a base URL or platform-specific URLs:
 
 ```yaml
 schema: 1
@@ -126,9 +128,10 @@ first trust:
 go tool muamba lock --strict
 ```
 
-`lock` downloads every unlocked base URL and platform variant, caches verified
-bytes, and adds SHA-384 SRI locks to the same YAML atomically. It writes only
-the current runtime target to each shared destination. Use
+`lock` downloads every unlocked base URL and platform variant, caches the
+first fetched bytes, and adds their SHA-384 SRI locks to the same YAML
+atomically. It writes only the selected target to each shared
+destination. Use
 `--target GOOS/GOARCH` to choose another target. Commit the manifest and tracked
 downloads together.
 

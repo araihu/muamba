@@ -7,7 +7,7 @@ const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 test("landing explains Muamba and links to documentation", async () => {
   const html = await read("../app/_generated/index.html");
 
-  assert.match(html, /<h1[^>]*>Review remote files once\. Verify every copy\.<\/h1>/);
+  assert.match(html, /<h1[^>]*>Choose each source URL\. Lock the first bytes fetched\.<\/h1>/);
   assert.match(html, /href="\/docs"/);
   assert.match(html, /go get -tool github\.com\/araihu\/muamba\/cmd\/muamba@v0\.0\.2/);
   assert.doesNotMatch(html, /go get -tool[^<\n]*@latest/);
@@ -21,14 +21,28 @@ test("public copy states the trust contract directly", async () => {
     read("../../README.md"),
   ]);
 
-  assert.match(landing, /Review remote files once\. Verify every copy\./);
-  assert.match(landing, /You review each URL, record SHA-384 locks, and commit the verified files\./);
-  assert.match(docs, /Review a remote file, lock its digest, and verify it offline\./);
-  assert.match(readme, /Muamba vendors remote files using trust on first use \(TOFU\)\./);
+  assert.match(landing, /Choose each source URL\. Lock the first bytes fetched\./);
+  assert.match(landing, /Running lock accepts the first response and records its SHA-384 digest\./);
+  assert.match(docs, /The digest detects later changes; it does not authenticate the publisher or content\./);
+  assert.match(readme, /Running `lock`\s+accepts the first response returned by each reviewed URL and records its/);
   assert.match(readme, /cmd\/muamba@v0\.0\.2/);
 
-  const retiredCopy = /A small workflow with a hard boundary|Remote convenience, local certainty|Muamba never decides|It is aimed at|—/;
+  const retiredCopy = /Review remote files once|You choose the sources and bytes to trust|verified (?:files|bytes)|A small workflow with a hard boundary|Remote convenience, local certainty|Muamba never decides|It is aimed at|—/i;
   assert.doesNotMatch(`${landing}\n${docs}\n${readme}`, retiredCopy);
+});
+
+test("public copy distinguishes materialized verification from cache verification and sync order", async () => {
+  const [landing, docs] = await Promise.all([
+    read("../app/_generated/index.html"),
+    read("../app/_generated/docs/index.html"),
+  ]);
+
+  for (const html of [landing, docs]) {
+    assert.match(html, /verify --all-platforms/);
+    assert.match(html, /Sync checks the destination first, then the cache, then the network\./);
+  }
+  assert.match(docs, /Default verify checks materialized files/);
+  assert.doesNotMatch(`${landing}\n${docs}`, /Verification reads committed files and integrity cache blobs|Sync uses verified cache first/);
 });
 
 test("landing uses Arai Hu color modes and Goshtoso controls", async () => {
@@ -58,7 +72,7 @@ test("landing keeps navigation links and install command inside Goshtoso compone
   const primaryCTA = html.match(/<a[^>]*data-primary-cta="true"[^>]*>/)?.[0] ?? "";
   const finalCTA = html.match(/<a[^>]*data-final-cta="true"[^>]*>/)?.[0] ?? "";
 
-  assert.match(html, /Language-agnostic file vendoring/);
+  assert.match(html, /Language-agnostic TOFU vendoring/);
   assert.doesNotMatch(html, /TOFU vendoring for Go/);
   assert.match(primaryCTA, /text-primary/);
   assert.doesNotMatch(primaryCTA, /bg-primary/);

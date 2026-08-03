@@ -12,6 +12,7 @@ import (
 	"github.com/araihu/goshtoso-app-shells/landingshell"
 	"github.com/araihu/goshtoso/components/badge"
 	"github.com/araihu/goshtoso/components/codeblock"
+	"github.com/araihu/goshtoso/components/inlinecode"
 	"github.com/araihu/goshtoso/components/link"
 	"github.com/araihu/goshtoso/components/panel"
 )
@@ -45,8 +46,8 @@ func LandingPage() templ.Component {
 		ctx = templ.ClearChildren(ctx)
 		templ_7745c5c3_Err = landingshell.Layout(landingShellConfig(), landingshell.Page{
 			Title:          "Home",
-			DocumentTitle:  "Muamba · Review remote files once",
-			Description:    "Review remote files once, record SHA-384 locks, and verify or restore the same bytes later.",
+			DocumentTitle:  "Muamba · Lock first-use bytes",
+			Description:    "Review source URLs, accept the first bytes fetched, and reject later changes with SHA-384 locks.",
 			CanonicalURL:   "https://muamba.araihu.com/",
 			SocialImageURL: "https://muamba.araihu.com/og.png",
 			Head:           landingHead(),
@@ -66,7 +67,7 @@ func landingShellConfig() landingshell.Config {
 			Name:       "Muamba",
 			HomeURL:    "/",
 			Logo:       landingBrandMark(),
-			Tagline:    "verified remote files",
+			Tagline:    "first-use file locks",
 			FaviconURL: "/brand/muamba-mark.svg",
 			Badge: &landingshell.BrandBadge{
 				Label:     muambaReleaseVersion,
@@ -84,7 +85,7 @@ func landingShellConfig() landingshell.Config {
 		RepositoryURL: "https://github.com/araihu/muamba",
 		Footer: landingshell.Footer{
 			Logo:         landingBrandMark(),
-			Meta:         []string{"verified remote files"},
+			Meta:         []string{"first-use file locks"},
 			Organization: &landingshell.Organization{Name: "Arai Hû", URL: "https://araihu.com"},
 			Links: []landingshell.Link{
 				{Label: "Docs", Href: "/docs"},
@@ -177,11 +178,11 @@ func landingHero() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = badge.Badge(badge.Config{Label: "Language-agnostic file vendoring", Tone: badge.ToneSuccess, Appearance: badge.AppearanceSoft, Indicator: true}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = badge.Badge(badge.Config{Label: "Language-agnostic TOFU vendoring", Tone: badge.ToneSuccess, Appearance: badge.AppearanceSoft, Indicator: true}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<h1>Review remote files once. Verify every copy.</h1><p class=\"muamba-lede\">You review each URL, record SHA-384 locks, and commit the verified files. Builds stay offline; later downloads must match those locks.</p><div class=\"muamba-actions\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<h1>Choose each source URL. Lock the first bytes fetched.</h1><p class=\"muamba-lede\">Running lock accepts the first response and records its SHA-384 digest. Commit those files for offline builds; every later copy must match.</p><div class=\"muamba-actions\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -280,7 +281,15 @@ func landingContent() templ.Component {
 			templ_7745c5c3_Var7 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<section class=\"muamba-section\" data-muamba-workflow><div class=\"landing-shell__container\"><div class=\"muamba-section-heading\"><p class=\"muamba-eyebrow\">Review once, enforce every time</p><h2>Your manifest is the trust record.</h2><p>You choose the sources and bytes to trust. Muamba records their digests, rejects mismatches, and updates grouped files atomically.</p></div><ol class=\"muamba-steps\"><li><span>01</span><h3>Lock</h3><p>Review each URL. Muamba downloads every declared variant and writes SHA-384 locks atomically.</p></li><li><span>02</span><h3>Verify</h3><p>Check committed files and cached blobs against the manifest without network access.</p></li><li><span>03</span><h3>Sync</h3><p>Restore missing or corrupt files only when cached or remote bytes match the lock.</p></li></ol></div></section><section class=\"muamba-section muamba-section-muted\"><div class=\"landing-shell__container muamba-proof-grid\"><div class=\"muamba-section-heading\"><p class=\"muamba-eyebrow\">Built for reproducible inputs</p><h2>Commit the bytes your build depends on.</h2></div><div class=\"muamba-proof-list\"><article><h3>Any remote file</h3><p>Vendor JavaScript, CSS, licenses, source maps, executables, or other release files. Muamba only needs a URL, path, and integrity lock.</p></article><article><h3>Atomic updates</h3><p>Stage every file in a grouped dependency before the manifest or visible destinations change.</p></article><article><h3>Go embed registries</h3><p>Generate deterministic, package-scoped registries with normalized digests for cache-busting URLs.</p></article><article><h3>Platform-aware tools</h3><p>Pin exact GOOS/GOARCH executables with one destination, explicit size limits, file modes, and per-target locks.</p></article></div></div></section><section class=\"muamba-section\"><div class=\"landing-shell__container muamba-final\"><div><p class=\"muamba-eyebrow\">Start with one remote file</p><h2>Review it, lock it, build offline.</h2></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<section class=\"muamba-section\" data-muamba-workflow><div class=\"landing-shell__container\"><div class=\"muamba-section-heading\"><p class=\"muamba-eyebrow\">First response, fixed identity</p><h2>The manifest identifies first-use bytes.</h2><p>The digest detects later changes. It does not authenticate the publisher or content. You remain responsible for choosing trustworthy source URLs.</p></div><ol class=\"muamba-steps\"><li><span>01</span><h3>Lock</h3><p>Review each URL, then run lock. It accepts the first response and writes its SHA-384 digest atomically.</p></li><li><span>02</span><h3>Verify</h3><p><span>Default verify checks materialized files offline. Run </span>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = inlinecode.InlineCode("verify --all-platforms").Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<span>&#32;to check every locked cache variant.</span></p></li><li><span>03</span><h3>Sync</h3><p>Sync checks the destination first, then the cache, then the network. Cached or remote bytes must match the lock before the destination changes.</p></li></ol></div></section><section class=\"muamba-section muamba-section-muted\"><div class=\"landing-shell__container muamba-proof-grid\"><div class=\"muamba-section-heading\"><p class=\"muamba-eyebrow\">Built for reproducible inputs</p><h2>Commit the bytes your build depends on.</h2></div><div class=\"muamba-proof-list\"><article><h3>Any remote file</h3><p>Vendor JavaScript, CSS, licenses, source maps, executables, or other release files. Muamba only needs source URLs, destination paths, and integrity locks.</p></article><article><h3>Atomic updates</h3><p>Stage every file in a grouped dependency before the manifest or visible destinations change.</p></article><article><h3>Go embed registries</h3><p>Generate deterministic, package-scoped registries with normalized digests for cache-busting URLs.</p></article><article><h3>Platform-aware tools</h3><p>Pin exact GOOS/GOARCH executables with one destination, explicit size limits, file modes, and per-target locks.</p></article></div></div></section><section class=\"muamba-section\"><div class=\"landing-shell__container muamba-final\"><div><p class=\"muamba-eyebrow\">Start with one remote file</p><h2>Choose the URL. Lock the response. Build offline.</h2></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -296,7 +305,7 @@ func landingContent() templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "Write your first manifest <span aria-hidden=\"true\">→</span>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "Write your first manifest <span aria-hidden=\"true\">→</span>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -306,7 +315,7 @@ func landingContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div></section>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</div></section>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -335,7 +344,7 @@ func landingManifestHeader() templ.Component {
 			templ_7745c5c3_Var9 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<div class=\"muamba-panel-heading\"><span>muamba.yaml</span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<div class=\"muamba-panel-heading\"><span>muamba.yaml</span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -343,7 +352,7 @@ func landingManifestHeader() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -410,7 +419,7 @@ func landingManifestFooter() templ.Component {
 			templ_7745c5c3_Var11 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<p>One manifest. One set of verified bytes.</p>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<p>One manifest. One set of locked bytes.</p>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
