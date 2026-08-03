@@ -15,11 +15,9 @@
 - Goshtoso v0.1.3 had no semantic inline-code primitive for prose. Muamba
   required `components/inlinecode`; the new public component now owns theme
   tokens, escaping, stable identity, and consumer root hooks.
-- `codeblock.CodeBlock` has no compact density option in the pinned API. Keep
-  the component's semantics and copy behavior, then scope density and rhythm
-  through a consumer wrapper until Goshtoso exposes that option.
-- Goshtoso's pinned standalone dark-mode store still touches `localStorage`
-  when its consent adapter reports storage unavailable. Muamba keeps the
-  Goshtoso toggle component but owns an exception-safe Alpine store;
-  unavailable storage falls back to system preference and a session-only
-  toggle instead of breaking color-mode interaction.
+- `codeblock.DensityCompact` now owns tighter header and body spacing for short
+  install and command snippets. Keep manifest and multi-line examples at the
+  default density; do not rebuild code blocks with consumer markup.
+- `goshtoso-app-shells/landingshell` v0.1.2 owns the icon-mode control and its
+  exception-safe Alpine store. Unavailable storage falls back to system
+  preference and a session-only toggle; Muamba adds no parallel theme runtime.

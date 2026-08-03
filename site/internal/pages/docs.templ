@@ -71,7 +71,7 @@ templ docsContent() {
 			<h2 id="requirements" data-toc-heading>Requirements and installation</h2>
 			<p>Muamba requires Go 1.26.5 or newer. Pin the command in your consumer module as a Go tool:</p>
 			@docsCodeBlock(codeblock.Config{Language: "bash", Label: "Install", Code: muambaInstallCommand() + `
-go tool muamba help`})
+go tool muamba help`, Density: codeblock.DensityCompact})
 		</section>
 		<section aria-labelledby="manifest">
 			<h2 id="manifest" data-toc-heading>Write a manifest</h2>
@@ -100,13 +100,13 @@ resources:
 			<h2 id="workflow" data-toc-heading>Establish and enforce trust</h2>
 			@alert.Alert(alert.Config{Title: "Trust is explicit", Description: "Review every source URL before lock. Muamba will verify later bytes against that decision, but it cannot decide whether a source is trustworthy for you.", Tone: alert.ToneWarning, RootClass: "muamba-trust-alert"})
 			<h3 id="lock">1. Lock reviewed sources</h3>
-			@docsCodeBlock(codeblock.Config{Language: "bash", Label: "First trust", Code: `go tool muamba lock --strict`})
+			@docsCodeBlock(codeblock.Config{Language: "bash", Label: "First trust", Code: `go tool muamba lock --strict`, Density: codeblock.DensityCompact})
 			<p>Lock downloads every unlocked URL and platform variant, stores verified bytes, and writes SHA-384 SRI values atomically.</p>
 			<h3 id="verify">2. Verify offline</h3>
-			@docsCodeBlock(codeblock.Config{Language: "bash", Label: "Read-only verification", Code: `go tool muamba verify --strict`})
+			@docsCodeBlock(codeblock.Config{Language: "bash", Label: "Read-only verification", Code: `go tool muamba verify --strict`, Density: codeblock.DensityCompact})
 			<p>Verification reads committed files and integrity cache blobs without network access.</p>
 			<h3 id="sync">3. Restore known bytes</h3>
-			@docsCodeBlock(codeblock.Config{Language: "bash", Label: "Materialize", Code: `go tool muamba sync --strict`})
+			@docsCodeBlock(codeblock.Config{Language: "bash", Label: "Materialize", Code: `go tool muamba sync --strict`, Density: codeblock.DensityCompact})
 			<p>Sync repairs missing or corrupt destinations only when cached or remote bytes match the lock.</p>
 		</section>
 		<section aria-labelledby="cache">

@@ -49,8 +49,8 @@ test("landing keeps navigation links and install command inside Goshtoso compone
   assert.doesNotMatch(finalCTA, /bg-primary/);
   assert.match(html, /class="muamba-install-code" aria-label="Install Muamba"/);
   assert.match(html, /aria-label="Copy Install Muamba code"/);
+  assert.match(html, /class="muamba-install-code"[^>]*>.*?data-code-block.*?data-density="compact"/s);
   assert.doesNotMatch(html, /aria-label="Copy (Lock|Verify|Sync) code"/);
-  assert.doesNotMatch(html, /muamba-codeblock-compact/);
   assert.doesNotMatch(html, /class="muamba-install"/);
 });
 
@@ -112,6 +112,7 @@ test("docs use explicit prose rhythm and Goshtoso inline code", async () => {
 
   assert.match(html, /class="muamba-docs-codeblock"/);
   assert.match(html, /data-inline-code="version"/);
+  assert.equal((html.match(/data-density="compact"/g) ?? []).length, 4);
   assert.match(html, /class="[^"]*muamba-trust-alert[^"]*"[^>]*role="alert"/);
   assert.match(css, /\.muamba-docs-codeblock\s*\{[^}]*margin-top:\s*1rem/s);
   assert.doesNotMatch(css, /\.muamba-docs \[data-code-block\]/);

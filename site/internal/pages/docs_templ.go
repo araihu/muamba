@@ -150,7 +150,7 @@ func docsContent() templ.Component {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = docsCodeBlock(codeblock.Config{Language: "bash", Label: "Install", Code: muambaInstallCommand() + `
-go tool muamba help`}).Render(ctx, templ_7745c5c3_Buffer)
+go tool muamba help`, Density: codeblock.DensityCompact}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -196,7 +196,7 @@ resources:
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = docsCodeBlock(codeblock.Config{Language: "bash", Label: "First trust", Code: `go tool muamba lock --strict`}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = docsCodeBlock(codeblock.Config{Language: "bash", Label: "First trust", Code: `go tool muamba lock --strict`, Density: codeblock.DensityCompact}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -204,7 +204,7 @@ resources:
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = docsCodeBlock(codeblock.Config{Language: "bash", Label: "Read-only verification", Code: `go tool muamba verify --strict`}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = docsCodeBlock(codeblock.Config{Language: "bash", Label: "Read-only verification", Code: `go tool muamba verify --strict`, Density: codeblock.DensityCompact}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -212,7 +212,7 @@ resources:
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = docsCodeBlock(codeblock.Config{Language: "bash", Label: "Materialize", Code: `go tool muamba sync --strict`}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = docsCodeBlock(codeblock.Config{Language: "bash", Label: "Materialize", Code: `go tool muamba sync --strict`, Density: codeblock.DensityCompact}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
