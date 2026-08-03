@@ -64,7 +64,7 @@ a { color: inherit; }
 .component-doc-shell__brand-mark { border-radius: 0 !important; }
 .muamba-shell-mark { display: block; width: 2.25rem; height: 2.25rem; }
 
-@media (max-width: 820px) {
+@media (max-width: 1023px) {
   .muamba-hero-grid { grid-template-columns: 1fr; min-height: 0; gap: 3rem; padding-block: 3.5rem; }
   .muamba-hero-copy h1 { font-size: clamp(3rem, 13vw, 4.8rem); }
   .muamba-steps { grid-template-columns: 1fr; }

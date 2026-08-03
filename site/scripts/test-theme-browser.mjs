@@ -157,6 +157,13 @@ try {
     await new Promise((resolve) => setTimeout(resolve, 150));
   };
 
+  const setViewport = (width, height) => send("Emulation.setDeviceMetricsOverride", {
+    width,
+    height,
+    deviceScaleFactor: 1,
+    mobile: false,
+  }, sessionId);
+
   await loadWithScheme("dark");
   if (storageDisabled) {
     assert.deepEqual(await state(), { dark: true, label: "Switch to light mode", store: true, saved: "unavailable" });
@@ -181,6 +188,22 @@ try {
     await evaluate(`document.querySelector("#landingshell-dark-mode").click()`);
     await new Promise((resolve) => setTimeout(resolve, 50));
     assert.deepEqual(await state(), { dark: true, label: "Switch to light mode", store: true, saved: "true" });
+
+    await setViewport(880, 781);
+    await loadWithScheme("light");
+    assert.deepEqual(await evaluate(`(() => {
+      const hero = document.querySelector(".muamba-hero-grid");
+      const code = document.querySelector(".muamba-install-code .codeblock");
+      return {
+        columns: getComputedStyle(hero).gridTemplateColumns.split(" ").length,
+        commandFits: code.scrollWidth <= code.clientWidth,
+        pageFits: document.documentElement.scrollWidth <= innerWidth,
+      };
+    })()`), { columns: 1, commandFits: true, pageFits: true });
+
+    await setViewport(1280, 900);
+    await loadWithScheme("light");
+    assert.equal(await evaluate(`getComputedStyle(document.querySelector(".muamba-hero-grid")).gridTemplateColumns.split(" ").length`), 2);
   }
 
   assert.deepEqual(
