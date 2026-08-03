@@ -8,9 +8,8 @@
 @layer base {
   [data-theme="araihu"] {
     color-scheme: light;
-    /* Modern geometry and typography, with Arai Hû's existing palette. */
-    --font-body: "Lato", ui-sans-serif, system-ui, sans-serif;
-    --font-title: "Lato", ui-sans-serif, system-ui, sans-serif;
+    --font-body: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+    --font-title: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
 
     /* V11 inline SVG contract. External SVGs use their embedded scheme fallback. */
     --araihu-logo-surface: var(--color-surface);
@@ -51,7 +50,7 @@
     --color-on-warning: #ffffff;
     --color-danger: #b42c46;
     --color-on-danger: #ffffff;
-    --radius-radius: var(--radius-sm);
+    --radius-radius: var(--radius-lg);
   }
 
   [data-theme="araihu"].dark,

@@ -18,29 +18,7 @@ html.dark {
 
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
-body.muamba-site { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
 a { color: inherit; }
-.muamba-container { width: min(100% - 2rem, 72rem); margin-inline: auto; }
-.muamba-skip { position: fixed; left: 1rem; top: -5rem; z-index: 100; background: var(--color-primary); color: var(--color-on-primary); padding: .75rem 1rem; font-weight: 700; }
-.dark .muamba-skip { background: var(--color-primary-dark); color: var(--color-on-primary-dark); }
-.muamba-skip:focus { top: 1rem; }
-.muamba-hero { border-bottom: 1px solid var(--muamba-line); background: color-mix(in srgb, var(--muamba-wash) 70%, transparent); }
-.muamba-topbar { min-height: 5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-bottom: 1px solid var(--muamba-line); }
-.muamba-brand-lockup { display: flex; align-items: center; gap: .75rem; min-width: 0; }
-.muamba-brand { display: inline-flex; align-items: center; gap: .75rem; text-decoration: none; }
-.muamba-brand-mark { display: block; width: 2.5rem; height: 2.5rem; }
-.muamba-brand strong, .muamba-brand small { display: block; }
-.muamba-brand strong { color: var(--muamba-ink); letter-spacing: -.02em; }
-.muamba-brand small { color: var(--muamba-muted); font-size: .72rem; }
-.muamba-version { flex: none; text-decoration: none; }
-.muamba-nav { display: flex; align-items: center; gap: .35rem; }
-.muamba-nav a { padding: .55rem .75rem; text-decoration: none; font-size: .9rem; font-weight: 650; }
-.muamba-nav a:hover { color: var(--muamba-accent); }
-.muamba-nav .muamba-icon-button { display: inline-flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; padding: .5rem; border: 0; border-radius: var(--radius); background: transparent; color: var(--muamba-ink); cursor: pointer; }
-.muamba-nav .muamba-icon-button:hover { background: var(--color-surface-alt); color: var(--muamba-ink); }
-.dark .muamba-nav .muamba-icon-button:hover { background: var(--color-surface-dark-alt); }
-.muamba-icon-button:focus-visible { outline: 2px solid var(--muamba-accent); outline-offset: 2px; }
-.muamba-icon-button svg { display: block; width: 1.5rem; height: 1.5rem; }
 .muamba-hero-copy { min-width: 0; }
 .muamba-install-code { width: 100%; min-width: 0; max-width: 42rem; margin-top: 1.5rem; }
 .muamba-hero-grid { min-height: 39rem; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(22rem, .95fr); align-items: center; gap: 4rem; padding-block: 5rem; outline: none; }
@@ -72,9 +50,6 @@ a { color: inherit; }
 .muamba-proof-list h3 { color: var(--muamba-ink); font-size: 1rem; }
 .muamba-proof-list p { color: var(--muamba-muted); line-height: 1.65; }
 .muamba-final { display: flex; align-items: end; justify-content: space-between; gap: 2rem; }
-.muamba-footer { border-top: 1px solid var(--muamba-line); color: var(--muamba-muted); font-size: .85rem; }
-.muamba-footer .muamba-container { min-height: 5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
-.muamba-footer a { color: var(--muamba-accent); text-underline-offset: .2rem; }
 
 .muamba-docs { color: var(--muamba-ink); }
 .muamba-docs section { margin-top: 2.75rem; scroll-margin-top: 6rem; }
@@ -102,16 +77,9 @@ a { color: inherit; }
 }
 
 @media (max-width: 430px) {
-  .muamba-container { width: min(100% - 1.5rem, 72rem); }
-  .muamba-topbar { align-items: flex-start; flex-direction: column; padding-block: 1rem; }
-  .muamba-brand-lockup { width: 100%; justify-content: space-between; }
-  .muamba-brand small { display: none; }
-  .muamba-nav { width: 100%; gap: 0; justify-content: space-between; }
-  .muamba-nav a { padding-inline: .5rem; }
   .muamba-hero-grid { padding-block: 2.75rem; }
   .muamba-section { padding-block: 4rem; }
   .muamba-actions { align-items: stretch; flex-direction: column; }
-  .muamba-footer .muamba-container { align-items: flex-start; flex-direction: column; justify-content: center; }
 }
 
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }

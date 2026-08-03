@@ -143,8 +143,8 @@ try {
   };
   const state = () => evaluate(`(() => ({
     dark: document.documentElement.classList.contains("dark"),
-    label: document.querySelector("#muamba-color-mode").getAttribute("aria-label"),
-    store: Alpine.store("darkMode").on,
+    label: document.querySelector("#landingshell-dark-mode").getAttribute("aria-label"),
+    store: Alpine.$data(document.documentElement).dark,
     saved: (() => { try { return localStorage.getItem("darkMode") } catch { return "unavailable" } })()
   }))()`);
   const loadWithScheme = async (scheme) => {
@@ -160,25 +160,25 @@ try {
   await loadWithScheme("dark");
   if (storageDisabled) {
     assert.deepEqual(await state(), { dark: true, label: "Switch to light mode", store: true, saved: "unavailable" });
-    await evaluate(`document.querySelector("#muamba-color-mode").click()`);
+    await evaluate(`document.querySelector("#landingshell-dark-mode").click()`);
     await new Promise((resolve) => setTimeout(resolve, 50));
     assert.deepEqual(await state(), { dark: false, label: "Switch to dark mode", store: false, saved: "unavailable" });
 
     await loadWithScheme("light");
     assert.deepEqual(await state(), { dark: false, label: "Switch to dark mode", store: false, saved: "unavailable" });
-    await evaluate(`document.querySelector("#muamba-color-mode").click()`);
+    await evaluate(`document.querySelector("#landingshell-dark-mode").click()`);
     await new Promise((resolve) => setTimeout(resolve, 50));
     assert.deepEqual(await state(), { dark: true, label: "Switch to light mode", store: true, saved: "unavailable" });
   } else {
     assert.deepEqual(await state(), { dark: true, label: "Switch to light mode", store: true, saved: null });
-    await evaluate(`document.querySelector("#muamba-color-mode").click()`);
+    await evaluate(`document.querySelector("#landingshell-dark-mode").click()`);
     await new Promise((resolve) => setTimeout(resolve, 50));
     assert.deepEqual(await state(), { dark: false, label: "Switch to dark mode", store: false, saved: "false" });
 
     await evaluate("localStorage.clear()");
     await loadWithScheme("light");
     assert.deepEqual(await state(), { dark: false, label: "Switch to dark mode", store: false, saved: null });
-    await evaluate(`document.querySelector("#muamba-color-mode").click()`);
+    await evaluate(`document.querySelector("#landingshell-dark-mode").click()`);
     await new Promise((resolve) => setTimeout(resolve, 50));
     assert.deepEqual(await state(), { dark: true, label: "Switch to light mode", store: true, saved: "true" });
   }

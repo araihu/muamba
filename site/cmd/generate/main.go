@@ -11,6 +11,7 @@ import (
 
 	"github.com/a-h/templ"
 	shellassets "github.com/araihu/goshtoso-app-shells/componentdocshell/assets"
+	landingassets "github.com/araihu/goshtoso-app-shells/landingshell/assets"
 	"github.com/araihu/goshtoso/assets"
 	"github.com/araihu/muamba/site/internal/pages"
 )
@@ -47,6 +48,14 @@ func run() error {
 		shellassets.AraiHuThemeURL(""),
 	} {
 		if err := extract(shellassets.Handler(), "public", assetURL); err != nil {
+			return err
+		}
+	}
+	for _, assetURL := range []string{
+		landingassets.StylesheetURL(""),
+		landingassets.ScriptURL(""),
+	} {
+		if err := extract(landingassets.Handler(), "public", assetURL); err != nil {
 			return err
 		}
 	}

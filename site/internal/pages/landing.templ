@@ -3,139 +3,133 @@ package pages
 import (
 	"github.com/araihu/goshtoso/components/badge"
 	"github.com/araihu/goshtoso/components/codeblock"
-	"github.com/araihu/goshtoso/components/head"
 	"github.com/araihu/goshtoso/components/link"
 	"github.com/araihu/goshtoso/components/panel"
+	"github.com/araihu/goshtoso-app-shells/landingshell"
 )
 
 templ LandingPage() {
-	<!doctype html>
-	<html lang="en" data-theme="araihu">
-		<head>
-			<meta charset="utf-8"/>
-			<meta name="viewport" content="width=device-width, initial-scale=1"/>
-			<title>Muamba · Trust remote files once</title>
-			<meta name="description" content="Language-agnostic TOFU vendoring and integrity verification for remote build assets."/>
-			<link rel="canonical" href="https://muamba.araihu.com/"/>
-			<meta property="og:type" content="website"/>
-			<meta property="og:title" content="Muamba · Trust remote files once"/>
-			<meta property="og:description" content="Vendor opaque remote files, lock their integrity, and keep builds offline."/>
-			<meta property="og:url" content="https://muamba.araihu.com/"/>
-			<meta property="og:image" content="https://muamba.araihu.com/og.png"/>
-			<meta name="twitter:card" content="summary_large_image"/>
-			<link rel="icon" href="/brand/muamba-mark.svg" type="image/svg+xml"/>
-			@templ.Raw(`<script>(()=>{let dark;try{const saved=localStorage.getItem("darkMode");dark=saved===null?matchMedia("(prefers-color-scheme: dark)").matches:saved==="true"}catch{dark=matchMedia("(prefers-color-scheme: dark)").matches}document.documentElement.classList.toggle("dark",dark)})();</script>`)
-			<script defer src="/scripts/theme.js"></script>
-			@head.Dependencies(head.WithLocalRuntime())
-			<link rel="stylesheet" href="/styles/site.css"/>
-		</head>
-		<body class="muamba-site bg-surface text-on-surface dark:bg-surface-dark dark:text-on-surface-dark">
-			<a class="muamba-skip" href="#hero-content">Skip to main content</a>
-			<main id="main-content">
-				<section id="hero" class="muamba-hero">
-					<div class="muamba-container">
-						<header class="muamba-topbar">
-							<div class="muamba-brand-lockup">
-								<a class="muamba-brand" href="/" aria-label="Muamba home">
-									<img class="muamba-brand-mark" src="/brand/muamba-mark.svg" alt="" aria-hidden="true"/>
-									<span><strong>Muamba</strong><small>trusted remote assets</small></span>
-								</a>
-								<a class="muamba-version" href="https://github.com/araihu/muamba/releases/tag/v0.0.2" target="_blank" rel="noreferrer" aria-label="Muamba v0.0.2 release">
-									@badge.Badge(badge.Config{Label: "v0.0.2", Appearance: badge.AppearanceSoft, Size: badge.SizeSM})
-								</a>
-							</div>
-							<nav aria-label="Primary navigation" class="muamba-nav" x-data="{}">
-								@link.Link("/docs", link.WithAppearance(link.AppearanceText), link.WithRootClass("muamba-docs-link")) { Docs }
-								<button class="muamba-icon-button" id="muamba-color-mode" type="button" aria-label="Switch to dark mode" x-bind:aria-label="$store.darkMode.on ? 'Switch to light mode' : 'Switch to dark mode'" x-on:click="$store.darkMode.toggle()">
-									<span x-show="!$store.darkMode.on">@landingMoonIcon()</span>
-									<span x-show="$store.darkMode.on" x-cloak>@landingSunIcon()</span>
-								</button>
-								<a class="muamba-icon-button" href="https://github.com/araihu/muamba" target="_blank" rel="noreferrer" aria-label="Source repository">
-									@landingRepositoryIcon()
-								</a>
-							</nav>
-						</header>
-						<div id="hero-content" class="muamba-hero-grid" tabindex="-1">
-							<div class="muamba-hero-copy">
-								@badge.Badge(badge.Config{Label: "Language-agnostic TOFU vendoring", Tone: badge.ToneSuccess, Appearance: badge.AppearanceSoft, Indicator: true})
-								<h1>Trust remote files once. Verify them forever.</h1>
-								<p class="muamba-lede">Muamba vendors JavaScript, CSS, licenses, source maps, executables, and other opaque release artifacts. Review the source once, lock SHA-384 integrity, then build and test without network access.</p>
-								<div class="muamba-actions">
-									@link.Link("/docs", link.WithAppearance(link.AppearanceText), link.WithRootClass("muamba-cta-link"), link.WithAttrs(templ.Attributes{"data-primary-cta": "true"})) {
-										Read the docs <span aria-hidden="true">→</span>
-									}
-									@link.Link("https://github.com/araihu/muamba", link.WithAppearance(link.AppearanceText), link.WithTarget("_blank"), link.WithRel("noreferrer")) {
-										View source
-									}
-								</div>
-								<div class="muamba-install-code" aria-label="Install Muamba">
-									@codeblock.CodeBlock(codeblock.Config{Language: "bash", Label: "Install Muamba", Code: `go get -tool github.com/araihu/muamba/cmd/muamba@latest`})
-								</div>
-							</div>
-							<div class="muamba-manifest-preview">
-								@panel.Panel(panel.Config{
-									Appearance: panel.AppearanceOutlined,
-									Header: landingManifestHeader(),
-									Body: landingManifestBody(),
-									Footer: landingManifestFooter(),
-									RootAttrs: templ.Attributes{"data-hero-preview": "true"},
-								})
-							</div>
-						</div>
-					</div>
-				</section>
-				<section class="muamba-section" data-muamba-workflow>
-					<div class="muamba-container">
-						<div class="muamba-section-heading">
-							<p class="muamba-eyebrow">One manifest, explicit trust</p>
-							<h2>A small workflow with a hard boundary.</h2>
-							<p>Muamba never decides that changed bytes are trustworthy. Your manifest records the decision; every later command enforces it.</p>
-						</div>
-						<ol class="muamba-steps">
-							<li><span>01</span><h3>Lock</h3><p>Review every URL, fetch each artifact, and write its SHA-384 integrity once.</p></li>
-							<li><span>02</span><h3>Verify</h3><p>Check committed files and cache blobs offline. Different bytes fail closed.</p></li>
-							<li><span>03</span><h3>Sync</h3><p>Restore only missing or corrupt files whose remote bytes still match the lock.</p></li>
-						</ol>
-					</div>
-				</section>
-				<section class="muamba-section muamba-section-muted">
-					<div class="muamba-container muamba-proof-grid">
-						<div class="muamba-section-heading">
-							<p class="muamba-eyebrow">Designed for reproducible builds</p>
-							<h2>Remote convenience, local certainty.</h2>
-						</div>
-						<div class="muamba-proof-list">
-							<article><h3>Opaque by design</h3><p>No package-manager assumptions. Muamba treats every download as bytes plus a reviewed source and integrity lock.</p></article>
-							<article><h3>Atomic updates</h3><p>Grouped dependencies stage every declared artifact before the manifest or visible files change.</p></article>
-							<article><h3>Package-scoped embedding</h3><p>Generate deterministic Go registries for vendored files, including normalized hashes for cache busting.</p></article>
-							<article><h3>Platform-aware tools</h3><p>Pin exact GOOS/GOARCH executables with shared destinations, size limits, modes, and per-target locks.</p></article>
-						</div>
-					</div>
-				</section>
-				<section class="muamba-section">
-					<div class="muamba-container muamba-final">
-						<div><p class="muamba-eyebrow">Start with one dependency</p><h2>Make the network optional after review.</h2></div>
-						@link.Link("/docs", link.WithAppearance(link.AppearanceText), link.WithRootClass("muamba-cta-link"), link.WithAttrs(templ.Attributes{"data-final-cta": "true"})) {
-							Create your first manifest <span aria-hidden="true">→</span>
-						}
-					</div>
-				</section>
-			</main>
-			<footer class="muamba-footer"><div class="muamba-container"><span><a href="/">Muamba</a> · an <a href="https://araihu.com">Arai Hû</a> project</span><a href="https://github.com/araihu/muamba">GitHub</a></div></footer>
-		</body>
-	</html>
+	@landingshell.Layout(landingShellConfig(), landingshell.Page{
+		Title: "Home",
+		DocumentTitle: "Muamba · Trust remote files once",
+		Description: "Language-agnostic TOFU vendoring and integrity verification for remote build assets.",
+		CanonicalURL: "https://muamba.araihu.com/",
+		SocialImageURL: "https://muamba.araihu.com/og.png",
+		Head: landingHead(),
+		Hero: landingHero(),
+		Content: landingContent(),
+	})
 }
 
-templ landingSunIcon() {
-	<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="size-6"><circle cx="12" cy="12" r="4" stroke-width="1.5"></circle><path stroke-linecap="round" stroke-width="1.5" d="M12 2.25v1.5M12 20.25v1.5M21.75 12h-1.5M3.75 12h-1.5M18.9 5.1l-1.05 1.05M6.15 17.85 5.1 18.9M18.9 18.9l-1.05-1.05M6.15 6.15 5.1 5.1"></path></svg>
+func landingShellConfig() landingshell.Config {
+	return landingshell.Config{
+		Brand: landingshell.Brand{
+			Name: "Muamba",
+			HomeURL: "/",
+			Logo: landingBrandMark(),
+			Tagline: "trusted remote assets",
+			FaviconURL: "/brand/muamba-mark.svg",
+			Badge: &landingshell.BrandBadge{
+				Label: "v0.0.2",
+				AriaLabel: "Muamba v0.0.2 release",
+				Href: "https://github.com/araihu/muamba/releases/tag/v0.0.2",
+			},
+		},
+		Navigation: []landingshell.Link{{Label: "Docs", Href: "/docs", Primary: true}},
+		Appearance: landingshell.AppearanceConfig{
+			DefaultTheme: "araihu",
+			InitialColorScheme: landingshell.ColorSchemeSystem,
+			PersistPreferences: true,
+		},
+		Interactions: landingshell.InteractionConfig{LocalRuntime: true},
+		RepositoryURL: "https://github.com/araihu/muamba",
+		Footer: landingshell.Footer{
+			Logo: landingBrandMark(),
+			Meta: []string{"trusted remote assets"},
+			Organization: &landingshell.Organization{Name: "Arai Hû", URL: "https://araihu.com"},
+			Links: []landingshell.Link{
+				{Label: "Docs", Href: "/docs"},
+				{Label: "GitHub", Href: "https://github.com/araihu/muamba", External: true},
+			},
+		},
+	}
 }
 
-templ landingMoonIcon() {
-	<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21.75 15A9.7 9.7 0 0 1 18 15.75 9.75 9.75 0 0 1 9 2.25 9.75 9.75 0 1 0 21.75 15Z"></path></svg>
+templ landingHead() {
+	<link rel="stylesheet" href="/styles/site.css"/>
 }
 
-templ landingRepositoryIcon() {
-	<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-5"><path d="M12 0a12 12 0 0 0-3.79 23.39c.6.11.82-.26.82-.58v-2.23c-3.34.73-4.04-1.42-4.04-1.42-.55-1.39-1.33-1.76-1.33-1.76-1.09-.74.08-.73.08-.73 1.21.09 1.84 1.24 1.84 1.24 1.07 1.83 2.81 1.3 3.49 1 .11-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.12-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23A11.5 11.5 0 0 1 12 5.8c1.02 0 2.05.14 3 .4 2.3-1.55 3.3-1.23 3.3-1.23.66 1.66.24 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.63-5.48 5.92.43.37.82 1.1.82 2.22v3.3c0 .32.22.69.82.57A12 12 0 0 0 12 0Z"></path></svg>
+templ landingBrandMark() {
+	<img class="muamba-brand-mark" src="/brand/muamba-mark.svg" alt="" aria-hidden="true"/>
+}
+
+templ landingHero() {
+	<div id="hero-content" class="muamba-hero-grid" tabindex="-1">
+		<div class="muamba-hero-copy">
+			@badge.Badge(badge.Config{Label: "Language-agnostic TOFU vendoring", Tone: badge.ToneSuccess, Appearance: badge.AppearanceSoft, Indicator: true})
+			<h1>Trust remote files once. Verify them forever.</h1>
+			<p class="muamba-lede">Muamba vendors JavaScript, CSS, licenses, source maps, executables, and other opaque release artifacts. Review the source once, lock SHA-384 integrity, then build and test without network access.</p>
+			<div class="muamba-actions">
+				@link.Link("/docs", link.WithAppearance(link.AppearanceText), link.WithRootClass("muamba-cta-link"), link.WithAttrs(templ.Attributes{"data-primary-cta": "true"})) {
+					Read the docs <span aria-hidden="true">→</span>
+				}
+				@link.Link("https://github.com/araihu/muamba", link.WithAppearance(link.AppearanceText), link.WithTarget("_blank"), link.WithRel("noreferrer")) {
+					View source
+				}
+			</div>
+			<div class="muamba-install-code" aria-label="Install Muamba">
+				@codeblock.CodeBlock(codeblock.Config{Language: "bash", Label: "Install Muamba", Code: `go get -tool github.com/araihu/muamba/cmd/muamba@latest`})
+			</div>
+		</div>
+		<div class="muamba-manifest-preview">
+			@panel.Panel(panel.Config{
+				Appearance: panel.AppearanceOutlined,
+				Header: landingManifestHeader(),
+				Body: landingManifestBody(),
+				Footer: landingManifestFooter(),
+				RootAttrs: templ.Attributes{"data-hero-preview": "true"},
+			})
+		</div>
+	</div>
+}
+
+templ landingContent() {
+	<section class="muamba-section" data-muamba-workflow>
+		<div class="landing-shell__container">
+			<div class="muamba-section-heading">
+				<p class="muamba-eyebrow">One manifest, explicit trust</p>
+				<h2>A small workflow with a hard boundary.</h2>
+				<p>Muamba never decides that changed bytes are trustworthy. Your manifest records the decision; every later command enforces it.</p>
+			</div>
+			<ol class="muamba-steps">
+				<li><span>01</span><h3>Lock</h3><p>Review every URL, fetch each artifact, and write its SHA-384 integrity once.</p></li>
+				<li><span>02</span><h3>Verify</h3><p>Check committed files and cache blobs offline. Different bytes fail closed.</p></li>
+				<li><span>03</span><h3>Sync</h3><p>Restore only missing or corrupt files whose remote bytes still match the lock.</p></li>
+			</ol>
+		</div>
+	</section>
+	<section class="muamba-section muamba-section-muted">
+		<div class="landing-shell__container muamba-proof-grid">
+			<div class="muamba-section-heading">
+				<p class="muamba-eyebrow">Designed for reproducible builds</p>
+				<h2>Remote convenience, local certainty.</h2>
+			</div>
+			<div class="muamba-proof-list">
+				<article><h3>Opaque by design</h3><p>No package-manager assumptions. Muamba treats every download as bytes plus a reviewed source and integrity lock.</p></article>
+				<article><h3>Atomic updates</h3><p>Grouped dependencies stage every declared artifact before the manifest or visible files change.</p></article>
+				<article><h3>Package-scoped embedding</h3><p>Generate deterministic Go registries for vendored files, including normalized hashes for cache busting.</p></article>
+				<article><h3>Platform-aware tools</h3><p>Pin exact GOOS/GOARCH executables with shared destinations, size limits, modes, and per-target locks.</p></article>
+			</div>
+		</div>
+	</section>
+	<section class="muamba-section">
+		<div class="landing-shell__container muamba-final">
+			<div><p class="muamba-eyebrow">Start with one dependency</p><h2>Make the network optional after review.</h2></div>
+			@link.Link("/docs", link.WithAppearance(link.AppearanceText), link.WithRootClass("muamba-cta-link"), link.WithAttrs(templ.Attributes{"data-final-cta": "true"})) {
+				Create your first manifest <span aria-hidden="true">→</span>
+			}
+		</div>
+	</section>
 }
 
 templ landingManifestHeader() {

@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
-import { runInNewContext } from "node:vm";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 
@@ -22,12 +21,14 @@ test("landing uses Arai Hu color modes and Goshtoso controls", async () => {
 
   assert.match(html, /<html[^>]*data-theme="araihu"/);
   assert.match(html, /prefers-color-scheme: dark/);
-  assert.match(html, /src="\/scripts\/theme\.js"/);
+  assert.match(html, /href="\/landingshell\/assets\/shell\.css\?v=/);
+  assert.match(html, /src="\/landingshell\/assets\/shell\.js\?v=/);
+  assert.match(html, /x-data="landingShell\(/);
+  assert.doesNotMatch(html, /src="\/scripts\/theme\.js"/);
   assert.doesNotMatch(html, /src="\/assets\/js\/darkmode\.js"/);
-  assert.match(html, /id="muamba-color-mode"/);
-  assert.match(html, /<nav[^>]*aria-label="Primary navigation"[^>]*x-data="\{\}"/);
-  assert.match(html, /x-bind:aria-label="\$store\.darkMode\.on \? 'Switch to light mode' : 'Switch to dark mode'"/);
-  assert.match(html, /x-on:click="\$store\.darkMode\.toggle\(\)"/);
+  assert.match(html, /id="landingshell-dark-mode"/);
+  assert.match(html, /x-bind:aria-label="dark \? 'Switch to light mode' : 'Switch to dark mode'"/);
+  assert.match(html, /x-on:click="toggleDark\(\)"/);
   assert.match(html, /aria-label="Source repository"/);
   assert.match(css, /--muamba-ink: var\(--color-on-surface-strong\)/);
   assert.match(css, /--muamba-accent: var\(--color-primary\)/);
@@ -54,11 +55,11 @@ test("landing keeps navigation links and install command inside Goshtoso compone
 
 test("landing header exposes the current release and icon controls", async () => {
   const html = await read("../app/_generated/index.html");
-  const navigation = html.match(/<nav aria-label="Primary navigation".*?<\/nav>/)?.[0] ?? "";
+  const navigation = html.match(/<nav class="landing-shell__navigation".*?<\/nav>/)?.[0] ?? "";
 
   assert.match(html, /href="https:\/\/github\.com\/araihu\/muamba\/releases\/tag\/v0\.0\.2"/);
-  assert.match(html, />v0\.0\.2<\/span><\/span>/);
-  assert.match(html, /<button[^>]*id="muamba-color-mode"[^>]*aria-label="Switch to dark mode"/);
+  assert.match(html, />v0\.0\.2<\/a>/);
+  assert.match(html, /<button[^>]*id="landingshell-dark-mode"[^>]*aria-label="Switch to dark mode"/);
   assert.match(navigation, /<a[^>]*aria-label="Source repository"/);
   assert.doesNotMatch(navigation, />GitHub<\/a>/);
   assert.doesNotMatch(navigation, />Dark mode<\/label>/);
@@ -67,51 +68,19 @@ test("landing header exposes the current release and icon controls", async () =>
 test("landing footer identifies linked Muamba and Arai Hu projects", async () => {
   const html = await read("../app/_generated/index.html");
 
-  assert.match(html, /<a href="\/">Muamba<\/a> · an <a href="https:\/\/araihu\.com">Arai Hû<\/a> project/);
+  assert.match(html, /<strong>Muamba<\/strong>/);
+  assert.match(html, /an <a href="https:\/\/araihu\.com"[^>]*>Arai Hû<\/a> project/);
+  assert.match(html, /<nav class="landing-shell__footer-links" aria-label="Footer navigation">/);
+  assert.match(html, /<a href="\/docs">Docs<\/a>/);
+  assert.match(html, /<a href="https:\/\/github\.com\/araihu\/muamba"[^>]*>GitHub<\/a>/);
 });
 
-test("landing dark-mode store follows system preference and toggles persistently", async () => {
-  const source = await read("../public/scripts/theme.js");
-  const listeners = new Map();
-  const stores = new Map();
-  const classes = new Set();
-  const storage = new Map();
-  const context = {
-    document: {
-      addEventListener: (name, listener) => listeners.set(name, listener),
-      documentElement: {
-        classList: {
-          add: (name) => classes.add(name),
-          remove: (name) => classes.delete(name),
-          toggle: (name, force) => force ? classes.add(name) : classes.delete(name),
-        },
-      },
-    },
-    localStorage: {
-      getItem: (name) => storage.get(name) ?? null,
-      setItem: (name, value) => storage.set(name, value),
-      removeItem: (name) => storage.delete(name),
-    },
-    matchMedia: () => ({ matches: true }),
-  };
-  context.window = context;
-  context.Alpine = {
-    store(name, value) {
-      if (value !== undefined) stores.set(name, value);
-      return stores.get(name);
-    },
-  };
+test("landing shell owns guarded dark-mode behavior", async () => {
+  const source = await read("../public/landingshell/assets/shell.js");
 
-  runInNewContext(source, context);
-  listeners.get("alpine:init")();
-
-  const darkMode = stores.get("darkMode");
-  assert.equal(darkMode.on, true);
-  assert.equal(classes.has("dark"), true);
-  darkMode.toggle();
-  assert.equal(darkMode.on, false);
-  assert.equal(classes.has("dark"), false);
-  assert.equal(storage.get("darkMode"), "false");
+  assert.match(source, /Alpine\.data\("landingShell"/);
+  assert.match(source, /root\.classList\.toggle\("dark", this\.dark\)/);
+  assert.match(source, /try \{ window\.localStorage\.setItem\("darkMode", String\(this\.dark\)\); \} catch/);
 });
 
 test("docs use Goshtoso componentdocshell and remain static", async () => {
