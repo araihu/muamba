@@ -7,11 +7,42 @@ const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 test("landing explains Muamba and links to documentation", async () => {
   const html = await read("../app/_generated/index.html");
 
-  assert.match(html, /<h1[^>]*>Trust remote files once\. Verify them forever\.<\/h1>/);
+  assert.match(html, /<h1[^>]*>Choose each source URL\. Lock the first bytes fetched\.<\/h1>/);
   assert.match(html, /href="\/docs"/);
   assert.match(html, /go get -tool github\.com\/araihu\/muamba\/cmd\/muamba@v0\.0\.2/);
   assert.doesNotMatch(html, /go get -tool[^<\n]*@latest/);
   assert.match(html, /data-muamba-workflow/);
+});
+
+test("public copy states the trust contract directly", async () => {
+  const [landing, docs, readme] = await Promise.all([
+    read("../app/_generated/index.html"),
+    read("../app/_generated/docs/index.html"),
+    read("../../README.md"),
+  ]);
+
+  assert.match(landing, /Choose each source URL\. Lock the first bytes fetched\./);
+  assert.match(landing, /Running lock accepts the first response and records its SHA-384 digest\./);
+  assert.match(docs, /The digest detects later changes; it does not authenticate the publisher or content\./);
+  assert.match(readme, /Running `lock`\s+accepts the first response returned by each reviewed URL and records its/);
+  assert.match(readme, /cmd\/muamba@v0\.0\.2/);
+
+  const retiredCopy = /Review remote files once|You choose the sources and bytes to trust|verified (?:files|bytes)|A small workflow with a hard boundary|Remote convenience, local certainty|Muamba never decides|It is aimed at|—/i;
+  assert.doesNotMatch(`${landing}\n${docs}\n${readme}`, retiredCopy);
+});
+
+test("public copy distinguishes materialized verification from cache verification and sync order", async () => {
+  const [landing, docs] = await Promise.all([
+    read("../app/_generated/index.html"),
+    read("../app/_generated/docs/index.html"),
+  ]);
+
+  for (const html of [landing, docs]) {
+    assert.match(html, /verify --all-platforms/);
+    assert.match(html, /Sync checks the destination first, then the cache, then the network\./);
+  }
+  assert.match(docs, /Default verify checks materialized files/);
+  assert.doesNotMatch(`${landing}\n${docs}`, /Verification reads committed files and integrity cache blobs|Sync uses verified cache first/);
 });
 
 test("landing uses Arai Hu color modes and Goshtoso controls", async () => {
@@ -49,8 +80,8 @@ test("landing keeps navigation links and install command inside Goshtoso compone
   assert.doesNotMatch(finalCTA, /bg-primary/);
   assert.match(html, /class="muamba-install-code" aria-label="Install Muamba"/);
   assert.match(html, /aria-label="Copy Install Muamba code"/);
+  assert.match(html, /class="muamba-install-code"[^>]*>.*?data-code-block.*?data-density="compact"/s);
   assert.doesNotMatch(html, /aria-label="Copy (Lock|Verify|Sync) code"/);
-  assert.doesNotMatch(html, /muamba-codeblock-compact/);
   assert.doesNotMatch(html, /class="muamba-install"/);
 });
 
@@ -112,6 +143,7 @@ test("docs use explicit prose rhythm and Goshtoso inline code", async () => {
 
   assert.match(html, /class="muamba-docs-codeblock"/);
   assert.match(html, /data-inline-code="version"/);
+  assert.equal((html.match(/data-density="compact"/g) ?? []).length, 4);
   assert.match(html, /class="[^"]*muamba-trust-alert[^"]*"[^>]*role="alert"/);
   assert.match(css, /\.muamba-docs-codeblock\s*\{[^}]*margin-top:\s*1rem/s);
   assert.doesNotMatch(css, /\.muamba-docs \[data-code-block\]/);
