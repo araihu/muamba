@@ -9,7 +9,8 @@ test("landing explains Muamba and links to documentation", async () => {
 
   assert.match(html, /<h1[^>]*>Trust remote files once\. Verify them forever\.<\/h1>/);
   assert.match(html, /href="\/docs"/);
-  assert.match(html, /go get -tool github\.com\/araihu\/muamba\/cmd\/muamba@latest/);
+  assert.match(html, /go get -tool github\.com\/araihu\/muamba\/cmd\/muamba@v0\.0\.2/);
+  assert.doesNotMatch(html, /go get -tool[^<\n]*@latest/);
   assert.match(html, /data-muamba-workflow/);
 });
 
@@ -90,6 +91,8 @@ test("docs use Goshtoso componentdocshell and remain static", async () => {
   assert.match(html, /<h1[^>]*>Get started<\/h1>/);
   assert.match(html, /href="\/componentdocshell\/assets\/shell\.css/);
   assert.match(html, /href="\/assets\/styles\.css/);
+  assert.match(html, /go get -tool github\.com\/araihu\/muamba\/cmd\/muamba@v0\.0\.2/);
+  assert.doesNotMatch(html, /go get -tool[^<\n]*@latest/);
   assert.doesNotMatch(html, /WebAssembly|wasm_exec|fetch\(["']\/api/);
 });
 

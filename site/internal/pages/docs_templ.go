@@ -149,7 +149,7 @@ func docsContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = docsCodeBlock(codeblock.Config{Language: "bash", Label: "Install", Code: `go get -tool github.com/araihu/muamba/cmd/muamba@latest
+		templ_7745c5c3_Err = docsCodeBlock(codeblock.Config{Language: "bash", Label: "Install", Code: muambaInstallCommand() + `
 go tool muamba help`}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err

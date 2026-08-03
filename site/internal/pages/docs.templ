@@ -70,7 +70,7 @@ templ docsContent() {
 		<section aria-labelledby="requirements">
 			<h2 id="requirements" data-toc-heading>Requirements and installation</h2>
 			<p>Muamba requires Go 1.26.5 or newer. Pin the command in your consumer module as a Go tool:</p>
-			@docsCodeBlock(codeblock.Config{Language: "bash", Label: "Install", Code: `go get -tool github.com/araihu/muamba/cmd/muamba@latest
+			@docsCodeBlock(codeblock.Config{Language: "bash", Label: "Install", Code: muambaInstallCommand() + `
 go tool muamba help`})
 		</section>
 		<section aria-labelledby="manifest">

@@ -8,6 +8,12 @@ import (
 	"github.com/araihu/goshtoso-app-shells/landingshell"
 )
 
+const muambaReleaseVersion = "v0.0.2"
+
+func muambaInstallCommand() string {
+	return "go get -tool github.com/araihu/muamba/cmd/muamba@" + muambaReleaseVersion
+}
+
 templ LandingPage() {
 	@landingshell.Layout(landingShellConfig(), landingshell.Page{
 		Title: "Home",
@@ -30,9 +36,9 @@ func landingShellConfig() landingshell.Config {
 			Tagline: "trusted remote assets",
 			FaviconURL: "/brand/muamba-mark.svg",
 			Badge: &landingshell.BrandBadge{
-				Label: "v0.0.2",
-				AriaLabel: "Muamba v0.0.2 release",
-				Href: "https://github.com/araihu/muamba/releases/tag/v0.0.2",
+				Label: muambaReleaseVersion,
+				AriaLabel: "Muamba " + muambaReleaseVersion + " release",
+				Href: "https://github.com/araihu/muamba/releases/tag/" + muambaReleaseVersion,
 			},
 		},
 		Navigation: []landingshell.Link{{Label: "Docs", Href: "/docs", Primary: true}},
@@ -78,7 +84,7 @@ templ landingHero() {
 				}
 			</div>
 			<div class="muamba-install-code" aria-label="Install Muamba">
-				@codeblock.CodeBlock(codeblock.Config{Language: "bash", Label: "Install Muamba", Code: `go get -tool github.com/araihu/muamba/cmd/muamba@latest`})
+				@codeblock.CodeBlock(codeblock.Config{Language: "bash", Label: "Install Muamba", Code: muambaInstallCommand()})
 			</div>
 		</div>
 		<div class="muamba-manifest-preview">

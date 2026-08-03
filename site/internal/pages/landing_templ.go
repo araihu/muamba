@@ -16,6 +16,12 @@ import (
 	"github.com/araihu/goshtoso/components/panel"
 )
 
+const muambaReleaseVersion = "v0.0.2"
+
+func muambaInstallCommand() string {
+	return "go get -tool github.com/araihu/muamba/cmd/muamba@" + muambaReleaseVersion
+}
+
 func LandingPage() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -63,9 +69,9 @@ func landingShellConfig() landingshell.Config {
 			Tagline:    "trusted remote assets",
 			FaviconURL: "/brand/muamba-mark.svg",
 			Badge: &landingshell.BrandBadge{
-				Label:     "v0.0.2",
-				AriaLabel: "Muamba v0.0.2 release",
-				Href:      "https://github.com/araihu/muamba/releases/tag/v0.0.2",
+				Label:     muambaReleaseVersion,
+				AriaLabel: "Muamba " + muambaReleaseVersion + " release",
+				Href:      "https://github.com/araihu/muamba/releases/tag/" + muambaReleaseVersion,
 			},
 		},
 		Navigation: []landingshell.Link{{Label: "Docs", Href: "/docs", Primary: true}},
@@ -227,7 +233,7 @@ func landingHero() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = codeblock.CodeBlock(codeblock.Config{Language: "bash", Label: "Install Muamba", Code: `go get -tool github.com/araihu/muamba/cmd/muamba@latest`}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = codeblock.CodeBlock(codeblock.Config{Language: "bash", Label: "Install Muamba", Code: muambaInstallCommand()}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
