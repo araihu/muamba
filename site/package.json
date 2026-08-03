@@ -1,0 +1,18 @@
+{
+  "name": "muamba-site",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "generate": "go run ./cmd/generate",
+    "dev": "npm run generate && npm run build && wrangler dev",
+    "build": "node scripts/build-static.mjs",
+    "deploy": "npm run generate && npm run build && wrangler deploy",
+    "test": "npm run generate && npm run build && node --test tests/*.test.mjs",
+    "test:browser": "npm run generate && npm run build && node scripts/test-theme-browser.mjs",
+    "lint": "node --check scripts/build-static.mjs"
+  },
+  "type": "module"
+}

@@ -1,0 +1,160 @@
+package pages
+
+import (
+	"github.com/araihu/goshtoso/components/badge"
+	"github.com/araihu/goshtoso/components/codeblock"
+	"github.com/araihu/goshtoso/components/link"
+	"github.com/araihu/goshtoso/components/panel"
+	"github.com/araihu/goshtoso-app-shells/landingshell"
+)
+
+const muambaReleaseVersion = "v0.0.2"
+
+func muambaInstallCommand() string {
+	return "go get -tool github.com/araihu/muamba/cmd/muamba@" + muambaReleaseVersion
+}
+
+templ LandingPage() {
+	@landingshell.Layout(landingShellConfig(), landingshell.Page{
+		Title: "Home",
+		DocumentTitle: "Muamba · Trust remote files once",
+		Description: "Language-agnostic TOFU vendoring and integrity verification for remote build assets.",
+		CanonicalURL: "https://muamba.araihu.com/",
+		SocialImageURL: "https://muamba.araihu.com/og.png",
+		Head: landingHead(),
+		Hero: landingHero(),
+		Content: landingContent(),
+	})
+}
+
+func landingShellConfig() landingshell.Config {
+	return landingshell.Config{
+		Brand: landingshell.Brand{
+			Name: "Muamba",
+			HomeURL: "/",
+			Logo: landingBrandMark(),
+			Tagline: "trusted remote assets",
+			FaviconURL: "/brand/muamba-mark.svg",
+			Badge: &landingshell.BrandBadge{
+				Label: muambaReleaseVersion,
+				AriaLabel: "Muamba " + muambaReleaseVersion + " release",
+				Href: "https://github.com/araihu/muamba/releases/tag/" + muambaReleaseVersion,
+			},
+		},
+		Navigation: []landingshell.Link{{Label: "Docs", Href: "/docs", Primary: true}},
+		Appearance: landingshell.AppearanceConfig{
+			DefaultTheme: "araihu",
+			InitialColorScheme: landingshell.ColorSchemeSystem,
+			PersistPreferences: true,
+		},
+		Interactions: landingshell.InteractionConfig{LocalRuntime: true},
+		RepositoryURL: "https://github.com/araihu/muamba",
+		Footer: landingshell.Footer{
+			Logo: landingBrandMark(),
+			Meta: []string{"trusted remote assets"},
+			Organization: &landingshell.Organization{Name: "Arai Hû", URL: "https://araihu.com"},
+			Links: []landingshell.Link{
+				{Label: "Docs", Href: "/docs"},
+				{Label: "GitHub", Href: "https://github.com/araihu/muamba", External: true},
+			},
+		},
+	}
+}
+
+templ landingHead() {
+	<link rel="stylesheet" href="/styles/site.css"/>
+}
+
+templ landingBrandMark() {
+	<img class="muamba-brand-mark" src="/brand/muamba-mark.svg" alt="" aria-hidden="true"/>
+}
+
+templ landingHero() {
+	<div id="hero-content" class="muamba-hero-grid" tabindex="-1">
+		<div class="muamba-hero-copy">
+			@badge.Badge(badge.Config{Label: "Language-agnostic TOFU vendoring", Tone: badge.ToneSuccess, Appearance: badge.AppearanceSoft, Indicator: true})
+			<h1>Trust remote files once. Verify them forever.</h1>
+			<p class="muamba-lede">Muamba vendors JavaScript, CSS, licenses, source maps, executables, and other opaque release artifacts. Review the source once, lock SHA-384 integrity, then build and test without network access.</p>
+			<div class="muamba-actions">
+				@link.Link("/docs", link.WithAppearance(link.AppearanceText), link.WithRootClass("muamba-cta-link"), link.WithAttrs(templ.Attributes{"data-primary-cta": "true"})) {
+					Read the docs <span aria-hidden="true">→</span>
+				}
+				@link.Link("https://github.com/araihu/muamba", link.WithAppearance(link.AppearanceText), link.WithTarget("_blank"), link.WithRel("noreferrer")) {
+					View source
+				}
+			</div>
+			<div class="muamba-install-code" aria-label="Install Muamba">
+				@codeblock.CodeBlock(codeblock.Config{Language: "bash", Label: "Install Muamba", Code: muambaInstallCommand()})
+			</div>
+		</div>
+		<div class="muamba-manifest-preview">
+			@panel.Panel(panel.Config{
+				Appearance: panel.AppearanceOutlined,
+				Header: landingManifestHeader(),
+				Body: landingManifestBody(),
+				Footer: landingManifestFooter(),
+				RootAttrs: templ.Attributes{"data-hero-preview": "true"},
+			})
+		</div>
+	</div>
+}
+
+templ landingContent() {
+	<section class="muamba-section" data-muamba-workflow>
+		<div class="landing-shell__container">
+			<div class="muamba-section-heading">
+				<p class="muamba-eyebrow">One manifest, explicit trust</p>
+				<h2>A small workflow with a hard boundary.</h2>
+				<p>Muamba never decides that changed bytes are trustworthy. Your manifest records the decision; every later command enforces it.</p>
+			</div>
+			<ol class="muamba-steps">
+				<li><span>01</span><h3>Lock</h3><p>Review every URL, fetch each artifact, and write its SHA-384 integrity once.</p></li>
+				<li><span>02</span><h3>Verify</h3><p>Check committed files and cache blobs offline. Different bytes fail closed.</p></li>
+				<li><span>03</span><h3>Sync</h3><p>Restore only missing or corrupt files whose remote bytes still match the lock.</p></li>
+			</ol>
+		</div>
+	</section>
+	<section class="muamba-section muamba-section-muted">
+		<div class="landing-shell__container muamba-proof-grid">
+			<div class="muamba-section-heading">
+				<p class="muamba-eyebrow">Designed for reproducible builds</p>
+				<h2>Remote convenience, local certainty.</h2>
+			</div>
+			<div class="muamba-proof-list">
+				<article><h3>Opaque by design</h3><p>No package-manager assumptions. Muamba treats every download as bytes plus a reviewed source and integrity lock.</p></article>
+				<article><h3>Atomic updates</h3><p>Grouped dependencies stage every declared artifact before the manifest or visible files change.</p></article>
+				<article><h3>Package-scoped embedding</h3><p>Generate deterministic Go registries for vendored files, including normalized hashes for cache busting.</p></article>
+				<article><h3>Platform-aware tools</h3><p>Pin exact GOOS/GOARCH executables with shared destinations, size limits, modes, and per-target locks.</p></article>
+			</div>
+		</div>
+	</section>
+	<section class="muamba-section">
+		<div class="landing-shell__container muamba-final">
+			<div><p class="muamba-eyebrow">Start with one dependency</p><h2>Make the network optional after review.</h2></div>
+			@link.Link("/docs", link.WithAppearance(link.AppearanceText), link.WithRootClass("muamba-cta-link"), link.WithAttrs(templ.Attributes{"data-final-cta": "true"})) {
+				Create your first manifest <span aria-hidden="true">→</span>
+			}
+		</div>
+	</section>
+}
+
+templ landingManifestHeader() {
+	<div class="muamba-panel-heading"><span>muamba.yaml</span>@badge.Badge(badge.Config{Label: "SHA-384 locked", Tone: badge.ToneSuccess, Appearance: badge.AppearanceSoft, Size: badge.SizeSM})</div>
+}
+
+templ landingManifestBody() {
+	@codeblock.CodeBlock(codeblock.Config{Language: "yaml", Label: "Manifest", Code: `schema: 1
+
+resources:
+  alpine:
+    version: "3.14.9"
+    downloads:
+      runtime:
+        url: https://unpkg.com/alpinejs@${version}/dist/cdn.min.js
+        path: assets/vendor/alpine/${version}/alpine.min.js
+        integrity: sha384-…`})
+}
+
+templ landingManifestFooter() {
+	<p>Typed manifest in. Verified bytes out.</p>
+}
