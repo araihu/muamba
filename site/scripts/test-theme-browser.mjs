@@ -207,6 +207,22 @@ try {
     assert.equal(await evaluate(`getComputedStyle(document.querySelector(".muamba-hero-grid")).gridTemplateColumns.split(" ").length`), 2);
   }
 
+  await setViewport(1280, 900);
+  await loadWithScheme("light");
+  const incumbentTypography = await evaluate(`(() => {
+    const rootStyle = getComputedStyle(document.documentElement);
+    return {
+      body: getComputedStyle(document.body).fontFamily,
+      heading: getComputedStyle(document.querySelector('.muamba-hero-copy h1')).fontFamily,
+      bodyToken: rootStyle.getPropertyValue('--font-body').trim(),
+      titleToken: rootStyle.getPropertyValue('--font-title').trim(),
+    };
+  })()`);
+  assert.match(incumbentTypography.body, /^ui-sans-serif/);
+  assert.match(incumbentTypography.heading, /^ui-sans-serif/);
+  assert.match(incumbentTypography.bodyToken, /Lato/);
+  assert.match(incumbentTypography.titleToken, /Lato/);
+
   await setViewport(1496, 849);
   await loadWithScheme("dark", "/docs");
   const docsTypography = await evaluate(`(() => {
@@ -241,7 +257,7 @@ try {
   assert.ok(docsTypography.codeFollowGap >= 16, `code-to-copy gap is ${docsTypography.codeFollowGap}px`);
   assert.ok(docsTypography.proseWidth <= docsTypography.maximumReadableWidth,
     `prose measure is ${docsTypography.proseWidth}px; 75ch is ${docsTypography.maximumReadableWidth}px`);
-  assert.match(docsTypography.fontFamily, /^ui-sans-serif/);
+  assert.match(docsTypography.fontFamily, /^"Instrument Sans"/);
   assert.ok(docsTypography.h2LineHeightRatio <= 1.3,
     `h2 line-height ratio is ${docsTypography.h2LineHeightRatio}`);
   assert.deepEqual({

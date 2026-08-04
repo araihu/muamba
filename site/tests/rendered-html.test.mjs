@@ -33,6 +33,60 @@ test("public installation offers standalone releases and pinned Go tools", async
   assert.match(readme, /go get -tool github\.com\/araihu\/muamba\/cmd\/muamba@v0\.0\.3/);
 });
 
+test("public routes expose complete route-specific social metadata", async () => {
+  const routes = [
+    {
+      html: await read("../app/_generated/index.html"),
+      title: "Muamba · Lock first-use bytes",
+      description: "Review source URLs, accept the first bytes fetched, and reject later changes with SHA-384 locks.",
+      canonical: "https://muamba.araihu.com/",
+    },
+    {
+      html: await read("../app/_generated/docs/index.html"),
+      title: "Muamba docs · Get started",
+      description: "Review a source URL, lock the first bytes fetched, and verify later copies offline.",
+      canonical: "https://muamba.araihu.com/docs",
+    },
+  ];
+  const image = "https://muamba.araihu.com/og-v2.png";
+  const alt = "Muamba flow from reviewed source to locked bytes and offline build.";
+
+  for (const route of routes) {
+    const required = [
+      `<title>${route.title}</title>`,
+      `<meta name="description" content="${route.description}">`,
+      `<link rel="canonical" href="${route.canonical}">`,
+      `<meta property="og:url" content="${route.canonical}">`,
+      `<meta property="og:type" content="website">`,
+      `<meta property="og:title" content="${route.title}">`,
+      `<meta property="og:description" content="${route.description}">`,
+      `<meta property="og:site_name" content="Muamba">`,
+      `<meta property="og:image" content="${image}">`,
+      `<meta property="og:image:type" content="image/png">`,
+      `<meta property="og:image:width" content="1280">`,
+      `<meta property="og:image:height" content="640">`,
+      `<meta property="og:image:alt" content="${alt}">`,
+      `<meta name="twitter:card" content="summary_large_image">`,
+      `<meta name="twitter:title" content="${route.title}">`,
+      `<meta name="twitter:description" content="${route.description}">`,
+      `<meta name="twitter:image" content="${image}">`,
+      `<meta name="twitter:image:alt" content="${alt}">`,
+    ];
+    for (const tag of required) {
+      assert.equal(route.html.split(tag).length - 1, 1, `${route.canonical}: ${tag}`);
+    }
+  }
+});
+
+test("social preview image has validated share dimensions and size", async () => {
+  const image = await readFile(new URL("../public/og-v2.png", import.meta.url));
+
+  assert.equal(image.subarray(1, 4).toString("ascii"), "PNG");
+  assert.equal(image.readUInt32BE(16), 1280);
+  assert.equal(image.readUInt32BE(20), 640);
+  assert.ok(image.byteLength < 1_000_000, `social preview is ${image.byteLength} bytes`);
+});
+
 test("public copy states the trust contract directly", async () => {
   const [landing, docs, readme] = await Promise.all([
     read("../app/_generated/index.html"),

@@ -1,7 +1,5 @@
 :root {
   color-scheme: light;
-  --font-body: ui-sans-serif, system-ui, sans-serif;
-  --font-title: ui-sans-serif, system-ui, sans-serif;
   --muamba-ink: var(--color-on-surface-strong);
   --muamba-muted: var(--color-on-surface-muted);
   --muamba-line: var(--color-outline);
