@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -18,13 +19,36 @@ func TestHelp(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("Run(help) code = %d, stderr = %q", code, stderr.String())
 	}
-	for _, command := range []string{"lock", "sync", "verify", "update", "generate-go", "--target", "--cache-dir", "--all-platforms", "MUAMBA_CACHE_DIR"} {
+	for _, command := range []string{"lock", "sync", "verify", "update", "generate-go", "version", "--target", "--cache-dir", "--all-platforms", "MUAMBA_CACHE_DIR"} {
 		if !strings.Contains(stdout.String(), command) {
 			t.Errorf("help missing %q", command)
 		}
 	}
 	if stderr.Len() != 0 {
 		t.Fatalf("stderr = %q, want empty", stderr.String())
+	}
+}
+
+func TestVersionReportsRuntimeIdentity(t *testing.T) {
+	for _, args := range [][]string{{"version"}, {"--version"}} {
+		t.Run(strings.Join(args, " "), func(t *testing.T) {
+			var stdout, stderr bytes.Buffer
+			code := Run(args, &stdout, &stderr)
+			if code != 0 {
+				t.Fatalf("Run(%q) code = %d, stderr = %q", args, code, stderr.String())
+			}
+			for _, want := range []string{"muamba ", runtime.Version(), runtime.GOOS + "/" + runtime.GOARCH} {
+				if !strings.Contains(stdout.String(), want) {
+					t.Errorf("version output = %q, want %q", stdout.String(), want)
+				}
+			}
+			if strings.Count(stdout.String(), "\n") != 1 {
+				t.Errorf("version output = %q, want one line", stdout.String())
+			}
+			if stderr.Len() != 0 {
+				t.Fatalf("stderr = %q, want empty", stderr.String())
+			}
+		})
 	}
 }
 

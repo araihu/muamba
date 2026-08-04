@@ -20,17 +20,47 @@ licenses, notices, source maps, executables, and other release files without
 package-manager rules. Once you commit the manifest and files, builds and tests
 need no network access.
 
-## Requirements and installation
+## Installation
 
-Muamba requires Go 1.26.5 or later. Add the current release to a consumer
-module as a pinned Go tool:
+### Prebuilt archives
+
+Prebuilt archives require no Go installation. Each release publishes Muamba
+for macOS (`darwin_amd64`, `darwin_arm64`), Linux (`linux_amd64`,
+`linux_arm64`), and Windows (`windows_amd64`). Download the matching archive,
+`checksums.txt`, and `checksums.txt.sigstore.json` from the
+[latest GitHub release](https://github.com/araihu/muamba/releases/latest).
+
+Verify the signed checksum list with the release version you downloaded, then
+verify the archive before placing `muamba` on your `PATH`:
 
 ```bash
-go get -tool github.com/araihu/muamba/cmd/muamba@v0.0.2
+VERSION=v0.0.3 # Set this to the downloaded release tag.
+ARCHIVE="muamba_${VERSION#v}_linux_amd64.tar.gz"
+cosign verify-blob \
+  --bundle checksums.txt.sigstore.json \
+  --certificate-identity "https://github.com/araihu/muamba/.github/workflows/release.yml@refs/tags/${VERSION}" \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  checksums.txt
+grep -F -- "  ${ARCHIVE}" checksums.txt | sha256sum --check
+muamba version
+```
+
+Set `ARCHIVE` to the file you downloaded. Use `shasum -a 256 -c` instead of
+`sha256sum --check` on macOS.
+
+### Pinned Go tool
+
+Go projects can pin Muamba in the consumer module. This installation path
+requires Go 1.26.5 or later:
+
+```bash
+go get -tool github.com/araihu/muamba/cmd/muamba@v0.0.3
 go tool muamba help
 ```
 
-Use `go run ./cmd/muamba` when working in this repository.
+The examples below use the standalone `muamba` command. Prefix commands with
+`go tool` when using the module-pinned tool. Use `go run ./cmd/muamba` when
+working in this repository.
 
 ## Manifest
 
@@ -125,7 +155,7 @@ For a new or partially unlocked manifest, review every URL before you establish
 first trust:
 
 ```bash
-go tool muamba lock --strict
+muamba lock --strict
 ```
 
 `lock` downloads every unlocked base URL and platform variant, caches the
@@ -139,32 +169,32 @@ Later commands reject different bytes:
 
 ```bash
 # Offline, read-only integrity check.
-go tool muamba verify --strict
+muamba verify --strict
 
 # Restore missing or corrupt files only when remote bytes match the lock.
-go tool muamba sync --strict
+muamba sync --strict
 
 # Restore a CI target explicitly.
-go tool muamba sync --strict --target linux/amd64
+muamba sync --strict --target linux/amd64
 
 # Operate on one resource or download.
-go tool muamba verify --strict bootstrap/core-css
+muamba verify --strict bootstrap/core-css
 
 # Offline verification of every locked cache blob.
-go tool muamba verify --strict --all-platforms
+muamba verify --strict --all-platforms
 ```
 
 Trust changes only through an explicit update. Move every download in a grouped
 resource atomically to a new logical version:
 
 ```bash
-go tool muamba update bootstrap --version 5.3.9 --strict
+muamba update bootstrap --version 5.3.9 --strict
 ```
 
 Or re-trust one artifact whose bytes changed at the same URL:
 
 ```bash
-go tool muamba update bootstrap/core-css --strict
+muamba update bootstrap/core-css --strict
 ```
 
 A grouped or single-download update stages and hashes every declared platform
