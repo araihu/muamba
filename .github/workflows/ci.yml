@@ -15,6 +15,7 @@ permissions:
 
 env:
   GO_VERSION: '1.26.5'
+  GORELEASER_VERSION: 'v2.17.1'
   GOLANGCI_LINT_VERSION: 'v2.12.2'
   MIN_COVERAGE: '70.0'
 
@@ -73,6 +74,27 @@ jobs:
 
       - name: Build CLI
         run: go build -o "$RUNNER_TEMP/muamba" ./cmd/muamba
+
+      - name: Build release snapshot
+        uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94 # v7.2.3
+        with:
+          distribution: goreleaser
+          version: ${{ env.GORELEASER_VERSION }}
+          args: release --snapshot --clean --skip=sign
+
+      - name: Verify release snapshot
+        shell: bash
+        run: |
+          archive="$(find dist -maxdepth 1 -name 'muamba_*_linux_amd64.tar.gz' -print -quit)"
+          if [[ -z "$archive" ]]; then
+            echo "::error::Linux amd64 release archive missing"
+            exit 1
+          fi
+          mkdir -p "$RUNNER_TEMP/muamba-release-smoke"
+          tar -xzf "$archive" -C "$RUNNER_TEMP/muamba-release-smoke"
+          "$RUNNER_TEMP/muamba-release-smoke/muamba" version \
+            | grep -E 'muamba v.+-SNAPSHOT-.+linux/amd64'
+          (cd dist && sha256sum --check checksums.txt)
 
       - name: Test coverage gate
         run: scripts/check-coverage_test.sh

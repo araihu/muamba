@@ -9,7 +9,7 @@ import (
 	"github.com/araihu/goshtoso-app-shells/landingshell"
 )
 
-const muambaReleaseVersion = "v0.0.2"
+const muambaReleaseVersion = "v0.0.3"
 
 func muambaInstallCommand() string {
 	return "go get -tool github.com/araihu/muamba/cmd/muamba@" + muambaReleaseVersion
@@ -80,6 +80,9 @@ templ landingHero() {
 				@link.Link("/docs", link.WithAppearance(link.AppearanceText), link.WithRootClass("muamba-cta-link"), link.WithAttrs(templ.Attributes{"data-primary-cta": "true"})) {
 					Read the docs <span aria-hidden="true">→</span>
 				}
+				@link.Link("https://github.com/araihu/muamba/releases/latest", link.WithAppearance(link.AppearanceText), link.WithTarget("_blank"), link.WithRel("noreferrer")) {
+					Download release
+				}
 				@link.Link("https://github.com/araihu/muamba", link.WithAppearance(link.AppearanceText), link.WithTarget("_blank"), link.WithRel("noreferrer")) {
 					View source
 				}
@@ -87,6 +90,7 @@ templ landingHero() {
 			<div class="muamba-install-code" aria-label="Install Muamba">
 				@codeblock.CodeBlock(codeblock.Config{Language: "bash", Label: "Install Muamba", Code: muambaInstallCommand(), Density: codeblock.DensityCompact})
 			</div>
+			<p>Prebuilt releases need no Go installation.</p>
 		</div>
 		<div class="muamba-manifest-preview">
 			@panel.Panel(panel.Config{

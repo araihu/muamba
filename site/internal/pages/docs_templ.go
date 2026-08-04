@@ -145,7 +145,7 @@ func docsContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<section aria-labelledby=\"requirements\"><h2 id=\"requirements\" data-toc-heading>Requirements and installation</h2><p>Muamba requires Go 1.26.5 or later. Add the pinned tool to your module:</p>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<section aria-labelledby=\"requirements\"><h2 id=\"requirements\" data-toc-heading>Requirements and installation</h2><p>Prebuilt archives need no Go installation. Download the matching macOS, Linux, or Windows archive and its signed checksums from <a href=\"https://github.com/araihu/muamba/releases/latest\">GitHub Releases</a>.</p><p>Go projects can instead pin Muamba in their module. This path requires Go 1.26.5 or later:</p>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -154,7 +154,7 @@ go tool muamba help`, Density: codeblock.DensityCompact}).Render(ctx, templ_7745
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</section><section aria-labelledby=\"manifest\"><h2 id=\"manifest\" data-toc-heading>Write a manifest</h2><p>A resource groups related downloads under one version. Each download names a destination path and either a base URL or platform-specific URLs.</p>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<p>Workflow examples below use the standalone command. Project CI and Go code generation keep the module-pinned tool.</p></section><section aria-labelledby=\"manifest\"><h2 id=\"manifest\" data-toc-heading>Write a manifest</h2><p>A resource groups related downloads under one version. Each download names a destination path and either a base URL or platform-specific URLs.</p>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -196,7 +196,7 @@ resources:
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = docsCodeBlock(codeblock.Config{Language: "bash", Label: "First trust", Code: `go tool muamba lock --strict`, Density: codeblock.DensityCompact}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = docsCodeBlock(codeblock.Config{Language: "bash", Label: "First trust", Code: `muamba lock --strict`, Density: codeblock.DensityCompact}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -204,7 +204,7 @@ resources:
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = docsCodeBlock(codeblock.Config{Language: "bash", Label: "Read-only verification", Code: `go tool muamba verify --strict`, Density: codeblock.DensityCompact}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = docsCodeBlock(codeblock.Config{Language: "bash", Label: "Read-only verification", Code: `muamba verify --strict`, Density: codeblock.DensityCompact}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -220,7 +220,7 @@ resources:
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = docsCodeBlock(codeblock.Config{Language: "bash", Label: "Materialize", Code: `go tool muamba sync --strict`, Density: codeblock.DensityCompact}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = docsCodeBlock(codeblock.Config{Language: "bash", Label: "Materialize", Code: `muamba sync --strict`, Density: codeblock.DensityCompact}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -1,6 +1,7 @@
 .worktrees/
 docs/superpowers/
 bin/
+dist/
 .coverage/
 coverage.out
 /muamba
