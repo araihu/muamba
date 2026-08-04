@@ -62,6 +62,7 @@ const profile = await mkdtemp(join(tmpdir(), "muamba-theme-browser-"));
 const chrome = spawn(await findChrome(), [
   "--headless=new",
   "--disable-gpu",
+  "--disable-extensions",
   "--no-default-browser-check",
   "--no-first-run",
   "--remote-debugging-port=0",
@@ -147,12 +148,12 @@ try {
     store: Alpine.$data(document.documentElement).dark,
     saved: (() => { try { return localStorage.getItem("darkMode") } catch { return "unavailable" } })()
   }))()`);
-  const loadWithScheme = async (scheme) => {
+  const loadWithScheme = async (scheme, pathname = "/") => {
     await send("Emulation.setEmulatedMedia", {
       features: [{ name: "prefers-color-scheme", value: scheme }],
     }, sessionId);
     const loaded = waitFor("Page.loadEventFired", sessionId);
-    await send("Page.navigate", { url: `${origin}/` }, sessionId);
+    await send("Page.navigate", { url: `${origin}${pathname}` }, sessionId);
     await loaded;
     await new Promise((resolve) => setTimeout(resolve, 150));
   };
@@ -206,6 +207,102 @@ try {
     assert.equal(await evaluate(`getComputedStyle(document.querySelector(".muamba-hero-grid")).gridTemplateColumns.split(" ").length`), 2);
   }
 
+  await setViewport(1496, 849);
+  await loadWithScheme("dark", "/docs");
+  const docsTypography = await evaluate(`(() => {
+    const section = document.querySelector('.muamba-docs section');
+    const paragraphs = section.querySelectorAll(':scope > p');
+    const codeblock = section.querySelector(':scope > .muamba-docs-codeblock');
+    const h2 = section.querySelector(':scope > h2');
+    const paragraphStyle = getComputedStyle(paragraphs[0]);
+    const h2Style = getComputedStyle(h2);
+    const alertTitleStyle = getComputedStyle(document.querySelector('.muamba-trust-alert h3'));
+    const alertBodyStyle = getComputedStyle(document.querySelector('.muamba-trust-alert p'));
+    const measure = document.createElement('span');
+    measure.style.cssText = 'position:absolute;visibility:hidden;width:75ch;font:' + paragraphStyle.font;
+    document.body.append(measure);
+    const result = {
+      paragraphGap: Math.round(paragraphs[1].getBoundingClientRect().top - paragraphs[0].getBoundingClientRect().bottom),
+      codeFollowGap: Math.round(codeblock.nextElementSibling.getBoundingClientRect().top - codeblock.getBoundingClientRect().bottom),
+      proseWidth: Math.round(paragraphs[0].getBoundingClientRect().width),
+      maximumReadableWidth: Math.round(measure.getBoundingClientRect().width),
+      fontFamily: paragraphStyle.fontFamily,
+      h2LineHeightRatio: Number((parseFloat(h2Style.lineHeight) / parseFloat(h2Style.fontSize)).toFixed(2)),
+      alertTitleFontSize: Math.round(parseFloat(alertTitleStyle.fontSize)),
+      alertTitleMarginTop: Math.round(parseFloat(alertTitleStyle.marginTop)),
+      alertTitleMarginBottom: Math.round(parseFloat(alertTitleStyle.marginBottom)),
+      alertBodyFontSize: Math.round(parseFloat(alertBodyStyle.fontSize)),
+      pageFits: document.documentElement.scrollWidth <= innerWidth,
+    };
+    measure.remove();
+    return result;
+  })()`);
+  assert.ok(docsTypography.paragraphGap >= 16, `paragraph gap is ${docsTypography.paragraphGap}px`);
+  assert.ok(docsTypography.codeFollowGap >= 16, `code-to-copy gap is ${docsTypography.codeFollowGap}px`);
+  assert.ok(docsTypography.proseWidth <= docsTypography.maximumReadableWidth,
+    `prose measure is ${docsTypography.proseWidth}px; 75ch is ${docsTypography.maximumReadableWidth}px`);
+  assert.match(docsTypography.fontFamily, /^ui-sans-serif/);
+  assert.ok(docsTypography.h2LineHeightRatio <= 1.3,
+    `h2 line-height ratio is ${docsTypography.h2LineHeightRatio}`);
+  assert.deepEqual({
+    titleFontSize: docsTypography.alertTitleFontSize,
+    titleMarginTop: docsTypography.alertTitleMarginTop,
+    titleMarginBottom: docsTypography.alertTitleMarginBottom,
+    bodyFontSize: docsTypography.alertBodyFontSize,
+  }, { titleFontSize: 14, titleMarginTop: 0, titleMarginBottom: 0, bodyFontSize: 14 });
+  assert.equal(docsTypography.pageFits, true);
+
+  for (const width of [375, 639, 719, 720, 959, 960, 1279, 1280]) {
+    await setViewport(width, 900);
+    await loadWithScheme("light", "/docs");
+    const responsiveTypography = await evaluate(`(() => {
+      const h1 = document.querySelector('.muamba-docs h1');
+      const h2 = document.querySelector('.muamba-docs section > h2');
+      const paragraph = document.querySelector('.muamba-docs section > p');
+      const paragraphStyle = getComputedStyle(paragraph);
+      const menuStyle = getComputedStyle(document.querySelector('.component-doc-shell__menu-button'));
+      const sidebarStyle = getComputedStyle(document.querySelector('.component-doc-shell__sidebar'));
+      const measure = document.createElement('span');
+      measure.style.cssText = 'position:absolute;visibility:hidden;width:45ch;font:' + paragraphStyle.font;
+      document.body.append(measure);
+      const content = [...document.querySelectorAll('.muamba-docs section > h2, .muamba-docs section > h3, .muamba-docs section > p, .muamba-docs-codeblock')];
+      const result = {
+        h1FontSize: Math.round(parseFloat(getComputedStyle(h1).fontSize)),
+        h2FontSize: Math.round(parseFloat(getComputedStyle(h2).fontSize)),
+        proseWidth: Math.round(paragraph.getBoundingClientRect().width),
+        minimumReadableWidth: Math.round(measure.getBoundingClientRect().width),
+        menuDisplay: menuStyle.display,
+        sidebarPosition: sidebarStyle.position,
+        inlineCodeIntact: [...document.querySelectorAll('.muamba-docs section > p > code')]
+          .every((element) => element.getClientRects().length === 1),
+        contentFits: content.every((element) => {
+          const rect = element.getBoundingClientRect();
+          return rect.left >= 0 && rect.right <= innerWidth + 0.5;
+        }),
+      };
+      measure.remove();
+      return result;
+    })()`);
+    assert.equal(responsiveTypography.contentFits, true, `docs content overflows at ${width}px`);
+    assert.equal(responsiveTypography.inlineCodeIntact, true, `inline code wraps internally at ${width}px`);
+    if (width < 640) {
+      assert.ok(responsiveTypography.h1FontSize > responsiveTypography.h2FontSize,
+        `heading hierarchy reverses at ${width}px: h1 ${responsiveTypography.h1FontSize}px, h2 ${responsiveTypography.h2FontSize}px`);
+    }
+    if (width === 720) {
+      assert.ok(responsiveTypography.proseWidth >= responsiveTypography.minimumReadableWidth,
+        `prose collapses to ${responsiveTypography.proseWidth}px at sidebar breakpoint; 45ch is ${responsiveTypography.minimumReadableWidth}px`);
+    }
+    if (width >= 720 && width < 960) {
+      assert.equal(responsiveTypography.menuDisplay, 'flex', `menu is hidden at ${width}px`);
+      assert.equal(responsiveTypography.sidebarPosition, 'fixed', `sidebar consumes reading width at ${width}px`);
+    }
+    if (width === 960) {
+      assert.equal(responsiveTypography.menuDisplay, 'none');
+      assert.equal(responsiveTypography.sidebarPosition, 'static');
+    }
+  }
+
   assert.deepEqual(
     events.filter((event) => event.method === "Runtime.exceptionThrown" ||
       (event.method === "Log.entryAdded" && event.params?.entry?.level === "error")),
@@ -218,8 +315,19 @@ try {
     ? "theme browser test passed with localStorage throwing SecurityError"
     : "theme browser test passed for dark and light system preferences");
 } finally {
-  chrome.kill("SIGTERM");
-  server.close();
+  if (chrome.exitCode === null) {
+    const exited = new Promise((resolve) => chrome.once("exit", resolve));
+    chrome.kill("SIGTERM");
+    const graceful = await Promise.race([
+      exited.then(() => true),
+      new Promise((resolve) => setTimeout(() => resolve(false), 2_000)),
+    ]);
+    if (!graceful) {
+      chrome.kill("SIGKILL");
+      await exited;
+    }
+  }
+  await new Promise((resolve) => server.close(resolve));
   await rm(profile, { force: true, recursive: true });
 }
 
