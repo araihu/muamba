@@ -49,7 +49,7 @@ jobs:
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: ${{ env.GO_VERSION }}
-          cache-dependency-path: go.sum
+          cache: false
 
       - name: Run release tests
         run: |
@@ -68,4 +68,5 @@ jobs:
           version: ${{ env.GORELEASER_VERSION }}
           args: release --clean
         env:
+          GOCACHE: ${{ runner.temp }}/goreleaser-go-build
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -81,6 +81,8 @@ jobs:
           distribution: goreleaser
           version: ${{ env.GORELEASER_VERSION }}
           args: release --snapshot --clean --skip=sign
+        env:
+          GOCACHE: ${{ runner.temp }}/goreleaser-go-build
 
       - name: Verify release snapshot
         shell: bash
