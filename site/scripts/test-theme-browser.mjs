@@ -229,6 +229,10 @@ try {
     const section = document.querySelector('.muamba-docs section');
     const paragraphs = section.querySelectorAll(':scope > p');
     const codeblock = section.querySelector(':scope > .muamba-docs-codeblock');
+    const codeFollower = codeblock.nextElementSibling;
+    if (!codeFollower || codeFollower.tagName !== 'P') {
+      throw new Error('no paragraph follows the code block');
+    }
     const h2 = section.querySelector(':scope > h2');
     const paragraphStyle = getComputedStyle(paragraphs[0]);
     const h2Style = getComputedStyle(h2);
@@ -239,7 +243,7 @@ try {
     document.body.append(measure);
     const result = {
       paragraphGap: Math.round(paragraphs[1].getBoundingClientRect().top - paragraphs[0].getBoundingClientRect().bottom),
-      codeFollowGap: Math.round(codeblock.nextElementSibling.getBoundingClientRect().top - codeblock.getBoundingClientRect().bottom),
+      codeFollowGap: Math.round(codeFollower.getBoundingClientRect().top - codeblock.getBoundingClientRect().bottom),
       proseWidth: Math.round(paragraphs[0].getBoundingClientRect().width),
       maximumReadableWidth: Math.round(measure.getBoundingClientRect().width),
       fontFamily: paragraphStyle.fontFamily,
@@ -278,10 +282,16 @@ try {
       const paragraphStyle = getComputedStyle(paragraph);
       const menuStyle = getComputedStyle(document.querySelector('.component-doc-shell__menu-button'));
       const sidebarStyle = getComputedStyle(document.querySelector('.component-doc-shell__sidebar'));
+      const overflowProbe = document.createElement('p');
+      const overflowCode = document.createElement('code');
+      overflowCode.textContent = 'https://example.com/' + 'unbroken-segment-'.repeat(30);
+      overflowProbe.append(overflowCode);
+      paragraph.parentElement.append(overflowProbe);
       const measure = document.createElement('span');
       measure.style.cssText = 'position:absolute;visibility:hidden;width:45ch;font:' + paragraphStyle.font;
       document.body.append(measure);
       const content = [...document.querySelectorAll('.muamba-docs section > h2, .muamba-docs section > h3, .muamba-docs section > p, .muamba-docs-codeblock')];
+      const overflowRect = overflowCode.getBoundingClientRect();
       const result = {
         h1FontSize: Math.round(parseFloat(getComputedStyle(h1).fontSize)),
         h2FontSize: Math.round(parseFloat(getComputedStyle(h2).fontSize)),
@@ -289,8 +299,10 @@ try {
         minimumReadableWidth: Math.round(measure.getBoundingClientRect().width),
         menuDisplay: menuStyle.display,
         sidebarPosition: sidebarStyle.position,
+        sidebarVisibility: sidebarStyle.visibility,
         inlineCodeIntact: [...document.querySelectorAll('.muamba-docs section > p > code')]
           .every((element) => element.getClientRects().length === 1),
+        inlineCodeFits: overflowRect.left >= -0.5 && overflowRect.right <= innerWidth + 0.5,
         contentFits: content.every((element) => {
           const rect = element.getBoundingClientRect();
           return rect.left >= 0 && rect.right <= innerWidth + 0.5;
@@ -309,6 +321,25 @@ try {
       assert.ok(responsiveTypography.proseWidth >= responsiveTypography.minimumReadableWidth,
         `prose collapses to ${responsiveTypography.proseWidth}px at sidebar breakpoint; 45ch is ${responsiveTypography.minimumReadableWidth}px`);
     }
+    if (width < 960) {
+      assert.equal(responsiveTypography.sidebarVisibility, 'hidden', `closed sidebar is not hidden at ${width}px`);
+      await evaluate(`document.querySelector('.component-doc-shell__menu-button').click()`);
+      await evaluate(`new Promise((resolve, reject) => {
+        const deadline = performance.now() + 1000;
+        const check = () => {
+          if (getComputedStyle(document.querySelector('.component-doc-shell__sidebar')).visibility === 'visible') {
+            resolve(true);
+          } else if (performance.now() >= deadline) {
+            reject(new Error('sidebar did not become visible'));
+          } else {
+            requestAnimationFrame(check);
+          }
+        };
+        check();
+      })`);
+      assert.equal(await evaluate(`getComputedStyle(document.querySelector('.component-doc-shell__sidebar')).visibility`),
+        'visible', `open sidebar stays hidden at ${width}px`);
+    }
     if (width >= 720 && width < 960) {
       assert.equal(responsiveTypography.menuDisplay, 'flex', `menu is hidden at ${width}px`);
       assert.equal(responsiveTypography.sidebarPosition, 'fixed', `sidebar consumes reading width at ${width}px`);
@@ -317,6 +348,7 @@ try {
       assert.equal(responsiveTypography.menuDisplay, 'none');
       assert.equal(responsiveTypography.sidebarPosition, 'static');
     }
+    assert.equal(responsiveTypography.inlineCodeFits, true, `inline code overflows at ${width}px`);
   }
 
   assert.deepEqual(

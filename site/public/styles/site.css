@@ -58,7 +58,13 @@ a { color: inherit; }
 .muamba-docs section > p { max-width: 72ch; margin: 0; color: var(--muamba-muted); font-size: 1rem; line-height: 1.75; }
 .muamba-docs section > p + p,
 .muamba-docs section > .muamba-docs-codeblock + p { margin-top: 1rem; }
-.muamba-docs section > p > code { white-space: nowrap; }
+.muamba-docs section > p > code {
+  display: inline-block;
+  max-width: 100%;
+  overflow-x: auto;
+  vertical-align: bottom;
+  white-space: nowrap;
+}
 .muamba-docs a { color: var(--muamba-accent); text-underline-offset: .2rem; }
 .muamba-docs-codeblock { margin-top: 1rem; }
 .muamba-docs .muamba-trust-alert { margin-top: 1rem; }
@@ -77,6 +83,11 @@ a { color: inherit; }
   .muamba-proof-grid { grid-template-columns: 1fr; gap: 2.5rem; }
   .muamba-proof-list article { grid-template-columns: 1fr; gap: .5rem; }
   .muamba-final { align-items: flex-start; flex-direction: column; }
+}
+
+@media (max-width: 959px) {
+  .component-doc-shell .component-doc-shell__sidebar { visibility: hidden; }
+  .component-doc-shell .component-doc-shell__sidebar.is-open { visibility: visible; }
 }
 
 @media (min-width: 720px) and (max-width: 959px) {

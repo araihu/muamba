@@ -81,7 +81,10 @@ test("public routes expose complete route-specific social metadata", async () =>
 test("social preview image has validated share dimensions and size", async () => {
   const image = await readFile(new URL("../public/og-v2.png", import.meta.url));
 
-  assert.equal(image.subarray(1, 4).toString("ascii"), "PNG");
+  assert.ok(image.subarray(0, 8).equals(Buffer.from([
+    0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+  ])));
+  assert.equal(image.subarray(12, 16).toString("ascii"), "IHDR");
   assert.equal(image.readUInt32BE(16), 1280);
   assert.equal(image.readUInt32BE(20), 640);
   assert.ok(image.byteLength < 1_000_000, `social preview is ${image.byteLength} bytes`);
