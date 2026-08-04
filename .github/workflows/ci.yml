@@ -94,8 +94,9 @@ jobs:
           fi
           mkdir -p "$RUNNER_TEMP/muamba-release-smoke"
           tar -xzf "$archive" -C "$RUNNER_TEMP/muamba-release-smoke"
-          "$RUNNER_TEMP/muamba-release-smoke/muamba" version \
-            | grep -E 'muamba v.+-SNAPSHOT-.+linux/amd64'
+          version_output="$("$RUNNER_TEMP/muamba-release-smoke/muamba" version)"
+          grep -E 'muamba v.+-SNAPSHOT-.+linux/amd64' <<<"$version_output"
+          grep -F "commit $(git rev-parse HEAD)" <<<"$version_output"
           (cd dist && sha256sum --check checksums.txt)
 
       - name: Test coverage gate

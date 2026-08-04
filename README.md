@@ -34,8 +34,8 @@ Verify the signed checksum list with the release version you downloaded, then
 verify the archive before placing `muamba` on your `PATH`:
 
 ```bash
-VERSION=v0.0.3
-ARCHIVE=muamba_0.0.3_linux_amd64.tar.gz
+VERSION=v0.0.3 # Set this to the downloaded release tag.
+ARCHIVE="muamba_${VERSION#v}_linux_amd64.tar.gz"
 cosign verify-blob \
   --bundle checksums.txt.sigstore.json \
   --certificate-identity "https://github.com/araihu/muamba/.github/workflows/release.yml@refs/tags/${VERSION}" \
