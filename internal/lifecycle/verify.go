@@ -29,9 +29,13 @@ func (e *Engine) Verify(_ context.Context, selectors []string, allPlatforms bool
 		for _, selection := range selections {
 			selected[selectionLabel(selection)] = struct{}{}
 		}
-		selections, err = e.allSelections(selectors)
+		allSelections, err := e.allSelections(selectors)
 		if err != nil {
 			return Report{}, err
+		}
+		selections = allSelections
+		for _, directory := range directories {
+			selections = append(selections, directoryFileSelections(directory)...)
 		}
 	}
 	report := Report{Warnings: append([]manifest.Warning(nil), e.warnings...)}

@@ -143,7 +143,7 @@ templ landingContent() {
 			</div>
 			<div class="muamba-proof-list">
 				<article><h3>Any remote file</h3><p>Vendor JavaScript, CSS, licenses, source maps, executables, or other release files. Muamba only needs source URLs, destination paths, and integrity locks.</p></article>
-				<article><h3>Atomic updates</h3><p>Stage every file in a grouped dependency before the manifest or visible destinations change.</p></article>
+				<article><h3>Staged updates</h3><p>Stage every file in a grouped dependency before publishing the manifest or visible destinations. Muamba rolls back paths when a publish step returns an error; a process crash can still leave different files at different generations.</p></article>
 				<article><h3>Go embed registries</h3><p>Generate deterministic, package-scoped registries with normalized digests for cache-busting URLs.</p></article>
 				<article><h3>Platform-aware tools</h3><p>Pin exact GOOS/GOARCH executables with one destination, explicit size limits, file modes, and per-target locks.</p></article>
 			</div>

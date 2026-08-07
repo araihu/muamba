@@ -80,7 +80,7 @@ templ docsContent() {
 		<section aria-labelledby="requirements">
 			<h2 id="requirements" data-toc-heading>Requirements and installation</h2>
 			<p>Prebuilt archives need no Go installation. Download the matching macOS, Linux, or Windows archive and its signed checksums from <a href="https://github.com/araihu/muamba/releases/latest">GitHub Releases</a>.</p>
-			<p>Go projects can instead pin Muamba in their module. This path requires Go 1.26.5 or later. The v0.0.4 command below is for the next release candidate; use it after that tag is published, or run the command from a checkout while it remains unpublished:</p>
+			<p>Go projects can instead pin Muamba in their module. This path requires Go 1.26.5 or later. The v0.0.4 command below is for the next release candidate; use it after that tag is published. For local checkout work while it remains unpublished, invoke commands with <code class="font-mono">go run ./cmd/muamba ...</code>.</p>
 			@docsCodeBlock(codeblock.Config{Language: "bash", Label: "Install", Code: muambaInstallCommand() + `
 go tool muamba help`, Density: codeblock.DensityCompact})
 			<p>Workflow examples below use the standalone command. Project CI and Go code generation keep the module-pinned tool.</p>
@@ -132,7 +132,7 @@ resources:
 			@alert.Alert(alert.Config{Title: "You choose what to trust", Description: "Review each source URL before you run lock. Running lock accepts the first response and records its digest. The digest detects later changes; it does not authenticate the publisher or content.", Tone: alert.ToneWarning, RootClass: "muamba-trust-alert"})
 			<h3 id="lock">1. Lock reviewed sources</h3>
 			@docsCodeBlock(codeblock.Config{Language: "bash", Label: "First trust", Code: `muamba lock --strict`, Density: codeblock.DensityCompact})
-			<p>Lock downloads every unlocked URL, platform variant, and bounded archive directory; caches hash-matched bytes; and writes exact URLs, paths, sizes, and SHA-384 SRI values to .muamba.lock.yaml atomically.</p>
+			<p>Lock downloads every unlocked URL, platform variant, and bounded archive directory; caches hash-matched bytes; and stages exact URLs, paths, sizes, and SHA-384 SRI values for publication to .muamba.lock.yaml. A publish-step error rolls back the paths already replaced; a process crash is not a cross-file transaction.</p>
 			<h3 id="verify">2. Verify offline</h3>
 			@docsCodeBlock(codeblock.Config{Language: "bash", Label: "Read-only verification", Code: `muamba verify --strict`, Density: codeblock.DensityCompact})
 			<p>

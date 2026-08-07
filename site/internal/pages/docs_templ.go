@@ -146,7 +146,7 @@ func docsContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<section aria-labelledby=\"requirements\"><h2 id=\"requirements\" data-toc-heading>Requirements and installation</h2><p>Prebuilt archives need no Go installation. Download the matching macOS, Linux, or Windows archive and its signed checksums from <a href=\"https://github.com/araihu/muamba/releases/latest\">GitHub Releases</a>.</p><p>Go projects can instead pin Muamba in their module. This path requires Go 1.26.5 or later. The v0.0.4 command below is for the next release candidate; use it after that tag is published, or run the command from a checkout while it remains unpublished:</p>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<section aria-labelledby=\"requirements\"><h2 id=\"requirements\" data-toc-heading>Requirements and installation</h2><p>Prebuilt archives need no Go installation. Download the matching macOS, Linux, or Windows archive and its signed checksums from <a href=\"https://github.com/araihu/muamba/releases/latest\">GitHub Releases</a>.</p><p>Go projects can instead pin Muamba in their module. This path requires Go 1.26.5 or later. The v0.0.4 command below is for the next release candidate; use it after that tag is published. For local checkout work while it remains unpublished, invoke commands with <code class=\"font-mono\">go run ./cmd/muamba ...</code>.</p>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -222,7 +222,7 @@ resources:
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<p>Lock downloads every unlocked URL, platform variant, and bounded archive directory; caches hash-matched bytes; and writes exact URLs, paths, sizes, and SHA-384 SRI values to .muamba.lock.yaml atomically.</p><h3 id=\"verify\">2. Verify offline</h3>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<p>Lock downloads every unlocked URL, platform variant, and bounded archive directory; caches hash-matched bytes; and stages exact URLs, paths, sizes, and SHA-384 SRI values for publication to .muamba.lock.yaml. A publish-step error rolls back the paths already replaced; a process crash is not a cross-file transaction.</p><h3 id=\"verify\">2. Verify offline</h3>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

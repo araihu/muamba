@@ -103,6 +103,60 @@ resources:
 	}
 }
 
+func TestVerifyAllPlatformsChecksMaterializedDirectoryFiles(t *testing.T) {
+	archive := directoryArchive(t, map[string]string{
+		"icons-v1/icons/a.svg": "trusted",
+	})
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write(archive)
+	}))
+	defer server.Close()
+	root := t.TempDir()
+	declaration := filepath.Join(root, ".muamba.yaml")
+	writeLifecycleFile(t, declaration, `schema: 1
+resources:
+  icons:
+    version: v1
+    directories:
+      source:
+        url: `+server.URL+`/icons-${version}.tar.gz
+        archive: tar.gz
+        path: vendor/icons/${version}
+        include: ["icons/**/*.svg"]
+        strip_components: 1
+        max_size: 1MiB
+        max_files: 10
+        max_unpacked_size: 1MiB
+`)
+	cacheDir := filepath.Join(t.TempDir(), "cache")
+	engine, err := New(declaration, Options{
+		Strict:    true,
+		CacheDir:  cacheDir,
+		Transport: transport.Options{AllowHTTP: true},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := engine.Lock(context.Background(), nil); err != nil {
+		t.Fatal(err)
+	}
+	target := filepath.Join(root, "vendor/icons/v1/icons/a.svg")
+	if err := os.WriteFile(target, []byte("locally-corrupt"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	engine, err = New(declaration, Options{
+		Strict:    true,
+		CacheDir:  cacheDir,
+		Transport: transport.Options{AllowHTTP: true},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := engine.Verify(context.Background(), nil, true); err == nil {
+		t.Fatal("all-platforms verify accepted a corrupt materialized directory file")
+	}
+}
+
 func TestDirectorySyncRejectsArchiveDriftWithoutReplacingTarget(t *testing.T) {
 	body := directoryArchive(t, map[string]string{"icons-v1/icons/a.svg": "trusted"})
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { _, _ = w.Write(body) }))

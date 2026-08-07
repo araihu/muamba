@@ -211,8 +211,8 @@ muamba lock --strict
 
 `lock` downloads every unlocked base URL, platform variant, and directory
 archive; caches verified file bytes; and generates `.muamba.lock.yaml`
-atomically with selected destinations. It writes only the selected target to
-each shared destination. Use
+using staged publication with rollback if a publish step returns an error. It
+writes only the selected target to each shared destination. Use
 `--target GOOS/GOARCH` to choose another target. Commit `.muamba.yaml`,
 `.muamba.lock.yaml`, and all materialized files together. Review changes to the
 archive digest and exact member list before accepting first trust or an update.
@@ -242,7 +242,7 @@ muamba verify --strict --all-platforms
 ```
 
 Trust changes only through an explicit update. Move every download in a grouped
-resource atomically to a new logical version:
+resource together to a new logical version:
 
 ```bash
 muamba update bootstrap --version 5.3.9 --strict
@@ -255,9 +255,13 @@ muamba update bootstrap/core-css --strict
 ```
 
 A grouped or single-download update stages and hashes every declared platform
-variant or directory before it changes declaration, lock, or visible files. It materializes only
-the selected target. If an old versioned file no longer matches its previous
-lock, Muamba leaves it in place and fails the update.
+variant or directory before it changes declaration, lock, or visible files. It
+materializes only the selected target. Publication uses per-path renames and
+rolls back paths when a publish step returns an error; a process crash can still
+leave different files at different generations, so consumers should run
+`verify` at their build or deployment boundary. If an old versioned file no
+longer matches its previous lock, Muamba leaves it in place and fails the
+update.
 
 Commands search the current directory and its parents for `.muamba.yaml`, then
 fall back to legacy `muamba.yaml` when no split declaration exists.
@@ -285,8 +289,8 @@ Muamba resolves the cache directory from `--cache-dir`, then
 directory. `sync` follows this order:
 
 1. Verify the destination; seed or repair its cache blob without network.
-2. Otherwise verify and copy the cache blob atomically.
-3. Otherwise download, verify, cache, and atomically materialize it.
+2. Otherwise verify and copy the cache blob with an atomic per-file replacement.
+3. Otherwise download, verify, cache, and atomically materialize the file.
 
 Corrupt cached or remote bytes never replace an existing destination. Muamba
 uses regular copies instead of symlinks or hard links.
