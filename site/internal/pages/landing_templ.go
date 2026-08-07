@@ -17,7 +17,7 @@ import (
 	"github.com/araihu/goshtoso/components/panel"
 )
 
-const muambaReleaseVersion = "v0.0.3"
+const muambaReleaseVersion = "v0.0.4"
 
 func muambaInstallCommand() string {
 	return "go get -tool github.com/araihu/muamba/cmd/muamba@" + muambaReleaseVersion
@@ -116,7 +116,7 @@ func landingHead() templ.Component {
 			templ_7745c5c3_Var2 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<link rel=\"stylesheet\" href=\"/styles/site.css\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<meta property=\"og:site_name\" content=\"Muamba\"><meta property=\"og:image:type\" content=\"image/png\"><meta property=\"og:image:width\" content=\"1672\"><meta property=\"og:image:height\" content=\"941\"><meta property=\"og:image:alt\" content=\"Muamba first-use file-lock workflow\"><meta name=\"twitter:title\" content=\"Muamba · Lock first-use bytes\"><meta name=\"twitter:description\" content=\"Review source URLs, accept the first bytes fetched, and reject later changes with SHA-384 locks.\"><meta name=\"twitter:image\" content=\"https://muamba.araihu.com/og.png\"><meta name=\"twitter:image:alt\" content=\"Muamba first-use file-lock workflow\"><link rel=\"stylesheet\" href=\"/styles/site.css\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

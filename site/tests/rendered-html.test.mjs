@@ -9,7 +9,7 @@ test("landing explains Muamba and links to documentation", async () => {
 
   assert.match(html, /<h1[^>]*>Choose each source URL\. Lock the first bytes fetched\.<\/h1>/);
   assert.match(html, /href="\/docs"/);
-  assert.match(html, /go get -tool github\.com\/araihu\/muamba\/cmd\/muamba@v0\.0\.3/);
+  assert.match(html, /go get -tool github\.com\/araihu\/muamba\/cmd\/muamba@v0\.0\.4/);
   assert.doesNotMatch(html, /go get -tool[^<\n]*@latest/);
   assert.match(html, /href="https:\/\/github\.com\/araihu\/muamba\/releases\/latest"/);
   assert.match(html, /Download release/);
@@ -30,7 +30,7 @@ test("public installation offers standalone releases and pinned Go tools", async
   assert.match(docs, /Prebuilt archives need no Go installation\./);
   assert.match(readme, /Prebuilt archives require no Go installation\./);
   assert.match(readme, /muamba version/);
-  assert.match(readme, /go get -tool github\.com\/araihu\/muamba\/cmd\/muamba@v0\.0\.3/);
+  assert.match(readme, /go get -tool github\.com\/araihu\/muamba\/cmd\/muamba@v0\.0\.4/);
 });
 
 test("public copy states the trust contract directly", async () => {
@@ -44,7 +44,7 @@ test("public copy states the trust contract directly", async () => {
   assert.match(landing, /Running lock accepts the first response and records its SHA-384 digest\./);
   assert.match(docs, /The digest detects later changes; it does not authenticate the publisher or content\./);
   assert.match(readme, /Running `lock`\s+accepts the first response returned by each reviewed URL and records its/);
-  assert.match(readme, /cmd\/muamba@v0\.0\.3/);
+  assert.match(readme, /cmd\/muamba@v0\.0\.4/);
 
   const retiredCopy = /Review remote files once|You choose the sources and bytes to trust|verified (?:files|bytes)|A small workflow with a hard boundary|Remote convenience, local certainty|Muamba never decides|It is aimed at|—/i;
   assert.doesNotMatch(`${landing}\n${docs}\n${readme}`, retiredCopy);
@@ -108,8 +108,8 @@ test("landing header exposes the current release and icon controls", async () =>
   const html = await read("../app/_generated/index.html");
   const navigation = html.match(/<nav class="landing-shell__navigation".*?<\/nav>/)?.[0] ?? "";
 
-  assert.match(html, /href="https:\/\/github\.com\/araihu\/muamba\/releases\/tag\/v0\.0\.3"/);
-  assert.match(html, />v0\.0\.3<\/a>/);
+  assert.match(html, /href="https:\/\/github\.com\/araihu\/muamba\/releases\/tag\/v0\.0\.4"/);
+  assert.match(html, />v0\.0\.4<\/a>/);
   assert.match(html, /<button[^>]*id="landingshell-dark-mode"[^>]*aria-label="Switch to dark mode"/);
   assert.match(navigation, /<a[^>]*aria-label="Source repository"/);
   assert.doesNotMatch(navigation, />GitHub<\/a>/);
@@ -141,7 +141,7 @@ test("docs use Goshtoso componentdocshell and remain static", async () => {
   assert.match(html, /<h1[^>]*>Get started<\/h1>/);
   assert.match(html, /href="\/componentdocshell\/assets\/shell\.css/);
   assert.match(html, /href="\/assets\/styles\.css/);
-  assert.match(html, /go get -tool github\.com\/araihu\/muamba\/cmd\/muamba@v0\.0\.3/);
+  assert.match(html, /go get -tool github\.com\/araihu\/muamba\/cmd\/muamba@v0\.0\.4/);
   assert.doesNotMatch(html, /go get -tool[^<\n]*@latest/);
   assert.doesNotMatch(html, /WebAssembly|wasm_exec|fetch\(["']\/api/);
 });
@@ -166,6 +166,35 @@ test("docs use explicit prose rhythm and Goshtoso inline code", async () => {
   assert.match(html, /class="[^"]*muamba-trust-alert[^"]*"[^>]*role="alert"/);
   assert.match(css, /\.muamba-docs-codeblock\s*\{[^}]*margin-top:\s*1rem/s);
   assert.doesNotMatch(css, /\.muamba-docs \[data-code-block\]/);
+});
+
+test("docs explain bounded directories and preserve complete social metadata", async () => {
+  const [landing, docs] = await Promise.all([
+    read("../app/_generated/index.html"),
+    read("../app/_generated/docs/index.html"),
+  ]);
+
+  assert.match(docs, /Vendor bounded archive directories/);
+  assert.match(docs, /max_files/);
+  assert.match(docs, /max_unpacked_size/);
+  assert.match(docs, /Commit the declaration, generated lock, materialized tree/);
+  assert.match(docs, /LICENSE.*NOTICE.*attribution/);
+
+  for (const html of [landing, docs]) {
+    for (const tag of [
+      /property="og:site_name"/g,
+      /property="og:image:type"/g,
+      /property="og:image:width"/g,
+      /property="og:image:height"/g,
+      /property="og:image:alt"/g,
+      /name="twitter:title"/g,
+      /name="twitter:description"/g,
+      /name="twitter:image"/g,
+      /name="twitter:image:alt"/g,
+    ]) {
+      assert.equal((html.match(tag) ?? []).length, 1);
+    }
+  }
 });
 
 test("docs footer links Muamba, Arai Hu, Goshtoso, and App Shells", async () => {

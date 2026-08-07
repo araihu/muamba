@@ -22,6 +22,7 @@ func DocsPage() templ.Component {
 			SectionsTitle: "",
 			Sections: []sidebar.Section{{Title: "Guide", Items: []sidebar.Item{
 				{ID: "manifest", Label: "Manifest", Href: "/docs#manifest"},
+				{ID: "directories", Label: "Archive directories", Href: "/docs#directories"},
 				{ID: "workflow", Label: "Trust workflow", Href: "/docs#workflow"},
 				{ID: "cache", Label: "Integrity cache", Href: "/docs#cache"},
 				{ID: "embedding", Label: "Go embedding", Href: "/docs#embedding"},
@@ -60,7 +61,16 @@ templ docsHead() {
 	<meta property="og:description" content="Review a source URL, lock the first bytes fetched, and verify later copies offline."/>
 	<meta property="og:url" content="https://muamba.araihu.com/docs"/>
 	<meta property="og:image" content="https://muamba.araihu.com/og.png"/>
+	<meta property="og:site_name" content="Muamba"/>
+	<meta property="og:image:type" content="image/png"/>
+	<meta property="og:image:width" content="1672"/>
+	<meta property="og:image:height" content="941"/>
+	<meta property="og:image:alt" content="Muamba first-use file-lock workflow"/>
 	<meta name="twitter:card" content="summary_large_image"/>
+	<meta name="twitter:title" content="Muamba docs · Get started"/>
+	<meta name="twitter:description" content="Review a source URL, lock the first bytes fetched, and verify later copies offline."/>
+	<meta name="twitter:image" content="https://muamba.araihu.com/og.png"/>
+	<meta name="twitter:image:alt" content="Muamba first-use file-lock workflow"/>
 	<link rel="stylesheet" href="/styles/site.css"/>
 }
 
@@ -97,6 +107,25 @@ resources:
 				@inlinecode.InlineCode("${version}", inlinecode.WithRootAttrs(templ.Attributes{"data-inline-code": "version"}))
 				<span>&#32;is the only template token. With strict mode, Muamba rejects URLs that omit the declared version before it downloads or writes anything.</span>
 			</p>
+		</section>
+		<section aria-labelledby="directories">
+			<h2 id="directories" data-toc-heading>Vendor bounded archive directories</h2>
+			<p>Use a <code class="font-mono">directories</code> declaration for a bounded <code class="font-mono">tar.gz</code> tree. Include globs select files after <code class="font-mono">strip_components</code>; exclude globs remove matches. <code class="font-mono">max_files</code> and <code class="font-mono">max_unpacked_size</code> are mandatory.</p>
+			@docsCodeBlock(codeblock.Config{Language: "yaml", Label: ".muamba.yaml", Code: `resources:
+  heroicons:
+    version: v2.2.0
+    directories:
+      optimized:
+        url: https://github.com/tailwindlabs/heroicons/archive/v2.2.0.tar.gz
+        archive: tar.gz
+        path: vendor/heroicons/v2.2.0
+        include:
+          - optimized/**/*.svg
+          - LICENSE
+        strip_components: 1
+        max_files: 4096
+        max_unpacked_size: 128MiB`})
+			<p>Directory sources require both <code class="font-mono">.muamba.yaml</code> and <code class="font-mono">.muamba.lock.yaml</code>. Commit the declaration, generated lock, materialized tree, and every applicable <code class="font-mono">LICENSE</code>, <code class="font-mono">NOTICE</code>, and attribution file together. The lock records the archive URL and digest plus every selected member path, destination, size, and digest.</p>
 		</section>
 		<section aria-labelledby="workflow">
 			<h2 id="workflow" data-toc-heading>Review, lock, and verify</h2>
