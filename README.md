@@ -188,12 +188,14 @@ resources:
 
 `**` matches zero or more path segments; other segments use Go glob syntax.
 `strip_components` applies before include/exclude matching. `max_size` bounds
-the compressed response. `max_files` and `max_unpacked_size` are mandatory
-archive-expansion bounds.
+the compressed response; `max_size`, `max_files`, and `max_unpacked_size` are
+mandatory archive-expansion bounds.
 
-Muamba accepts only regular files and directories. Absolute paths, `..`,
-backslashes, symlinks, hard links, devices, FIFOs, duplicate resolved paths,
-empty matches, and bound overruns fail before destination or lock replacement.
+Muamba accepts only regular files and directories. Archive paths are normalized
+before validation; absolute paths, paths that still escape the extraction root
+after normalization, backslashes, symlinks, hard links, devices, FIFOs,
+duplicate resolved paths, empty matches, and bound overruns fail before
+destination or lock replacement.
 The lock pins the archive URL, size, digest, and exact sorted file set; every
 resolved file also records source path, destination path, size, and digest.
 

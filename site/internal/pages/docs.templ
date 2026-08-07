@@ -110,7 +110,7 @@ resources:
 		</section>
 		<section aria-labelledby="directories">
 			<h2 id="directories" data-toc-heading>Vendor bounded archive directories</h2>
-			<p>Use a <code class="font-mono">directories</code> declaration for a bounded <code class="font-mono">tar.gz</code> tree. Include globs select files after <code class="font-mono">strip_components</code>; exclude globs remove matches. <code class="font-mono">max_files</code> and <code class="font-mono">max_unpacked_size</code> are mandatory.</p>
+			<p>Use a <code class="font-mono">directories</code> declaration for a bounded <code class="font-mono">tar.gz</code> tree. Include globs select files after <code class="font-mono">strip_components</code>; exclude globs remove matches. <code class="font-mono">max_size</code>, <code class="font-mono">max_files</code>, and <code class="font-mono">max_unpacked_size</code> are mandatory.</p>
 			@docsCodeBlock(codeblock.Config{Language: "yaml", Label: ".muamba.yaml", Code: `resources:
   heroicons:
     version: v2.2.0
@@ -123,8 +123,10 @@ resources:
           - optimized/**/*.svg
           - LICENSE
         strip_components: 1
+        max_size: 32MiB
         max_files: 4096
         max_unpacked_size: 128MiB`})
+			<p>Archive paths are normalized before validation. Absolute paths, paths that still escape the extraction root after normalization, backslashes, symlinks, hard links, special files, duplicate resolved paths, empty matches, and bound overruns fail before destination or lock replacement.</p>
 			<p>Directory sources require both <code class="font-mono">.muamba.yaml</code> and <code class="font-mono">.muamba.lock.yaml</code>. Commit the declaration, generated lock, materialized tree, and every applicable <code class="font-mono">LICENSE</code>, <code class="font-mono">NOTICE</code>, and attribution file together. The lock records the archive URL and digest plus every selected member path, destination, size, and digest.</p>
 		</section>
 		<section aria-labelledby="workflow">

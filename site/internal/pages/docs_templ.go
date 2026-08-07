@@ -185,7 +185,7 @@ resources:
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<span>&#32;is the only template token. With strict mode, Muamba rejects URLs that omit the declared version before it downloads or writes anything.</span></p></section><section aria-labelledby=\"directories\"><h2 id=\"directories\" data-toc-heading>Vendor bounded archive directories</h2><p>Use a <code class=\"font-mono\">directories</code> declaration for a bounded <code class=\"font-mono\">tar.gz</code> tree. Include globs select files after <code class=\"font-mono\">strip_components</code>; exclude globs remove matches. <code class=\"font-mono\">max_files</code> and <code class=\"font-mono\">max_unpacked_size</code> are mandatory.</p>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<span>&#32;is the only template token. With strict mode, Muamba rejects URLs that omit the declared version before it downloads or writes anything.</span></p></section><section aria-labelledby=\"directories\"><h2 id=\"directories\" data-toc-heading>Vendor bounded archive directories</h2><p>Use a <code class=\"font-mono\">directories</code> declaration for a bounded <code class=\"font-mono\">tar.gz</code> tree. Include globs select files after <code class=\"font-mono\">strip_components</code>; exclude globs remove matches. <code class=\"font-mono\">max_size</code>, <code class=\"font-mono\">max_files</code>, and <code class=\"font-mono\">max_unpacked_size</code> are mandatory.</p>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -201,12 +201,13 @@ resources:
           - optimized/**/*.svg
           - LICENSE
         strip_components: 1
+        max_size: 32MiB
         max_files: 4096
         max_unpacked_size: 128MiB`}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<p>Directory sources require both <code class=\"font-mono\">.muamba.yaml</code> and <code class=\"font-mono\">.muamba.lock.yaml</code>. Commit the declaration, generated lock, materialized tree, and every applicable <code class=\"font-mono\">LICENSE</code>, <code class=\"font-mono\">NOTICE</code>, and attribution file together. The lock records the archive URL and digest plus every selected member path, destination, size, and digest.</p></section><section aria-labelledby=\"workflow\"><h2 id=\"workflow\" data-toc-heading>Review, lock, and verify</h2>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<p>Archive paths are normalized before validation. Absolute paths, paths that still escape the extraction root after normalization, backslashes, symlinks, hard links, special files, duplicate resolved paths, empty matches, and bound overruns fail before destination or lock replacement.</p><p>Directory sources require both <code class=\"font-mono\">.muamba.yaml</code> and <code class=\"font-mono\">.muamba.lock.yaml</code>. Commit the declaration, generated lock, materialized tree, and every applicable <code class=\"font-mono\">LICENSE</code>, <code class=\"font-mono\">NOTICE</code>, and attribution file together. The lock records the archive URL and digest plus every selected member path, destination, size, and digest.</p></section><section aria-labelledby=\"workflow\"><h2 id=\"workflow\" data-toc-heading>Review, lock, and verify</h2>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

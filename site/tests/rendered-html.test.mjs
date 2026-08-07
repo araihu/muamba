@@ -182,6 +182,7 @@ test("docs explain bounded directories and preserve complete social metadata", a
   ]);
 
   assert.match(docs, /Vendor bounded archive directories/);
+  assert.match(docs, /max_size/);
   assert.match(docs, /max_files/);
   assert.match(docs, /max_unpacked_size/);
   assert.match(docs, /Commit the declaration, generated lock, materialized tree/);
