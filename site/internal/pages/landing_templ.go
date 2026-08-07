@@ -70,9 +70,9 @@ func landingShellConfig() landingshell.Config {
 			Tagline:    "first-use file locks",
 			FaviconURL: "/brand/muamba-mark.svg",
 			Badge: &landingshell.BrandBadge{
-				Label:     muambaReleaseVersion,
-				AriaLabel: "Muamba " + muambaReleaseVersion + " release",
-				Href:      "https://github.com/araihu/muamba/releases/tag/" + muambaReleaseVersion,
+				Label:     muambaReleaseVersion + " candidate",
+				AriaLabel: "Muamba " + muambaReleaseVersion + " candidate; latest public release",
+				Href:      "https://github.com/araihu/muamba/releases/latest",
 			},
 		},
 		Navigation: []landingshell.Link{{Label: "Docs", Href: "/docs", Primary: true}},
@@ -260,7 +260,7 @@ func landingHero() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div><p>Prebuilt releases need no Go installation.</p></div><div class=\"muamba-manifest-preview\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div><p>The v0.0.4 command is for the next release candidate; use it after that tag is published. Prebuilt releases need no Go installation.</p></div><div class=\"muamba-manifest-preview\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

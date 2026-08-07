@@ -146,7 +146,7 @@ func docsContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<section aria-labelledby=\"requirements\"><h2 id=\"requirements\" data-toc-heading>Requirements and installation</h2><p>Prebuilt archives need no Go installation. Download the matching macOS, Linux, or Windows archive and its signed checksums from <a href=\"https://github.com/araihu/muamba/releases/latest\">GitHub Releases</a>.</p><p>Go projects can instead pin Muamba in their module. This path requires Go 1.26.5 or later:</p>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<section aria-labelledby=\"requirements\"><h2 id=\"requirements\" data-toc-heading>Requirements and installation</h2><p>Prebuilt archives need no Go installation. Download the matching macOS, Linux, or Windows archive and its signed checksums from <a href=\"https://github.com/araihu/muamba/releases/latest\">GitHub Releases</a>.</p><p>Go projects can instead pin Muamba in their module. This path requires Go 1.26.5 or later. The v0.0.4 command below is for the next release candidate; use it after that tag is published, or run the command from a checkout while it remains unpublished:</p>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

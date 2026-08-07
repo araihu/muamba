@@ -35,7 +35,7 @@ Verify the signed checksum list with the release version you downloaded, then
 verify the archive before placing `muamba` on your `PATH`:
 
 ```bash
-VERSION=v0.0.4 # Set this to the downloaded release tag.
+VERSION=v0.0.4 # After v0.0.4 is published, set this to the tag you downloaded.
 ARCHIVE="muamba_${VERSION#v}_linux_amd64.tar.gz"
 cosign verify-blob \
   --bundle checksums.txt.sigstore.json \
@@ -63,6 +63,7 @@ Go projects can pin Muamba in the consumer module. This installation path
 requires Go 1.26.5 or later:
 
 ```bash
+# After the v0.0.4 tag is published:
 go get -tool github.com/araihu/muamba/cmd/muamba@v0.0.4
 go tool muamba help
 ```

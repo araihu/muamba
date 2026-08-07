@@ -37,9 +37,9 @@ func landingShellConfig() landingshell.Config {
 			Tagline: "first-use file locks",
 			FaviconURL: "/brand/muamba-mark.svg",
 			Badge: &landingshell.BrandBadge{
-				Label: muambaReleaseVersion,
-				AriaLabel: "Muamba " + muambaReleaseVersion + " release",
-				Href: "https://github.com/araihu/muamba/releases/tag/" + muambaReleaseVersion,
+				Label: muambaReleaseVersion + " candidate",
+				AriaLabel: "Muamba " + muambaReleaseVersion + " candidate; latest public release",
+				Href: "https://github.com/araihu/muamba/releases/latest",
 			},
 		},
 		Navigation: []landingshell.Link{{Label: "Docs", Href: "/docs", Primary: true}},
@@ -99,7 +99,7 @@ templ landingHero() {
 			<div class="muamba-install-code" aria-label="Install Muamba">
 				@codeblock.CodeBlock(codeblock.Config{Language: "bash", Label: "Install Muamba", Code: muambaInstallCommand(), Density: codeblock.DensityCompact})
 			</div>
-			<p>Prebuilt releases need no Go installation.</p>
+			<p>The v0.0.4 command is for the next release candidate; use it after that tag is published. Prebuilt releases need no Go installation.</p>
 		</div>
 		<div class="muamba-manifest-preview">
 			@panel.Panel(panel.Config{
