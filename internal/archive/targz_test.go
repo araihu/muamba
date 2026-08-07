@@ -13,6 +13,8 @@ type tarEntry struct {
 	name     string
 	body     string
 	typeflag byte
+	linkname string
+	pax      map[string]string
 }
 
 func TestExtractTarGzAppliesStripIncludeExcludeAndSort(t *testing.T) {
@@ -48,7 +50,15 @@ func TestExtractTarGzRejectsUnsafeEntriesEvenWhenGlobWouldIgnoreThem(t *testing.
 		},
 		"symlink": {
 			{name: "release/icons/ok.svg", body: "ok"},
-			{name: "release/link", typeflag: tar.TypeSymlink},
+			{name: "release/link", typeflag: tar.TypeSymlink, linkname: "icons/ok.svg"},
+		},
+		"hardlink": {
+			{name: "release/icons/ok.svg", body: "ok"},
+			{name: "release/hardlink", typeflag: tar.TypeLink, linkname: "release/icons/ok.svg"},
+		},
+		"special-type": {
+			{name: "release/icons/ok.svg", body: "ok"},
+			{name: "release/device", typeflag: tar.TypeChar},
 		},
 		"duplicate": {
 			{name: "release/icons/ok.svg", body: "one"},
@@ -66,6 +76,25 @@ func TestExtractTarGzRejectsUnsafeEntriesEvenWhenGlobWouldIgnoreThem(t *testing.
 				t.Fatalf("error = %v", err)
 			}
 		})
+	}
+}
+
+func TestExtractTarGzIgnoresPAXMetadataHeaders(t *testing.T) {
+	path := writeTarGz(t, []tarEntry{
+		{name: "pax_global_header", typeflag: tar.TypeXGlobalHeader, pax: map[string]string{"comment": "GitHub archive metadata"}},
+		{name: "release/icons/a.svg", body: "a", pax: map[string]string{"mtime": "1700000000.0"}},
+	})
+	files, err := ExtractTarGz(path, Options{
+		StripComponents: 1,
+		Include:         []string{"icons/**/*.svg"},
+		MaxFiles:        10,
+		MaxBytes:        1024,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(files) != 1 || files[0].Path != "icons/a.svg" || string(files[0].Contents) != "a" {
+		t.Fatalf("files = %#v", files)
 	}
 }
 
@@ -125,7 +154,13 @@ func writeTarGz(t *testing.T, entries []tarEntry) string {
 		if typeflag == 0 {
 			typeflag = tar.TypeReg
 		}
-		header := &tar.Header{Name: entry.name, Typeflag: typeflag, Mode: 0o644, Size: int64(len(entry.body))}
+		header := &tar.Header{Name: entry.name, Typeflag: typeflag, Linkname: entry.linkname, Mode: 0o644, Size: int64(len(entry.body)), PAXRecords: entry.pax}
+		if typeflag == tar.TypeXGlobalHeader {
+			header = &tar.Header{Typeflag: typeflag, PAXRecords: entry.pax}
+		}
+		if len(entry.pax) != 0 {
+			header.Format = tar.FormatPAX
+		}
 		if err := tw.WriteHeader(header); err != nil {
 			t.Fatal(err)
 		}

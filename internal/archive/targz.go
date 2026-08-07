@@ -85,6 +85,11 @@ func validateOptions(options Options) error {
 }
 
 func extractEntry(reader io.Reader, header *tar.Header, options Options, unpacked *int64, seen map[string]struct{}, matched int) (*File, error) {
+	// PAX global and extended headers carry metadata only. archive/tar applies
+	// extended records to the following file header before returning it.
+	if header.Typeflag == tar.TypeXGlobalHeader || header.Typeflag == tar.TypeXHeader {
+		return nil, nil
+	}
 	clean, err := safeArchivePath(header.Name)
 	if err != nil {
 		return nil, err
