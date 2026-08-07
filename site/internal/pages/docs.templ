@@ -22,6 +22,7 @@ func DocsPage() templ.Component {
 			SectionsTitle: "",
 			Sections: []sidebar.Section{{Title: "Guide", Items: []sidebar.Item{
 				{ID: "manifest", Label: "Manifest", Href: "/docs#manifest"},
+				{ID: "directories", Label: "Archive directories", Href: "/docs#directories"},
 				{ID: "workflow", Label: "Trust workflow", Href: "/docs#workflow"},
 				{ID: "cache", Label: "Integrity cache", Href: "/docs#cache"},
 				{ID: "embedding", Label: "Go embedding", Href: "/docs#embedding"},
@@ -60,7 +61,16 @@ templ docsHead() {
 	<meta property="og:description" content="Review a source URL, lock the first bytes fetched, and verify later copies offline."/>
 	<meta property="og:url" content="https://muamba.araihu.com/docs"/>
 	<meta property="og:image" content="https://muamba.araihu.com/og.png"/>
+	<meta property="og:site_name" content="Muamba"/>
+	<meta property="og:image:type" content="image/png"/>
+	<meta property="og:image:width" content="1672"/>
+	<meta property="og:image:height" content="941"/>
+	<meta property="og:image:alt" content="Muamba first-use file-lock workflow"/>
 	<meta name="twitter:card" content="summary_large_image"/>
+	<meta name="twitter:title" content="Muamba docs · Get started"/>
+	<meta name="twitter:description" content="Review a source URL, lock the first bytes fetched, and verify later copies offline."/>
+	<meta name="twitter:image" content="https://muamba.araihu.com/og.png"/>
+	<meta name="twitter:image:alt" content="Muamba first-use file-lock workflow"/>
 	<link rel="stylesheet" href="/styles/site.css"/>
 }
 
@@ -70,15 +80,15 @@ templ docsContent() {
 		<section aria-labelledby="requirements">
 			<h2 id="requirements" data-toc-heading>Requirements and installation</h2>
 			<p>Prebuilt archives need no Go installation. Download the matching macOS, Linux, or Windows archive and its signed checksums from <a href="https://github.com/araihu/muamba/releases/latest">GitHub Releases</a>.</p>
-			<p>Go projects can instead pin Muamba in their module. This path requires Go 1.26.5 or later:</p>
+			<p>Go projects can instead pin Muamba in their module. This path requires Go 1.26.5 or later. The command below installs the latest public release, v0.0.3. The v0.0.4 candidate is unpublished; from its checkout, invoke commands with <code class="font-mono">go run ./cmd/muamba ...</code>.</p>
 			@docsCodeBlock(codeblock.Config{Language: "bash", Label: "Install", Code: muambaInstallCommand() + `
 go tool muamba help`, Density: codeblock.DensityCompact})
 			<p>Workflow examples below use the standalone command. Project CI and Go code generation keep the module-pinned tool.</p>
 		</section>
 		<section aria-labelledby="manifest">
-			<h2 id="manifest" data-toc-heading>Write a manifest</h2>
+			<h2 id="manifest" data-toc-heading>Write a declaration</h2>
 			<p>A resource groups related downloads under one version. Each download names a destination path and either a base URL or platform-specific URLs.</p>
-			@docsCodeBlock(codeblock.Config{Language: "yaml", Label: "muamba.yaml", Code: `schema: 1
+			@docsCodeBlock(codeblock.Config{Language: "yaml", Label: ".muamba.yaml", Code: `schema: 1
 
 resources:
   bootstrap:
@@ -98,18 +108,39 @@ resources:
 				<span>&#32;is the only template token. With strict mode, Muamba rejects URLs that omit the declared version before it downloads or writes anything.</span>
 			</p>
 		</section>
+		<section aria-labelledby="directories">
+			<h2 id="directories" data-toc-heading>Vendor bounded archive directories</h2>
+			<p>Use a <code class="font-mono">directories</code> declaration for a bounded <code class="font-mono">tar.gz</code> tree. Include globs select files after <code class="font-mono">strip_components</code>; exclude globs remove matches. <code class="font-mono">max_size</code>, <code class="font-mono">max_files</code>, and <code class="font-mono">max_unpacked_size</code> are mandatory.</p>
+			@docsCodeBlock(codeblock.Config{Language: "yaml", Label: ".muamba.yaml", Code: `resources:
+  heroicons:
+    version: v2.2.0
+    directories:
+      optimized:
+        url: https://github.com/tailwindlabs/heroicons/archive/v2.2.0.tar.gz
+        archive: tar.gz
+        path: vendor/heroicons/v2.2.0
+        include:
+          - optimized/**/*.svg
+          - LICENSE
+        strip_components: 1
+        max_size: 32MiB
+        max_files: 4096
+        max_unpacked_size: 128MiB`})
+			<p>Archive paths are normalized before validation. Absolute paths, paths that still escape the extraction root after normalization, backslashes, symlinks, hard links, special files, duplicate resolved paths, empty matches, and bound overruns fail before destination or lock replacement.</p>
+			<p>Directory sources require both <code class="font-mono">.muamba.yaml</code> and <code class="font-mono">.muamba.lock.yaml</code>. Commit the declaration, generated lock, materialized tree, and every applicable <code class="font-mono">LICENSE</code>, <code class="font-mono">NOTICE</code>, and attribution file together. The lock records the archive URL and digest plus every selected member path, destination, size, and digest.</p>
+		</section>
 		<section aria-labelledby="workflow">
 			<h2 id="workflow" data-toc-heading>Review, lock, and verify</h2>
 			@alert.Alert(alert.Config{Title: "You choose what to trust", Description: "Review each source URL before you run lock. Running lock accepts the first response and records its digest. The digest detects later changes; it does not authenticate the publisher or content.", Tone: alert.ToneWarning, RootClass: "muamba-trust-alert"})
 			<h3 id="lock">1. Lock reviewed sources</h3>
 			@docsCodeBlock(codeblock.Config{Language: "bash", Label: "First trust", Code: `muamba lock --strict`, Density: codeblock.DensityCompact})
-			<p>Lock downloads every unlocked URL and platform variant, caches the first fetched bytes, and writes their SHA-384 SRI locks to the manifest atomically.</p>
+			<p>Lock downloads every unlocked URL, platform variant, and bounded archive directory; caches hash-matched bytes; and stages exact URLs, paths, sizes, and SHA-384 SRI values for publication to .muamba.lock.yaml. A publish-step error rolls back the paths already replaced; a process crash is not a cross-file transaction.</p>
 			<h3 id="verify">2. Verify offline</h3>
 			@docsCodeBlock(codeblock.Config{Language: "bash", Label: "Read-only verification", Code: `muamba verify --strict`, Density: codeblock.DensityCompact})
 			<p>
 				<span>Default verify checks materialized files without network access. Run </span>
 				@inlinecode.InlineCode("verify --all-platforms")
-				<span>&#32;to check every locked cache variant.</span>
+				<span>&#32;to check every locked cache variant and materialized directory file.</span>
 			</p>
 			<h3 id="sync">3. Restore known bytes</h3>
 			@docsCodeBlock(codeblock.Config{Language: "bash", Label: "Materialize", Code: `muamba sync --strict`, Density: codeblock.DensityCompact})
@@ -127,7 +158,7 @@ resources:
 			<p>Run generate-go once for each Go package that owns vendored files. The generated registry exposes resources, files, original integrity, and normalized digests.</p>
 			@docsCodeBlock(codeblock.Config{Language: "bash", Label: "Generate", Code: `go tool muamba generate-go \
   --strict \
-  -f muamba.yaml \
+  -f .muamba.yaml \
   --dir assets \
   --output muamba_gen.go`})
 			@docsCodeBlock(codeblock.Config{Language: "go", Label: "Use", Code: `hash, ok := assets.MuambaHash("bootstrap", "core-css")

@@ -66,6 +66,16 @@ func New(manifestPath string, options Options) (*Engine, error) {
 	if err := safepath.ValidateUnique(document.Dir, selections); err != nil {
 		return nil, err
 	}
+	directories, err := document.SelectDirectories(nil)
+	if err != nil {
+		return nil, err
+	}
+	for _, directory := range directories {
+		selections = append(selections, directoryFileSelections(directory)...)
+	}
+	if err := safepath.ValidateUnique(document.Dir, selections); err != nil {
+		return nil, err
+	}
 	if options.LockTimeout <= 0 {
 		options.LockTimeout = 5 * time.Second
 	}
@@ -132,6 +142,13 @@ func (e *Engine) reloadDocument() error {
 	selections, err := document.SelectTarget(nil, e.targetOS)
 	if err != nil {
 		return err
+	}
+	directories, err := document.SelectDirectories(nil)
+	if err != nil {
+		return err
+	}
+	for _, directory := range directories {
+		selections = append(selections, directoryFileSelections(directory)...)
 	}
 	if err := safepath.ValidateUnique(document.Dir, selections); err != nil {
 		return err

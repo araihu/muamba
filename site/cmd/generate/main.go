@@ -69,9 +69,13 @@ func render(name string, component templ.Component) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
-	if err := component.Render(context.Background(), file); err != nil {
-		return fmt.Errorf("render %s: %w", name, err)
+	renderErr := component.Render(context.Background(), file)
+	closeErr := file.Close()
+	if renderErr != nil {
+		return fmt.Errorf("render %s: %w", name, renderErr)
+	}
+	if closeErr != nil {
+		return fmt.Errorf("close %s: %w", name, closeErr)
 	}
 	return nil
 }

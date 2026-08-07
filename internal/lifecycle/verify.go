@@ -14,14 +14,28 @@ func (e *Engine) Verify(_ context.Context, selectors []string, allPlatforms bool
 	if err != nil {
 		return Report{}, err
 	}
+	directories, err := e.directorySelections(selectors)
+	if err != nil {
+		return Report{}, err
+	}
+	for _, directory := range directories {
+		if directory.Lock == nil {
+			return Report{}, fmt.Errorf("%s is unlocked", directory.ID())
+		}
+		selections = append(selections, directoryFileSelections(directory)...)
+	}
 	selected := make(map[string]struct{})
 	if allPlatforms {
 		for _, selection := range selections {
 			selected[selectionLabel(selection)] = struct{}{}
 		}
-		selections, err = e.allSelections(selectors)
+		allSelections, err := e.allSelections(selectors)
 		if err != nil {
 			return Report{}, err
+		}
+		selections = allSelections
+		for _, directory := range directories {
+			selections = append(selections, directoryFileSelections(directory)...)
 		}
 	}
 	report := Report{Warnings: append([]manifest.Warning(nil), e.warnings...)}
@@ -64,6 +78,15 @@ func (e *Engine) verifyFile(selection manifest.Selection) error {
 		return fmt.Errorf("%s at %s: %w", selectionLabel(selection), target, err)
 	}
 	defer func() { _ = file.Close() }()
+	if selection.Size >= 0 {
+		info, statErr := file.Stat()
+		if statErr != nil {
+			return fmt.Errorf("%s at %s: %w", selectionLabel(selection), target, statErr)
+		}
+		if info.Size() != selection.Size {
+			return fmt.Errorf("%s at %s: size = %d, want %d", selectionLabel(selection), target, info.Size(), selection.Size)
+		}
+	}
 	if _, err := integrity.Verify(file, digest); err != nil {
 		return fmt.Errorf("%s at %s: %w", selectionLabel(selection), target, err)
 	}

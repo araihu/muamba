@@ -17,6 +17,7 @@ type downloadedFile struct {
 	path      string
 	digest    integrity.Digest
 	integrity string
+	size      int64
 }
 
 func (e *Engine) stageCached(selection manifest.Selection) (stagedDownload, error) {
@@ -63,7 +64,8 @@ func (e *Engine) download(ctx context.Context, client *transport.Client, selecti
 			_ = os.Remove(path)
 		}
 	}()
-	if _, err := client.Fetch(ctx, selection.URL, file, e.effectiveMaxBytes(selection)); err != nil {
+	size, err := client.Fetch(ctx, selection.URL, file, e.effectiveMaxBytes(selection))
+	if err != nil {
 		return downloadedFile{}, fmt.Errorf("%s: %w", selectionLabel(selection), err)
 	}
 	if _, err := file.Seek(0, io.SeekStart); err != nil {
@@ -92,7 +94,7 @@ func (e *Engine) download(ctx context.Context, client *transport.Client, selecti
 		return downloadedFile{}, err
 	}
 	ok = true
-	return downloadedFile{path: path, digest: digest, integrity: integrity.FormatSRI(digest.Algorithm, digest.Sum)}, nil
+	return downloadedFile{path: path, digest: digest, integrity: integrity.FormatSRI(digest.Algorithm, digest.Sum), size: size}, nil
 }
 
 func (e *Engine) retrustSelections(ctx context.Context, client *transport.Client, selections []manifest.Selection) ([]manifest.Selection, error) {
@@ -108,6 +110,7 @@ func (e *Engine) retrustSelections(ctx context.Context, client *transport.Client
 		}
 		_ = os.Remove(downloaded.path)
 		selection.Integrity = downloaded.integrity
+		selection.Size = downloaded.size
 		trusted = append(trusted, selection)
 	}
 	return trusted, nil

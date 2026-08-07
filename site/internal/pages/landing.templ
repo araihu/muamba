@@ -9,10 +9,11 @@ import (
 	"github.com/araihu/goshtoso-app-shells/landingshell"
 )
 
-const muambaReleaseVersion = "v0.0.3"
+const muambaCandidateVersion = "v0.0.4"
+const muambaLatestPublicVersion = "v0.0.3"
 
 func muambaInstallCommand() string {
-	return "go get -tool github.com/araihu/muamba/cmd/muamba@" + muambaReleaseVersion
+	return "go get -tool github.com/araihu/muamba/cmd/muamba@" + muambaLatestPublicVersion
 }
 
 templ LandingPage() {
@@ -37,9 +38,9 @@ func landingShellConfig() landingshell.Config {
 			Tagline: "first-use file locks",
 			FaviconURL: "/brand/muamba-mark.svg",
 			Badge: &landingshell.BrandBadge{
-				Label: muambaReleaseVersion,
-				AriaLabel: "Muamba " + muambaReleaseVersion + " release",
-				Href: "https://github.com/araihu/muamba/releases/tag/" + muambaReleaseVersion,
+				Label:     muambaCandidateVersion + " candidate",
+				AriaLabel: "Muamba " + muambaCandidateVersion + " candidate; unpublished; latest public release " + muambaLatestPublicVersion,
+				Href: "https://github.com/araihu/muamba/releases/latest",
 			},
 		},
 		Navigation: []landingshell.Link{{Label: "Docs", Href: "/docs", Primary: true}},
@@ -63,6 +64,15 @@ func landingShellConfig() landingshell.Config {
 }
 
 templ landingHead() {
+	<meta property="og:site_name" content="Muamba"/>
+	<meta property="og:image:type" content="image/png"/>
+	<meta property="og:image:width" content="1672"/>
+	<meta property="og:image:height" content="941"/>
+	<meta property="og:image:alt" content="Muamba first-use file-lock workflow"/>
+	<meta name="twitter:title" content="Muamba · Lock first-use bytes"/>
+	<meta name="twitter:description" content="Review source URLs, accept the first bytes fetched, and reject later changes with SHA-384 locks."/>
+	<meta name="twitter:image" content="https://muamba.araihu.com/og.png"/>
+	<meta name="twitter:image:alt" content="Muamba first-use file-lock workflow"/>
 	<link rel="stylesheet" href="/styles/site.css"/>
 }
 
@@ -90,7 +100,7 @@ templ landingHero() {
 			<div class="muamba-install-code" aria-label="Install Muamba">
 				@codeblock.CodeBlock(codeblock.Config{Language: "bash", Label: "Install Muamba", Code: muambaInstallCommand(), Density: codeblock.DensityCompact})
 			</div>
-			<p>Prebuilt releases need no Go installation.</p>
+			<p>This installs the latest public release, v0.0.3. The v0.0.4 candidate is unpublished; from its checkout, run <code>go run ./cmd/muamba ...</code>. Prebuilt releases need no Go installation.</p>
 		</div>
 		<div class="muamba-manifest-preview">
 			@panel.Panel(panel.Config{
@@ -119,7 +129,7 @@ templ landingContent() {
 					<p>
 						<span>Default verify checks materialized files offline. Run </span>
 						@inlinecode.InlineCode("verify --all-platforms")
-						<span>&#32;to check every locked cache variant.</span>
+						<span>&#32;to check every locked cache variant and materialized directory file.</span>
 					</p>
 				</li>
 				<li><span>03</span><h3>Sync</h3><p>Sync checks the destination first, then the cache, then the network. Cached or remote bytes must match the lock before the destination changes.</p></li>
@@ -134,7 +144,7 @@ templ landingContent() {
 			</div>
 			<div class="muamba-proof-list">
 				<article><h3>Any remote file</h3><p>Vendor JavaScript, CSS, licenses, source maps, executables, or other release files. Muamba only needs source URLs, destination paths, and integrity locks.</p></article>
-				<article><h3>Atomic updates</h3><p>Stage every file in a grouped dependency before the manifest or visible destinations change.</p></article>
+				<article><h3>Staged updates</h3><p>Stage every file in a grouped dependency before publishing the manifest or visible destinations. Muamba rolls back paths when a publish step returns an error; a process crash can still leave different files at different generations.</p></article>
 				<article><h3>Go embed registries</h3><p>Generate deterministic, package-scoped registries with normalized digests for cache-busting URLs.</p></article>
 				<article><h3>Platform-aware tools</h3><p>Pin exact GOOS/GOARCH executables with one destination, explicit size limits, file modes, and per-target locks.</p></article>
 			</div>
@@ -151,7 +161,7 @@ templ landingContent() {
 }
 
 templ landingManifestHeader() {
-	<div class="muamba-panel-heading"><span>muamba.yaml</span>@badge.Badge(badge.Config{Label: "SHA-384 locked", Tone: badge.ToneSuccess, Appearance: badge.AppearanceSoft, Size: badge.SizeSM})</div>
+	<div class="muamba-panel-heading"><span>.muamba.yaml + lock</span>@badge.Badge(badge.Config{Label: "SHA-384 locked", Tone: badge.ToneSuccess, Appearance: badge.AppearanceSoft, Size: badge.SizeSM})</div>
 }
 
 templ landingManifestBody() {
@@ -163,10 +173,9 @@ resources:
     downloads:
       runtime:
         url: https://unpkg.com/alpinejs@${version}/dist/cdn.min.js
-        path: assets/vendor/alpine/${version}/alpine.min.js
-        integrity: sha384-…`})
+        path: assets/vendor/alpine/${version}/alpine.min.js`})
 }
 
 templ landingManifestFooter() {
-	<p>One manifest. One set of locked bytes.</p>
+	<p>Small declaration. Exact generated lock.</p>
 }

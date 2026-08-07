@@ -30,7 +30,7 @@ Commands:
   help
 
 Common options:
-  -f FILE                         Manifest path (default: find muamba.yaml)
+  -f FILE                         Declaration path (default: find .muamba.yaml, then legacy muamba.yaml)
   --strict                       Promote manifest warnings to errors
   --allow-http                   Allow explicitly insecure HTTP URLs
   --insecure-skip-tls-verify     Allow invalid HTTPS certificates
@@ -39,7 +39,7 @@ Common options:
   --max-size BYTES               Maximum response size (default: 104857600)
   --target GOOS/GOARCH           Materialization target (default: runtime)
   --cache-dir DIR                Integrity cache (default: MUAMBA_CACHE_DIR or OS cache)
-  --all-platforms                Verify every cached variant (verify only)
+  --all-platforms                Verify every cached platform variant and materialized directory file (verify only)
 
 Environment:
   MUAMBA_CACHE_DIR               Default integrity cache directory
@@ -117,7 +117,7 @@ func runLifecycle(command string, args []string, stdout, stderr io.Writer) int {
 	common := addCommonFlags(flags)
 	allPlatforms := false
 	if command == "verify" {
-		flags.BoolVar(&allPlatforms, "all-platforms", false, "verify every cached platform variant")
+		flags.BoolVar(&allPlatforms, "all-platforms", false, "verify every cached platform variant and materialized directory file")
 	}
 	if err := flags.Parse(args); err != nil {
 		return 2
