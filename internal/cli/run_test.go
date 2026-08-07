@@ -24,6 +24,9 @@ func TestHelp(t *testing.T) {
 			t.Errorf("help missing %q", command)
 		}
 	}
+	if !strings.Contains(stdout.String(), "materialized directory file") {
+		t.Errorf("help omits materialized directory verification contract: %q", stdout.String())
+	}
 	if stderr.Len() != 0 {
 		t.Fatalf("stderr = %q, want empty", stderr.String())
 	}

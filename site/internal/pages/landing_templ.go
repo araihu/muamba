@@ -17,10 +17,11 @@ import (
 	"github.com/araihu/goshtoso/components/panel"
 )
 
-const muambaReleaseVersion = "v0.0.4"
+const muambaCandidateVersion = "v0.0.4"
+const muambaLatestPublicVersion = "v0.0.3"
 
 func muambaInstallCommand() string {
-	return "go get -tool github.com/araihu/muamba/cmd/muamba@" + muambaReleaseVersion
+	return "go get -tool github.com/araihu/muamba/cmd/muamba@" + muambaLatestPublicVersion
 }
 
 func LandingPage() templ.Component {
@@ -70,8 +71,8 @@ func landingShellConfig() landingshell.Config {
 			Tagline:    "first-use file locks",
 			FaviconURL: "/brand/muamba-mark.svg",
 			Badge: &landingshell.BrandBadge{
-				Label:     muambaReleaseVersion + " candidate",
-				AriaLabel: "Muamba " + muambaReleaseVersion + " candidate; latest public release",
+				Label:     muambaCandidateVersion + " candidate",
+				AriaLabel: "Muamba " + muambaCandidateVersion + " candidate; unpublished; latest public release " + muambaLatestPublicVersion,
 				Href:      "https://github.com/araihu/muamba/releases/latest",
 			},
 		},
@@ -260,7 +261,7 @@ func landingHero() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div><p>The v0.0.4 command is for the next release candidate; use it after that tag is published. Prebuilt releases need no Go installation.</p></div><div class=\"muamba-manifest-preview\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div><p>This installs the latest public release, v0.0.3. The v0.0.4 candidate is unpublished; from its checkout, run <code>go run ./cmd/muamba ...</code>. Prebuilt releases need no Go installation.</p></div><div class=\"muamba-manifest-preview\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -311,7 +312,7 @@ func landingContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<span>&#32;to check every locked cache variant.</span></p></li><li><span>03</span><h3>Sync</h3><p>Sync checks the destination first, then the cache, then the network. Cached or remote bytes must match the lock before the destination changes.</p></li></ol></div></section><section class=\"muamba-section muamba-section-muted\"><div class=\"landing-shell__container muamba-proof-grid\"><div class=\"muamba-section-heading\"><p class=\"muamba-eyebrow\">Built for reproducible inputs</p><h2>Commit the bytes your build depends on.</h2></div><div class=\"muamba-proof-list\"><article><h3>Any remote file</h3><p>Vendor JavaScript, CSS, licenses, source maps, executables, or other release files. Muamba only needs source URLs, destination paths, and integrity locks.</p></article><article><h3>Staged updates</h3><p>Stage every file in a grouped dependency before publishing the manifest or visible destinations. Muamba rolls back paths when a publish step returns an error; a process crash can still leave different files at different generations.</p></article><article><h3>Go embed registries</h3><p>Generate deterministic, package-scoped registries with normalized digests for cache-busting URLs.</p></article><article><h3>Platform-aware tools</h3><p>Pin exact GOOS/GOARCH executables with one destination, explicit size limits, file modes, and per-target locks.</p></article></div></div></section><section class=\"muamba-section\"><div class=\"landing-shell__container muamba-final\"><div><p class=\"muamba-eyebrow\">Start with one remote file</p><h2>Choose the URL. Lock the response. Build offline.</h2></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<span>&#32;to check every locked cache variant and materialized directory file.</span></p></li><li><span>03</span><h3>Sync</h3><p>Sync checks the destination first, then the cache, then the network. Cached or remote bytes must match the lock before the destination changes.</p></li></ol></div></section><section class=\"muamba-section muamba-section-muted\"><div class=\"landing-shell__container muamba-proof-grid\"><div class=\"muamba-section-heading\"><p class=\"muamba-eyebrow\">Built for reproducible inputs</p><h2>Commit the bytes your build depends on.</h2></div><div class=\"muamba-proof-list\"><article><h3>Any remote file</h3><p>Vendor JavaScript, CSS, licenses, source maps, executables, or other release files. Muamba only needs source URLs, destination paths, and integrity locks.</p></article><article><h3>Staged updates</h3><p>Stage every file in a grouped dependency before publishing the manifest or visible destinations. Muamba rolls back paths when a publish step returns an error; a process crash can still leave different files at different generations.</p></article><article><h3>Go embed registries</h3><p>Generate deterministic, package-scoped registries with normalized digests for cache-busting URLs.</p></article><article><h3>Platform-aware tools</h3><p>Pin exact GOOS/GOARCH executables with one destination, explicit size limits, file modes, and per-target locks.</p></article></div></div></section><section class=\"muamba-section\"><div class=\"landing-shell__container muamba-final\"><div><p class=\"muamba-eyebrow\">Start with one remote file</p><h2>Choose the URL. Lock the response. Build offline.</h2></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

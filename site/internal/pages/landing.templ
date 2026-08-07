@@ -9,10 +9,11 @@ import (
 	"github.com/araihu/goshtoso-app-shells/landingshell"
 )
 
-const muambaReleaseVersion = "v0.0.4"
+const muambaCandidateVersion = "v0.0.4"
+const muambaLatestPublicVersion = "v0.0.3"
 
 func muambaInstallCommand() string {
-	return "go get -tool github.com/araihu/muamba/cmd/muamba@" + muambaReleaseVersion
+	return "go get -tool github.com/araihu/muamba/cmd/muamba@" + muambaLatestPublicVersion
 }
 
 templ LandingPage() {
@@ -37,8 +38,8 @@ func landingShellConfig() landingshell.Config {
 			Tagline: "first-use file locks",
 			FaviconURL: "/brand/muamba-mark.svg",
 			Badge: &landingshell.BrandBadge{
-				Label: muambaReleaseVersion + " candidate",
-				AriaLabel: "Muamba " + muambaReleaseVersion + " candidate; latest public release",
+				Label:     muambaCandidateVersion + " candidate",
+				AriaLabel: "Muamba " + muambaCandidateVersion + " candidate; unpublished; latest public release " + muambaLatestPublicVersion,
 				Href: "https://github.com/araihu/muamba/releases/latest",
 			},
 		},
@@ -99,7 +100,7 @@ templ landingHero() {
 			<div class="muamba-install-code" aria-label="Install Muamba">
 				@codeblock.CodeBlock(codeblock.Config{Language: "bash", Label: "Install Muamba", Code: muambaInstallCommand(), Density: codeblock.DensityCompact})
 			</div>
-			<p>The v0.0.4 command is for the next release candidate; use it after that tag is published. Prebuilt releases need no Go installation.</p>
+			<p>This installs the latest public release, v0.0.3. The v0.0.4 candidate is unpublished; from its checkout, run <code>go run ./cmd/muamba ...</code>. Prebuilt releases need no Go installation.</p>
 		</div>
 		<div class="muamba-manifest-preview">
 			@panel.Panel(panel.Config{
@@ -128,7 +129,7 @@ templ landingContent() {
 					<p>
 						<span>Default verify checks materialized files offline. Run </span>
 						@inlinecode.InlineCode("verify --all-platforms")
-						<span>&#32;to check every locked cache variant.</span>
+						<span>&#32;to check every locked cache variant and materialized directory file.</span>
 					</p>
 				</li>
 				<li><span>03</span><h3>Sync</h3><p>Sync checks the destination first, then the cache, then the network. Cached or remote bytes must match the lock before the destination changes.</p></li>

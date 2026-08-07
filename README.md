@@ -35,7 +35,7 @@ Verify the signed checksum list with the release version you downloaded, then
 verify the archive before placing `muamba` on your `PATH`:
 
 ```bash
-VERSION=v0.0.4 # After v0.0.4 is published, set this to the tag you downloaded.
+VERSION=v0.0.3 # Latest public release; set this to the tag you downloaded.
 ARCHIVE="muamba_${VERSION#v}_linux_amd64.tar.gz"
 cosign verify-blob \
   --bundle checksums.txt.sigstore.json \
@@ -53,8 +53,8 @@ On Windows, calculate the archive digest with PowerShell and compare it with
 the matching archive record in `checksums.txt`:
 
 ```powershell
-Get-FileHash .\muamba_0.0.4_windows_amd64.zip -Algorithm SHA256
-Select-String "muamba_0.0.4_windows_amd64.zip" .\checksums.txt
+Get-FileHash .\muamba_0.0.3_windows_amd64.zip -Algorithm SHA256
+Select-String "muamba_0.0.3_windows_amd64.zip" .\checksums.txt
 ```
 
 ### Pinned Go tool
@@ -63,14 +63,17 @@ Go projects can pin Muamba in the consumer module. This installation path
 requires Go 1.26.5 or later:
 
 ```bash
-# After the v0.0.4 tag is published:
-go get -tool github.com/araihu/muamba/cmd/muamba@v0.0.4
+# Latest public release:
+go get -tool github.com/araihu/muamba/cmd/muamba@v0.0.3
 go tool muamba help
+
+# Unpublished v0.0.4 candidate from this checkout:
+go run ./cmd/muamba help
 ```
 
 The examples below use the standalone `muamba` command. Prefix commands with
-`go tool` when using the module-pinned tool. Use `go run ./cmd/muamba` when
-working in this repository.
+`go tool` when using the module-pinned tool. The v0.0.4 candidate is not
+published; use `go run ./cmd/muamba` when working in this repository.
 
 ## Declaration and lock
 
@@ -237,7 +240,7 @@ muamba sync --strict --target linux/amd64
 # Operate on one resource or download.
 muamba verify --strict bootstrap/core-css
 
-# Offline verification of every locked cache blob.
+# Offline verification of every locked platform variant, directory member, and materialized target.
 muamba verify --strict --all-platforms
 ```
 

@@ -9,11 +9,11 @@ test("landing explains Muamba and links to documentation", async () => {
 
   assert.match(html, /<h1[^>]*>Choose each source URL\. Lock the first bytes fetched\.<\/h1>/);
   assert.match(html, /href="\/docs"/);
-  assert.match(html, /go get -tool github\.com\/araihu\/muamba\/cmd\/muamba@v0\.0\.4/);
+  assert.match(html, /go get -tool github\.com\/araihu\/muamba\/cmd\/muamba@v0\.0\.3/);
   assert.doesNotMatch(html, /go get -tool[^<\n]*@latest/);
   assert.match(html, /href="https:\/\/github\.com\/araihu\/muamba\/releases\/latest"/);
   assert.match(html, /Download release/);
-  assert.match(html, /v0\.0\.4 command is for the next release candidate/);
+  assert.match(html, /v0\.0\.4 candidate is unpublished/);
   assert.match(html, /data-muamba-workflow/);
 });
 
@@ -31,8 +31,8 @@ test("public installation offers standalone releases and pinned Go tools", async
   assert.match(docs, /Prebuilt archives need no Go installation\./);
   assert.match(readme, /Prebuilt archives require no Go installation\./);
   assert.match(readme, /muamba version/);
-  assert.match(readme, /go get -tool github\.com\/araihu\/muamba\/cmd\/muamba@v0\.0\.4/);
-  assert.match(readme, /After v0\.0\.4 is published/);
+  assert.match(readme, /go get -tool github\.com\/araihu\/muamba\/cmd\/muamba@v0\.0\.3/);
+  assert.match(readme, /Unpublished v0\.0\.4 candidate/);
 });
 
 test("public copy states the trust contract directly", async () => {
@@ -46,7 +46,7 @@ test("public copy states the trust contract directly", async () => {
   assert.match(landing, /Running lock accepts the first response and records its SHA-384 digest\./);
   assert.match(docs, /The digest detects later changes; it does not authenticate the publisher or content\./);
   assert.match(readme, /Running `lock`\s+accepts the first response returned by each reviewed URL and records its/);
-  assert.match(readme, /cmd\/muamba@v0\.0\.4/);
+  assert.match(readme, /cmd\/muamba@v0\.0\.3/);
 
   const retiredCopy = /Review remote files once|You choose the sources and bytes to trust|verified (?:files|bytes)|A small workflow with a hard boundary|Remote convenience, local certainty|Muamba never decides|It is aimed at|—/i;
   assert.doesNotMatch(`${landing}\n${docs}\n${readme}`, retiredCopy);
@@ -60,6 +60,7 @@ test("public copy distinguishes materialized verification from cache verificatio
 
   for (const html of [landing, docs]) {
     assert.match(html, /verify --all-platforms/);
+    assert.match(html, /every locked cache variant and materialized directory file/);
     assert.match(html, /Sync checks the destination first, then the cache, then the network\./);
   }
   assert.match(docs, /Default verify checks materialized files/);
@@ -112,6 +113,8 @@ test("landing header exposes the candidate release and icon controls", async () 
 
   assert.match(html, /href="https:\/\/github\.com\/araihu\/muamba\/releases\/latest"/);
   assert.match(html, />v0\.0\.4 candidate<\/a>/);
+  assert.match(html, /aria-label="Muamba v0\.0\.4 candidate; unpublished; latest public release v0\.0\.3"/);
+  assert.doesNotMatch(html, /go get -tool github\.com\/araihu\/muamba\/cmd\/muamba@v0\.0\.4/);
   assert.doesNotMatch(html, /releases\/tag\/v0\.0\.4/);
   assert.match(html, /<button[^>]*id="landingshell-dark-mode"[^>]*aria-label="Switch to dark mode"/);
   assert.match(navigation, /<a[^>]*aria-label="Source repository"/);
@@ -144,8 +147,8 @@ test("docs use Goshtoso componentdocshell and remain static", async () => {
   assert.match(html, /<h1[^>]*>Get started<\/h1>/);
   assert.match(html, /href="\/componentdocshell\/assets\/shell\.css/);
   assert.match(html, /href="\/assets\/styles\.css/);
-  assert.match(html, /go get -tool github\.com\/araihu\/muamba\/cmd\/muamba@v0\.0\.4/);
-  assert.match(html, /v0\.0\.4 command below is for the next release candidate/);
+  assert.match(html, /go get -tool github\.com\/araihu\/muamba\/cmd\/muamba@v0\.0\.3/);
+  assert.match(html, /v0\.0\.4 candidate is unpublished/);
   assert.doesNotMatch(html, /go get -tool[^<\n]*@latest/);
   assert.doesNotMatch(html, /WebAssembly|wasm_exec|fetch\(["']\/api/);
 });
