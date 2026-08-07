@@ -473,6 +473,39 @@ func TestCommitStagedRollsBackEarlierDestination(t *testing.T) {
 	assertNoMuambaTemporaryFiles(t, root)
 }
 
+func TestCommitStagedWithRemovalsRollsBackOnLaterFailure(t *testing.T) {
+	root := t.TempDir()
+	oldTarget := filepath.Join(root, "old")
+	blocked := filepath.Join(root, "blocked")
+	newTemporary := filepath.Join(root, ".muamba-stage-new")
+	if err := os.WriteFile(oldTarget, []byte("old"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(blocked, []byte("not a directory"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(newTemporary, []byte("new"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	items := []stagedDownload{{
+		target:    filepath.Join(blocked, "new"),
+		temporary: newTemporary,
+	}}
+	err := commitStagedWithRemovals(items, nil, []string{oldTarget})
+	if err == nil {
+		t.Fatal("commitStagedWithRemovals succeeded")
+	}
+	got, readErr := os.ReadFile(oldTarget)
+	if readErr != nil || string(got) != "old" {
+		t.Fatalf("old target = %q, %v", got, readErr)
+	}
+	if _, statErr := os.Stat(newTemporary); statErr != nil {
+		t.Fatalf("staged file disappeared: %v", statErr)
+	}
+	cleanupStaged(items, root)
+	assertNoMuambaTemporaryFiles(t, root)
+}
+
 func assertNoMuambaTemporaryFiles(t *testing.T, roots ...string) {
 	t.Helper()
 	for _, root := range roots {

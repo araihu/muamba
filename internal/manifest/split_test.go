@@ -29,6 +29,14 @@ func TestFindPrefersSplitDeclarationAndFallsBackToLegacy(t *testing.T) {
 	if err != nil || got != declaration {
 		t.Fatalf("split Find() = %q, %v", got, err)
 	}
+	nestedLegacy := filepath.Join(nested, "muamba.yaml")
+	if err := os.WriteFile(nestedLegacy, []byte("schema: 1\nresources: {}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	got, err = Find(nested, "")
+	if err != nil || got != declaration {
+		t.Fatalf("ancestor split Find() = %q, %v", got, err)
+	}
 }
 
 func TestLoadSplitLockOverlaysExactResolvedFile(t *testing.T) {

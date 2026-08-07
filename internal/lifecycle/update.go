@@ -30,12 +30,17 @@ func (e *Engine) UpdateResource(ctx context.Context, resource, version string) (
 		if marshalErr != nil {
 			return marshalErr
 		}
-		if err := commitStaged(staged, metadata); err != nil {
+		stale, staleErr := e.staleResourceFiles(oldSelections, oldDirectories, staged)
+		if staleErr != nil {
+			return staleErr
+		}
+		if err := commitStagedWithRemovals(staged, metadata, stale); err != nil {
 			return err
 		}
 		report.Changed = append(report.Changed, changed...)
 		e.document, e.warnings = candidate, warnings
-		return e.removeStaleResourceFiles(oldSelections, oldDirectories, staged)
+		removeEmptyParentsFor(stale, e.document.Dir)
+		return nil
 	})
 	return sortedReport(report), err
 }
@@ -147,11 +152,12 @@ func (e *Engine) retrustResourceDirectories(ctx context.Context, client *transpo
 	return files, changed, nil
 }
 
-func (e *Engine) removeStaleResourceFiles(downloads []manifest.Selection, directories []manifest.DirectorySelection, staged []stagedDownload) error {
+func (e *Engine) staleResourceFiles(downloads []manifest.Selection, directories []manifest.DirectorySelection, staged []stagedDownload) ([]string, error) {
 	retained := make(map[string]struct{}, len(staged))
 	for _, item := range staged {
 		retained[item.target] = struct{}{}
 	}
+	var stale []string
 	old := append([]manifest.Selection(nil), downloads...)
 	for _, directory := range directories {
 		old = append(old, directoryFileSelections(directory)...)
@@ -159,17 +165,14 @@ func (e *Engine) removeStaleResourceFiles(downloads []manifest.Selection, direct
 	for _, selection := range old {
 		target, err := e.target(selection)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if _, ok := retained[target]; ok {
 			continue
 		}
-		if err := os.Remove(target); err != nil && !os.IsNotExist(err) {
-			return err
-		}
-		removeEmptyParents(filepath.Dir(target), e.document.Dir)
+		stale = append(stale, target)
 	}
-	return nil
+	return stale, nil
 }
 
 func (e *Engine) UpdateDownload(ctx context.Context, resource, download string) (Report, error) {
@@ -222,12 +225,14 @@ func (e *Engine) updateDirectoryCandidate(ctx context.Context, candidate *manife
 	if err != nil {
 		return err
 	}
-	if err := commitStaged(staged, metadata); err != nil {
+	stale, err := e.staleResourceFiles(nil, []manifest.DirectorySelection{old}, staged)
+	if err != nil {
 		return err
 	}
-	if err := e.removeStaleResourceFiles(nil, []manifest.DirectorySelection{old}, staged); err != nil {
+	if err := commitStagedWithRemovals(staged, metadata, stale); err != nil {
 		return err
 	}
+	removeEmptyParentsFor(stale, e.document.Dir)
 	for _, selection := range files {
 		report.Changed = append(report.Changed, selectionLabel(selection))
 	}
@@ -309,6 +314,10 @@ func metadataWrites(document *manifest.Document, declarationChanged bool) ([]met
 }
 
 func commitStaged(items []stagedDownload, metadata []metadataWrite) error {
+	return commitStagedWithRemovals(items, metadata, nil)
+}
+
+func commitStagedWithRemovals(items []stagedDownload, metadata []metadataWrite, removals []string) error {
 	type stagedFile struct {
 		target    string
 		temporary string
@@ -354,21 +363,47 @@ func commitStaged(items []stagedDownload, metadata []metadataWrite) error {
 			}
 		}
 	}
+	backupTarget := func(target string) (string, error) {
+		if _, err := os.Lstat(target); err != nil {
+			if os.IsNotExist(err) {
+				return "", nil
+			}
+			return "", err
+		}
+		backup, err := os.CreateTemp(filepath.Dir(target), ".muamba-backup-*")
+		if err != nil {
+			return "", err
+		}
+		backupPath := backup.Name()
+		if err := backup.Close(); err != nil {
+			_ = os.Remove(backupPath)
+			return "", err
+		}
+		if err := os.Remove(backupPath); err != nil {
+			return "", err
+		}
+		if err := os.Rename(target, backupPath); err != nil {
+			return "", err
+		}
+		return backupPath, nil
+	}
+	for _, target := range removals {
+		entry := committedFile{target: target}
+		var err error
+		entry.backup, err = backupTarget(target)
+		if err != nil {
+			rollback()
+			return err
+		}
+		committed = append(committed, entry)
+	}
 	for _, item := range files {
 		entry := committedFile{target: item.target}
-		if _, err := os.Stat(item.target); err == nil {
-			backup, createErr := os.CreateTemp(filepath.Dir(item.target), ".muamba-backup-*")
-			if createErr != nil {
-				rollback()
-				return createErr
-			}
-			entry.backup = backup.Name()
-			_ = backup.Close()
-			_ = os.Remove(entry.backup)
-			if err := os.Rename(item.target, entry.backup); err != nil {
-				rollback()
-				return err
-			}
+		var err error
+		entry.backup, err = backupTarget(item.target)
+		if err != nil {
+			rollback()
+			return err
 		}
 		if err := os.Rename(item.temporary, item.target); err != nil {
 			if entry.backup != "" {
@@ -385,6 +420,12 @@ func commitStaged(items []stagedDownload, metadata []metadataWrite) error {
 		}
 	}
 	return nil
+}
+
+func removeEmptyParentsFor(targets []string, root string) {
+	for _, target := range targets {
+		removeEmptyParents(filepath.Dir(target), root)
+	}
 }
 
 func cleanupStaged(items []stagedDownload, root string) {

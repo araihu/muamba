@@ -45,15 +45,23 @@ func Find(startDir, explicit string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	var legacyCandidate string
 	for {
-		for _, name := range []string{".muamba.yaml", "muamba.yaml"} {
-			candidate := filepath.Join(dir, name)
-			if info, statErr := os.Stat(candidate); statErr == nil && !info.IsDir() {
-				return candidate, nil
+		split := filepath.Join(dir, ".muamba.yaml")
+		if info, statErr := os.Stat(split); statErr == nil && !info.IsDir() {
+			return split, nil
+		}
+		if legacyCandidate == "" {
+			legacy := filepath.Join(dir, "muamba.yaml")
+			if info, statErr := os.Stat(legacy); statErr == nil && !info.IsDir() {
+				legacyCandidate = legacy
 			}
 		}
 		parent := filepath.Dir(dir)
 		if parent == dir {
+			if legacyCandidate != "" {
+				return legacyCandidate, nil
+			}
 			return "", fmt.Errorf(".muamba.yaml or legacy muamba.yaml not found from %s", startDir)
 		}
 		dir = parent
