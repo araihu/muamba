@@ -6,12 +6,9 @@ resources:
       bundle-js:
         url: https://unpkg.com/bootstrap@${version}/dist/js/bootstrap.bundle.min.js
         path: assets/vendor/bootstrap/${version}/bootstrap.bundle.min.js
-        integrity: sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI
       core-css:
         url: https://unpkg.com/bootstrap@${version}/dist/css/bootstrap.min.css
         path: assets/vendor/bootstrap/${version}/bootstrap.min.css
-        integrity: sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB
       license:
         url: https://unpkg.com/bootstrap@${version}/LICENSE
         path: assets/vendor/bootstrap/${version}/LICENSE
-        integrity: sha384-WyeULmOarnkxIWJQ6Byifrdakj+J3Z1ONoIjyqqdmUvfwML66D4izPruHb7zDZbG

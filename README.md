@@ -10,7 +10,8 @@
 
 Muamba vendors remote files using trust on first use (TOFU). Running `lock`
 accepts the first response returned by each reviewed URL and records its
-SHA-384 digest in `muamba.yaml`. The digest detects later changes; it does not
+exact URL, destination, size, and SHA-384 digest in `.muamba.lock.yaml`.
+Declarations stay in `.muamba.yaml`. The digest detects later changes; it does not
 authenticate the publisher or content. `verify` checks materialized files
 offline. `sync` restores missing or corrupt files only when available bytes
 match the lock.
@@ -62,10 +63,11 @@ The examples below use the standalone `muamba` command. Prefix commands with
 `go tool` when using the module-pinned tool. Use `go run ./cmd/muamba` when
 working in this repository.
 
-## Manifest
+## Declaration and lock
 
 Each resource groups related downloads under one version. Every download names
-a destination path and either a base URL or platform-specific URLs:
+a destination path and either a base URL or platform-specific URLs. Put this
+reviewable source declaration in `.muamba.yaml`:
 
 ```yaml
 schema: 1
@@ -127,10 +129,8 @@ resources:
         platforms:
           linux/amd64:
             url: https://github.com/tailwindlabs/tailwindcss/releases/download/v${version}/tailwindcss-linux-x64
-            integrity: sha384-...
           darwin/arm64:
             url: https://github.com/tailwindlabs/tailwindcss/releases/download/v${version}/tailwindcss-macos-arm64
-            integrity: sha384-...
 ```
 
 `url` is optional when `platforms` is present. An exact platform entry takes
@@ -143,12 +143,53 @@ writes. Muamba does not infer aliases or libc variants.
 files use `0644` on POSIX. `max_size` accepts positive binary sizes using
 `KiB`, `MiB`, or `GiB`; omission retains the 100 MiB default.
 
+`lock` generates `.muamba.lock.yaml`. Each locked file records its stable ID,
+expanded URL, resolved destination path, exact byte size, and SHA-384 SRI.
+Generated entries and nested directory files are sorted by ID and path. Do not
+put `integrity` in `.muamba.yaml`; split declarations reject inline locks.
+
+### Archive directories and globs
+
+Use one bounded HTTPS `tar.gz` source to vendor a directory tree without one
+download declaration per file:
+
+```yaml
+schema: 1
+resources:
+  heroicons:
+    version: v2.2.0
+    directories:
+      optimized:
+        url: https://github.com/tailwindlabs/heroicons/archive/${version}.tar.gz
+        archive: tar.gz
+        path: vendor/heroicons/${version}
+        include:
+          - optimized/**/*.svg
+        exclude:
+          - optimized/**/experimental-*.svg
+        strip_components: 1
+        max_size: 32MiB
+        max_files: 4096
+        max_unpacked_size: 128MiB
+```
+
+`**` matches zero or more path segments; other segments use Go glob syntax.
+`strip_components` applies before include/exclude matching. `max_size` bounds
+the compressed response. `max_files` and `max_unpacked_size` are mandatory
+archive-expansion bounds.
+
+Muamba accepts only regular files and directories. Absolute paths, `..`,
+backslashes, symlinks, hard links, devices, FIFOs, duplicate resolved paths,
+empty matches, and bound overruns fail before destination or lock replacement.
+The lock pins the archive URL, size, digest, and exact sorted file set; every
+resolved file also records source path, destination path, size, and digest.
+
 ## Trust and materialization workflow
 
 Check the committed example in this repository without network access:
 
 ```bash
-go run ./cmd/muamba verify --strict -f examples/web-assets/muamba.yaml
+go run ./cmd/muamba verify --strict -f examples/web-assets/.muamba.yaml
 ```
 
 For a new or partially unlocked manifest, review every URL before you establish
@@ -158,10 +199,10 @@ first trust:
 muamba lock --strict
 ```
 
-`lock` downloads every unlocked base URL and platform variant, caches the
-first fetched bytes, and adds their SHA-384 SRI locks to the same YAML
-atomically. It writes only the selected target to each shared
-destination. Use
+`lock` downloads every unlocked base URL, platform variant, and directory
+archive; caches verified file bytes; and generates `.muamba.lock.yaml`
+atomically with selected destinations. It writes only the selected target to
+each shared destination. Use
 `--target GOOS/GOARCH` to choose another target. Commit the manifest and tracked
 downloads together.
 
@@ -198,13 +239,23 @@ muamba update bootstrap/core-css --strict
 ```
 
 A grouped or single-download update stages and hashes every declared platform
-variant before it changes the manifest or visible files. It materializes only
+variant or directory before it changes declaration, lock, or visible files. It materializes only
 the selected target. If an old versioned file no longer matches its previous
 lock, Muamba leaves it in place and fails the update.
 
-Commands search the current directory and its parents for `muamba.yaml`.
+Commands search the current directory and its parents for `.muamba.yaml`, then
+fall back to legacy `muamba.yaml` when no split declaration exists.
 Pass `-f PATH` to select one explicitly. Selectors are `resource` or
-`resource/download`; no selector means all downloads.
+`resource/download-or-directory`; no selector means all declarations.
+
+Legacy `muamba.yaml` files with inline integrity remain readable and keep their
+existing mutation behavior. New directory sources require split files. To
+migrate, create `.muamba.yaml` from the legacy declarations with every inline
+`integrity` removed, keep reviewed URLs and paths unchanged, then run
+`muamba lock --strict`. Review the generated exact sizes and resolved URLs,
+verify offline, and commit `.muamba.yaml`, `.muamba.lock.yaml`, and vendored
+files together. Presence of `.muamba.yaml` makes discovery ignore the legacy
+file, preventing an ambiguous mixed mode.
 
 ## Integrity cache and CI
 
@@ -231,7 +282,7 @@ destinations ignored:
 - uses: actions/cache@v4
   with:
     path: .cache/muamba
-    key: muamba-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('muamba.yaml') }}
+    key: muamba-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.muamba.yaml', '.muamba.lock.yaml') }}
 
 - run: go tool muamba sync --strict --target linux/amd64 --cache-dir .cache/muamba
 ```
@@ -244,22 +295,24 @@ Run `generate-go` once for each Go package that owns vendored files:
 go run ./cmd/muamba generate-go \
   --strict \
   --target linux/amd64 \
-  -f examples/web-assets/muamba.yaml \
+  -f examples/web-assets/.muamba.yaml \
   --dir assets \
   --output muamba_gen.go
 
 go run ./cmd/muamba generate-go \
   --strict --check \
-  -f examples/web-assets/muamba.yaml \
+  -f examples/web-assets/.muamba.yaml \
   --dir assets \
   --output muamba_gen.go
 ```
 
-`--dir` is relative to the manifest. Generation selects locked downloads under
+`--dir` is relative to the declaration. Generation selects named locked downloads under
 that package directory, verifies their local bytes, emits explicit `//go:embed`
 paths, and formats deterministic Go. It infers the package from an existing
 non-test `.go` file. Use `--package NAME` for an otherwise empty package
-directory. Generation uses the runtime target by default. Projects that commit
+directory. Directory/glob sources are materialized and verified by lifecycle
+commands but intentionally do not synthesize public download names; consumer
+generators can read their locked on-disk tree. Generation uses the runtime target by default. Projects that commit
 platform-specific generated bytes should always pass `--target`.
 
 The generated API exposes resource and download types plus four lookup functions:
@@ -279,7 +332,7 @@ func MuambaHash(resource, download string) (string, bool)
 func MuambaOpen(resource, download string) (fs.File, error)
 ```
 
-`Integrity` preserves the manifest’s original SRI or hexadecimal spelling.
+`Integrity` preserves the lock file's original SRI or hexadecimal spelling.
 `Hash` is the same full digest normalized as
 `sha256|sha384|sha512:<lowercase-hex>`, independent of the manifest encoding.
 Consumers can use the field or direct lookup for cache busting:
@@ -333,15 +386,15 @@ errors.
 
 ## Scope and roadmap
 
-Muamba v1 excludes authentication, SSH/Git sources, archive extraction,
+Muamba v1 excludes authentication, SSH/Git sources, arbitrary archive formats,
 release discovery, overlays, attribution models, and automatic network access
 during build or test.
 
 Planned source access includes HTTP Basic authentication, bearer/JWT tokens,
 OAuth 2.0 client credentials, and SSH. Credential values will come from
 environment variables, keychains, agents, or helper processes. They will not
-live in `muamba.yaml`. Other roadmap candidates include protected credential
-redirects, Git/release discovery, safe archive extraction, resumable downloads,
+live in `.muamba.yaml` or `.muamba.lock.yaml`. Other roadmap candidates include protected credential
+redirects, Git/release discovery, additional safe archive formats, resumable downloads,
 bounded parallelism, cache inspection and eviction, musl targeting, platform
 aliases, and multiple materialization destinations. Muamba remains
 publisher-neutral and does not hardcode release knowledge for Tailwind or
@@ -358,9 +411,9 @@ golangci-lint run
 scripts/check-coverage_test.sh
 scripts/check-coverage.sh
 go test -race ./...
-go run ./cmd/muamba verify --strict -f examples/web-assets/muamba.yaml
+go run ./cmd/muamba verify --strict -f examples/web-assets/.muamba.yaml
 go run ./cmd/muamba generate-go --strict --check \
-  -f examples/web-assets/muamba.yaml --dir assets --output muamba_gen.go
+  -f examples/web-assets/.muamba.yaml --dir assets --output muamba_gen.go
 ```
 
 Coverage must remain at or above 70%; CI uploads the raw profile, function

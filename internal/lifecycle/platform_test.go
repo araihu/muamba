@@ -460,7 +460,7 @@ func TestCommitStagedRollsBackEarlierDestination(t *testing.T) {
 		{target: firstTarget, temporary: firstTemporary},
 		{target: filepath.Join(root, "missing", "second"), temporary: secondTemporary},
 	}
-	if err := commitStaged(items, manifestPath, []byte("new manifest")); err == nil {
+	if err := commitStaged(items, []metadataWrite{{path: manifestPath, contents: []byte("new manifest")}}); err == nil {
 		t.Fatal("commitStaged succeeded")
 	}
 	cleanupStaged(items, root)

@@ -154,11 +154,11 @@ go tool muamba help`, Density: codeblock.DensityCompact}).Render(ctx, templ_7745
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<p>Workflow examples below use the standalone command. Project CI and Go code generation keep the module-pinned tool.</p></section><section aria-labelledby=\"manifest\"><h2 id=\"manifest\" data-toc-heading>Write a manifest</h2><p>A resource groups related downloads under one version. Each download names a destination path and either a base URL or platform-specific URLs.</p>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<p>Workflow examples below use the standalone command. Project CI and Go code generation keep the module-pinned tool.</p></section><section aria-labelledby=\"manifest\"><h2 id=\"manifest\" data-toc-heading>Write a declaration</h2><p>A resource groups related downloads under one version. Each download names a destination path and either a base URL or platform-specific URLs.</p>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = docsCodeBlock(codeblock.Config{Language: "yaml", Label: "muamba.yaml", Code: `schema: 1
+		templ_7745c5c3_Err = docsCodeBlock(codeblock.Config{Language: "yaml", Label: ".muamba.yaml", Code: `schema: 1
 
 resources:
   bootstrap:
@@ -200,7 +200,7 @@ resources:
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<p>Lock downloads every unlocked URL and platform variant, caches the first fetched bytes, and writes their SHA-384 SRI locks to the manifest atomically.</p><h3 id=\"verify\">2. Verify offline</h3>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<p>Lock downloads every unlocked URL, platform variant, and bounded archive directory; caches hash-matched bytes; and writes exact URLs, paths, sizes, and SHA-384 SRI values to .muamba.lock.yaml atomically.</p><h3 id=\"verify\">2. Verify offline</h3>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -240,7 +240,7 @@ resources:
 		}
 		templ_7745c5c3_Err = docsCodeBlock(codeblock.Config{Language: "bash", Label: "Generate", Code: `go tool muamba generate-go \
   --strict \
-  -f muamba.yaml \
+  -f .muamba.yaml \
   --dir assets \
   --output muamba_gen.go`}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {

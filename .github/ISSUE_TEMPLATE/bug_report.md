@@ -16,7 +16,7 @@ Provide the smallest manifest and command that reproduce the problem. Remove
 credentials, private URLs, authorization headers, and sensitive response data.
 
 ```yaml
-# minimal muamba.yaml
+# minimal .muamba.yaml and .muamba.lock.yaml
 ```
 
 ```text

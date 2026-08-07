@@ -76,9 +76,9 @@ go tool muamba help`, Density: codeblock.DensityCompact})
 			<p>Workflow examples below use the standalone command. Project CI and Go code generation keep the module-pinned tool.</p>
 		</section>
 		<section aria-labelledby="manifest">
-			<h2 id="manifest" data-toc-heading>Write a manifest</h2>
+			<h2 id="manifest" data-toc-heading>Write a declaration</h2>
 			<p>A resource groups related downloads under one version. Each download names a destination path and either a base URL or platform-specific URLs.</p>
-			@docsCodeBlock(codeblock.Config{Language: "yaml", Label: "muamba.yaml", Code: `schema: 1
+			@docsCodeBlock(codeblock.Config{Language: "yaml", Label: ".muamba.yaml", Code: `schema: 1
 
 resources:
   bootstrap:
@@ -103,7 +103,7 @@ resources:
 			@alert.Alert(alert.Config{Title: "You choose what to trust", Description: "Review each source URL before you run lock. Running lock accepts the first response and records its digest. The digest detects later changes; it does not authenticate the publisher or content.", Tone: alert.ToneWarning, RootClass: "muamba-trust-alert"})
 			<h3 id="lock">1. Lock reviewed sources</h3>
 			@docsCodeBlock(codeblock.Config{Language: "bash", Label: "First trust", Code: `muamba lock --strict`, Density: codeblock.DensityCompact})
-			<p>Lock downloads every unlocked URL and platform variant, caches the first fetched bytes, and writes their SHA-384 SRI locks to the manifest atomically.</p>
+			<p>Lock downloads every unlocked URL, platform variant, and bounded archive directory; caches hash-matched bytes; and writes exact URLs, paths, sizes, and SHA-384 SRI values to .muamba.lock.yaml atomically.</p>
 			<h3 id="verify">2. Verify offline</h3>
 			@docsCodeBlock(codeblock.Config{Language: "bash", Label: "Read-only verification", Code: `muamba verify --strict`, Density: codeblock.DensityCompact})
 			<p>
@@ -127,7 +127,7 @@ resources:
 			<p>Run generate-go once for each Go package that owns vendored files. The generated registry exposes resources, files, original integrity, and normalized digests.</p>
 			@docsCodeBlock(codeblock.Config{Language: "bash", Label: "Generate", Code: `go tool muamba generate-go \
   --strict \
-  -f muamba.yaml \
+  -f .muamba.yaml \
   --dir assets \
   --output muamba_gen.go`})
 			@docsCodeBlock(codeblock.Config{Language: "go", Label: "Use", Code: `hash, ok := assets.MuambaHash("bootstrap", "core-css")

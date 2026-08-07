@@ -30,7 +30,7 @@ Commands:
   help
 
 Common options:
-  -f FILE                         Manifest path (default: find muamba.yaml)
+  -f FILE                         Declaration path (default: find .muamba.yaml, then legacy muamba.yaml)
   --strict                       Promote manifest warnings to errors
   --allow-http                   Allow explicitly insecure HTTP URLs
   --insecure-skip-tls-verify     Allow invalid HTTPS certificates

@@ -1,0 +1,17 @@
+schema: 1
+files:
+  - id: bootstrap/bundle-js
+    url: https://unpkg.com/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js
+    path: assets/vendor/bootstrap/5.3.8/bootstrap.bundle.min.js
+    size: 80496
+    integrity: sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI
+  - id: bootstrap/core-css
+    url: https://unpkg.com/bootstrap@5.3.8/dist/css/bootstrap.min.css
+    path: assets/vendor/bootstrap/5.3.8/bootstrap.min.css
+    size: 232111
+    integrity: sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB
+  - id: bootstrap/license
+    url: https://unpkg.com/bootstrap@5.3.8/LICENSE
+    path: assets/vendor/bootstrap/5.3.8/LICENSE
+    size: 1093
+    integrity: sha384-WyeULmOarnkxIWJQ6Byifrdakj+J3Z1ONoIjyqqdmUvfwML66D4izPruHb7zDZbG

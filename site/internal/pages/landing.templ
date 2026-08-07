@@ -151,7 +151,7 @@ templ landingContent() {
 }
 
 templ landingManifestHeader() {
-	<div class="muamba-panel-heading"><span>muamba.yaml</span>@badge.Badge(badge.Config{Label: "SHA-384 locked", Tone: badge.ToneSuccess, Appearance: badge.AppearanceSoft, Size: badge.SizeSM})</div>
+	<div class="muamba-panel-heading"><span>.muamba.yaml + lock</span>@badge.Badge(badge.Config{Label: "SHA-384 locked", Tone: badge.ToneSuccess, Appearance: badge.AppearanceSoft, Size: badge.SizeSM})</div>
 }
 
 templ landingManifestBody() {
@@ -163,10 +163,9 @@ resources:
     downloads:
       runtime:
         url: https://unpkg.com/alpinejs@${version}/dist/cdn.min.js
-        path: assets/vendor/alpine/${version}/alpine.min.js
-        integrity: sha384-…`})
+        path: assets/vendor/alpine/${version}/alpine.min.js`})
 }
 
 templ landingManifestFooter() {
-	<p>One manifest. One set of locked bytes.</p>
+	<p>Small declaration. Exact generated lock.</p>
 }

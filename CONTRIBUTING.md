@@ -57,9 +57,9 @@ golangci-lint run
 scripts/check-coverage_test.sh
 scripts/check-coverage.sh
 go test -race ./...
-go run ./cmd/muamba verify --strict -f examples/web-assets/muamba.yaml
+go run ./cmd/muamba verify --strict -f examples/web-assets/.muamba.yaml
 go run ./cmd/muamba generate-go --strict --check \
-  -f examples/web-assets/muamba.yaml --dir assets --output muamba_gen.go
+  -f examples/web-assets/.muamba.yaml --dir assets --output muamba_gen.go
 ```
 
 Coverage must remain at or above 70%. CI publishes `coverage.out`, a function

@@ -366,7 +366,7 @@ func landingManifestHeader() templ.Component {
 			templ_7745c5c3_Var10 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<div class=\"muamba-panel-heading\"><span>muamba.yaml</span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<div class=\"muamba-panel-heading\"><span>.muamba.yaml + lock</span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -411,8 +411,7 @@ resources:
     downloads:
       runtime:
         url: https://unpkg.com/alpinejs@${version}/dist/cdn.min.js
-        path: assets/vendor/alpine/${version}/alpine.min.js
-        integrity: sha384-…`}).Render(ctx, templ_7745c5c3_Buffer)
+        path: assets/vendor/alpine/${version}/alpine.min.js`}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -441,7 +440,7 @@ func landingManifestFooter() templ.Component {
 			templ_7745c5c3_Var12 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<p>One manifest. One set of locked bytes.</p>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<p>Small declaration. Exact generated lock.</p>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
