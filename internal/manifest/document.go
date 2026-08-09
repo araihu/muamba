@@ -85,6 +85,18 @@ func LoadWithLock(path, lockPath string) (*Document, error) {
 	if err != nil {
 		return nil, fmt.Errorf("read manifest %s: %w", abs, err)
 	}
+	return LoadBytesWithLock(abs, lockPath, b)
+}
+
+// LoadBytesWithLock parses a declaration supplied by the caller and binds it
+// to an explicit lock path. The path is still used as the logical declaration
+// location for materialized files and mutation locking; the declaration bytes
+// themselves do not need to exist on disk.
+func LoadBytesWithLock(path, lockPath string, b []byte) (*Document, error) {
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		return nil, err
+	}
 	document, err := loadBytes(abs, b)
 	if err != nil {
 		return nil, err

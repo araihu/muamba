@@ -35,7 +35,7 @@ Verify the signed checksum list with the release version you downloaded, then
 verify the archive before placing `muamba` on your `PATH`:
 
 ```bash
-VERSION=v0.0.3 # Latest public release; set this to the tag you downloaded.
+VERSION=v0.0.5 # Latest public release; set this to the tag you downloaded.
 ARCHIVE="muamba_${VERSION#v}_linux_amd64.tar.gz"
 cosign verify-blob \
   --bundle checksums.txt.sigstore.json \
@@ -53,8 +53,8 @@ On Windows, calculate the archive digest with PowerShell and compare it with
 the matching archive record in `checksums.txt`:
 
 ```powershell
-Get-FileHash .\muamba_0.0.3_windows_amd64.zip -Algorithm SHA256
-Select-String "muamba_0.0.3_windows_amd64.zip" .\checksums.txt
+Get-FileHash .\muamba_0.0.5_windows_amd64.zip -Algorithm SHA256
+Select-String "muamba_0.0.5_windows_amd64.zip" .\checksums.txt
 ```
 
 ### Pinned Go tool
@@ -64,16 +64,29 @@ requires Go 1.26.5 or later:
 
 ```bash
 # Latest public release:
-go get -tool github.com/araihu/muamba/cmd/muamba@v0.0.3
+go get -tool github.com/araihu/muamba/cmd/muamba@v0.0.5
 go tool muamba help
-
-# Unpublished v0.0.4 candidate from this checkout:
-go run ./cmd/muamba help
 ```
 
 The examples below use the standalone `muamba` command. Prefix commands with
-`go tool` when using the module-pinned tool. The v0.0.4 candidate is not
-published; use `go run ./cmd/muamba` when working in this repository.
+`go tool` when using the module-pinned tool. Use `go run ./cmd/muamba` when
+working in this repository.
+
+### Library integrations
+
+Go libraries can provide a generated declaration in memory while keeping a
+separate lock namespace. `ManifestPath` is only the logical materialization
+root and mutation-lock identity; Muamba does not read or write that path when
+`ManifestBytes` is set:
+
+```go
+engine, err := source.New(source.Options{
+	ManifestPath:  filepath.Join(root, ".iconpack-engine"),
+	ManifestBytes: declarationBytes,
+	LockPath:      filepath.Join(root, ".iconpack.lock.yaml"),
+	CacheDir:      filepath.Join(root, ".iconpack-cache"),
+})
+```
 
 ## Declaration and lock
 

@@ -59,6 +59,38 @@ func TestExplicitNamespaceLocksAndSnapshotsWithoutMuambaDiscovery(t *testing.T) 
 	}
 }
 
+func TestInMemoryDeclarationUsesLogicalPathWithoutWritingAdapter(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("icon bytes"))
+	}))
+	defer server.Close()
+
+	root := t.TempDir()
+	manifest := filepath.Join(root, ".iconpack-engine")
+	lock := filepath.Join(root, ".iconpack.lock.yaml")
+	contents := []byte("schema: 1\nresources:\n  demo:\n    version: v1\n    downloads:\n      icon:\n        url: " + server.URL + "/${version}/icon.svg\n        path: sources/demo.svg\n        max_size: 1MiB\n")
+
+	engine, err := New(Options{
+		ManifestPath: manifest, ManifestBytes: contents, LockPath: lock,
+		CacheDir: filepath.Join(root, "cache"), Strict: true, AllowHTTP: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(manifest); !os.IsNotExist(err) {
+		t.Fatalf("in-memory declaration path exists before use: %v", err)
+	}
+	if _, err := engine.Lock(context.Background(), nil); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(manifest); !os.IsNotExist(err) {
+		t.Fatalf("in-memory declaration path was written: %v", err)
+	}
+	if _, err := engine.Snapshot(context.Background(), nil); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestNewRequiresExplicitDeclarationAndLockPaths(t *testing.T) {
 	if _, err := New(Options{LockPath: ".iconpack.lock.yaml"}); err == nil {
 		t.Fatal("missing declaration path was accepted")

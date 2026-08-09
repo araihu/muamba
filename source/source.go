@@ -15,11 +15,17 @@ import (
 
 // Options identifies one explicit Muamba declaration/lock namespace.
 type Options struct {
+	// ManifestPath is the declaration path or logical declaration location.
+	// It determines the materialization root and mutation-lock identity.
 	ManifestPath string
-	LockPath     string
-	CacheDir     string
-	Strict       bool
-	AllowHTTP    bool
+	// ManifestBytes supplies an in-memory declaration. When non-nil, Muamba
+	// does not read or write ManifestPath; callers still provide it so the
+	// engine has a stable logical namespace.
+	ManifestBytes []byte
+	LockPath      string
+	CacheDir      string
+	Strict        bool
+	AllowHTTP     bool
 }
 
 // Report summarizes a lock or synchronization operation.
@@ -54,7 +60,7 @@ func New(options Options) (*Engine, error) {
 	if options.LockPath == "" {
 		return nil, fmt.Errorf("source lock path is required")
 	}
-	inner, err := lifecycle.NewWithLock(options.ManifestPath, options.LockPath, lifecycle.Options{
+	inner, err := lifecycle.NewWithLockBytes(options.ManifestPath, options.LockPath, options.ManifestBytes, lifecycle.Options{
 		Strict: options.Strict, CacheDir: options.CacheDir,
 		Transport: transport.Options{AllowHTTP: options.AllowHTTP},
 	})

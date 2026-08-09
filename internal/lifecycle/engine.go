@@ -34,11 +34,12 @@ type Report struct {
 }
 
 type Engine struct {
-	document *manifest.Document
-	options  Options
-	warnings []manifest.Warning
-	cache    *blobcache.Store
-	targetOS manifest.Target
+	document      *manifest.Document
+	manifestBytes []byte
+	options       Options
+	warnings      []manifest.Warning
+	cache         *blobcache.Store
+	targetOS      manifest.Target
 }
 
 func New(manifestPath string, options Options) (*Engine, error) {
@@ -53,12 +54,26 @@ func NewWithLock(manifestPath, lockPath string, options Options) (*Engine, error
 }
 
 func newEngine(manifestPath, lockPath string, options Options) (*Engine, error) {
+	return newEngineWithManifest(manifestPath, lockPath, nil, options)
+}
+
+// NewWithLockBytes constructs an engine from declaration bytes and an
+// explicit lock path. manifestPath remains the logical declaration location
+// used for materialized paths and the mutation lock; no declaration file is
+// read or written.
+func NewWithLockBytes(manifestPath, lockPath string, manifestBytes []byte, options Options) (*Engine, error) {
+	return newEngineWithManifest(manifestPath, lockPath, manifestBytes, options)
+}
+
+func newEngineWithManifest(manifestPath, lockPath string, manifestBytes []byte, options Options) (*Engine, error) {
 	if options.MaxBytesSet && options.MaxBytes <= 0 {
 		return nil, fmt.Errorf("MaxBytes must be positive when explicitly set")
 	}
 	var document *manifest.Document
 	var err error
-	if lockPath == "" {
+	if manifestBytes != nil {
+		document, err = manifest.LoadBytesWithLock(manifestPath, lockPath, manifestBytes)
+	} else if lockPath == "" {
 		document, err = manifest.Load(manifestPath)
 	} else {
 		document, err = manifest.LoadWithLock(manifestPath, lockPath)
@@ -110,7 +125,10 @@ func newEngine(manifestPath, lockPath string, options Options) (*Engine, error) 
 	if err != nil {
 		return nil, err
 	}
-	return &Engine{document: document, options: options, warnings: warnings, cache: cache, targetOS: options.Target}, nil
+	return &Engine{
+		document: document, manifestBytes: append([]byte(nil), manifestBytes...),
+		options: options, warnings: warnings, cache: cache, targetOS: options.Target,
+	}, nil
 }
 
 func (e *Engine) selections(selectors []string) ([]manifest.Selection, error) {
@@ -150,7 +168,9 @@ func (e *Engine) target(selection manifest.Selection) (string, error) {
 func (e *Engine) reloadDocument() error {
 	var document *manifest.Document
 	var err error
-	if !e.document.IsLegacy() && e.document.LockPath != "" {
+	if e.manifestBytes != nil {
+		document, err = manifest.LoadBytesWithLock(e.document.Path, e.document.LockPath, e.manifestBytes)
+	} else if !e.document.IsLegacy() && e.document.LockPath != "" {
 		document, err = manifest.LoadWithLock(e.document.Path, e.document.LockPath)
 	} else {
 		document, err = manifest.Load(e.document.Path)
