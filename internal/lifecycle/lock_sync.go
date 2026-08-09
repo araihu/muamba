@@ -141,43 +141,45 @@ func (e *Engine) stageAcquired(downloads, directories []manifest.Selection, acqu
 
 func (e *Engine) Sync(ctx context.Context, selectors []string) (Report, error) {
 	report := Report{}
-	err := e.withMutationLock(ctx, func() error {
-		report.Warnings = append([]manifest.Warning(nil), e.warnings...)
-		selections, selectErr := e.selections(selectors)
-		if selectErr != nil {
-			return selectErr
-		}
-		client, clientErr := transport.New(e.options.Transport)
-		if clientErr != nil {
-			return clientErr
-		}
-		for _, selection := range selections {
-			if selection.Integrity == "" {
-				return fmt.Errorf("%s/%s is unlocked", selection.ResourceName, selection.DownloadName)
-			}
-			changed, restoreErr := e.restoreLocked(ctx, client, selection)
-			if restoreErr != nil {
-				return restoreErr
-			}
-			if changed {
-				report.Changed = append(report.Changed, selectionLabel(selection))
-			} else {
-				report.Verified = append(report.Verified, selectionLabel(selection))
-			}
-		}
-		directories, directoryErr := e.directorySelections(selectors)
-		if directoryErr != nil {
-			return directoryErr
-		}
-		for _, directory := range directories {
-			changed, verified, syncErr := e.syncDirectory(ctx, client, directory)
-			if syncErr != nil {
-				return syncErr
-			}
-			report.Changed = append(report.Changed, changed...)
-			report.Verified = append(report.Verified, verified...)
-		}
-		return nil
-	})
+	err := e.withMutationLock(ctx, func() error { return e.syncLocked(ctx, selectors, &report) })
 	return sortedReport(report), err
+}
+
+func (e *Engine) syncLocked(ctx context.Context, selectors []string, report *Report) error {
+	report.Warnings = append([]manifest.Warning(nil), e.warnings...)
+	selections, selectErr := e.selections(selectors)
+	if selectErr != nil {
+		return selectErr
+	}
+	client, clientErr := transport.New(e.options.Transport)
+	if clientErr != nil {
+		return clientErr
+	}
+	for _, selection := range selections {
+		if selection.Integrity == "" {
+			return fmt.Errorf("%s/%s is unlocked", selection.ResourceName, selection.DownloadName)
+		}
+		changed, restoreErr := e.restoreLocked(ctx, client, selection)
+		if restoreErr != nil {
+			return restoreErr
+		}
+		if changed {
+			report.Changed = append(report.Changed, selectionLabel(selection))
+		} else {
+			report.Verified = append(report.Verified, selectionLabel(selection))
+		}
+	}
+	directories, directoryErr := e.directorySelections(selectors)
+	if directoryErr != nil {
+		return directoryErr
+	}
+	for _, directory := range directories {
+		changed, verified, syncErr := e.syncDirectory(ctx, client, directory)
+		if syncErr != nil {
+			return syncErr
+		}
+		report.Changed = append(report.Changed, changed...)
+		report.Verified = append(report.Verified, verified...)
+	}
+	return nil
 }

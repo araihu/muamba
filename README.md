@@ -282,6 +282,35 @@ verify offline, and commit `.muamba.yaml`, `.muamba.lock.yaml`, and vendored
 files together. Presence of `.muamba.yaml` makes discovery ignore the legacy
 file, preventing an ambiguous mixed mode.
 
+## Library integrations
+
+Go libraries that need Muamba's acquisition boundary can import
+`github.com/araihu/muamba/source`. The package deliberately requires explicit
+declaration and lock paths, so a library can own a namespaced lock such as
+`.iconpack.lock.yaml` without discovering or modifying a consumer's
+`.muamba.yaml`:
+
+```go
+engine, err := source.New(source.Options{
+    ManifestPath: ".iconpack.engine.yaml",
+    LockPath:     ".iconpack.lock.yaml",
+    CacheDir:     ".iconpack-cache",
+})
+if err != nil {
+    return err
+}
+if _, err := engine.Lock(ctx, nil); err != nil { // explicit first trust
+    return err
+}
+files, err := engine.Snapshot(ctx, nil)
+```
+
+`Snapshot` synchronizes locked inputs while holding Muamba's mutation lock and
+returns verified in-memory bytes. Consumers should process `SnapshotFile.Contents`
+instead of reopening `SnapshotFile.Path`; that preserves the verify-then-use
+binding. `Lock` is the only first-trust operation, and later `Snapshot` calls
+fail on a changed or unavailable source.
+
 ## Integrity cache and CI
 
 Every locked download can use the integrity cache, including JavaScript, CSS,

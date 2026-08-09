@@ -69,6 +69,14 @@ func Find(startDir, explicit string) (string, error) {
 }
 
 func Load(path string) (*Document, error) {
+	return LoadWithLock(path, "")
+}
+
+// LoadWithLock loads a declaration and, when lockPath is non-empty, binds it
+// to that explicit lock file. Explicit lock paths let library consumers keep
+// independent lock namespaces without participating in Muamba's parent
+// discovery or .muamba.yaml naming convention.
+func LoadWithLock(path, lockPath string) (*Document, error) {
 	abs, err := filepath.Abs(path)
 	if err != nil {
 		return nil, err
@@ -80,6 +88,19 @@ func Load(path string) (*Document, error) {
 	document, err := loadBytes(abs, b)
 	if err != nil {
 		return nil, err
+	}
+	if lockPath != "" {
+		document.LockPath, err = filepath.Abs(lockPath)
+		if err != nil {
+			return nil, err
+		}
+		if err := document.rejectInlineLocks(); err != nil {
+			return nil, err
+		}
+		if err := document.loadLock(); err != nil {
+			return nil, err
+		}
+		return document, nil
 	}
 	if filepath.Base(abs) != ".muamba.yaml" {
 		document.legacy = true

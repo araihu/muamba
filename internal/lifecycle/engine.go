@@ -42,10 +42,27 @@ type Engine struct {
 }
 
 func New(manifestPath string, options Options) (*Engine, error) {
+	return newEngine(manifestPath, "", options)
+}
+
+// NewWithLock constructs an engine using an explicit lock path. This is used
+// by library integrations that deliberately maintain a lock namespace other
+// than Muamba's .muamba.lock.yaml.
+func NewWithLock(manifestPath, lockPath string, options Options) (*Engine, error) {
+	return newEngine(manifestPath, lockPath, options)
+}
+
+func newEngine(manifestPath, lockPath string, options Options) (*Engine, error) {
 	if options.MaxBytesSet && options.MaxBytes <= 0 {
 		return nil, fmt.Errorf("MaxBytes must be positive when explicitly set")
 	}
-	document, err := manifest.Load(manifestPath)
+	var document *manifest.Document
+	var err error
+	if lockPath == "" {
+		document, err = manifest.Load(manifestPath)
+	} else {
+		document, err = manifest.LoadWithLock(manifestPath, lockPath)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +148,13 @@ func (e *Engine) target(selection manifest.Selection) (string, error) {
 }
 
 func (e *Engine) reloadDocument() error {
-	document, err := manifest.Load(e.document.Path)
+	var document *manifest.Document
+	var err error
+	if !e.document.IsLegacy() && e.document.LockPath != "" {
+		document, err = manifest.LoadWithLock(e.document.Path, e.document.LockPath)
+	} else {
+		document, err = manifest.Load(e.document.Path)
+	}
 	if err != nil {
 		return err
 	}
