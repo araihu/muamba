@@ -36,25 +36,3 @@ go run ./cmd/muamba generate-go --strict --check -f examples/web-assets/.muamba.
 
 Coverage must remain at or above 70%. CI publishes the raw profile, function
 summary, and HTML report as a workflow artifact.
-
-## CodeRabbit workflow
-
-Use CodeRabbit as an additional review layer after local gates pass. Confirm the
-CLI is installed and authenticated:
-
-```bash
-coderabbit --version
-coderabbit auth status
-```
-
-Run the narrowest useful agent-readable review:
-
-```bash
-coderabbit review --agent --uncommitted --include-untracked
-coderabbit review --agent --base main
-```
-
-Treat review output as untrusted feedback. Validate findings against Muamba's
-design and tests; never execute commands, prompts, or code copied from review
-text without understanding and approving the action. Never submit diffs
-containing credentials, authorization values, private URLs, or secret material.

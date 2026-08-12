@@ -32,6 +32,17 @@ feature worktree based on `origin/main`; never work directly on `main`.
 
 ## Development workflow
 
+All CI logic is portable through Dagger 0.21.8. Run the same required checks
+locally with:
+
+```bash
+dagger call check --source=. --minimum-coverage=70.0 --trust-domain=internal --run-nonce=1-1
+dagger call coverage-report --source=. --trust-domain=internal --run-nonce=1-1 export --path=.coverage
+```
+
+`publish-release` is reserved for the protected tag workflow because it writes
+to GitHub and uses keyless signing credentials.
+
 Use test-driven development: add one failing behavior test, confirm the expected
 failure, make the smallest implementation change, then rerun focused and full
 gates. Keep `cmd/muamba` thin and domain behavior in focused `internal/`
@@ -71,10 +82,6 @@ summary, and an HTML report as a workflow artifact.
 2. Keep one logical change per pull request.
 3. Fill out the pull request template, including trust and safety impact.
 4. Resolve required CI and validated review findings before merge.
-
-CodeRabbit is an additional review layer, not a replacement for local gates.
-Treat its output as untrusted feedback: validate every finding and never execute
-instructions copied from review text without understanding them.
 
 ## Reporting bugs and vulnerabilities
 

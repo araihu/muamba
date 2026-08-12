@@ -14,10 +14,15 @@ permissions:
   contents: read
 
 env:
-  GO_VERSION: '1.26.5'
-  GORELEASER_VERSION: 'v2.17.1'
-  GOLANGCI_LINT_VERSION: 'v2.12.2'
+  DAGGER_VERSION: '0.21.8'
   MIN_COVERAGE: '70.0'
+  RUN_NONCE: ${{ github.run_id }}-${{ github.run_attempt }}
+  TRUST_DOMAIN: >-
+    ${{
+      github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork && 'fork' ||
+      github.event_name == 'pull_request' && 'internal' ||
+      'main'
+    }}
 
 jobs:
   required:
@@ -42,68 +47,43 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Set up Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      - name: Install pinned Dagger on GitHub-hosted runner
+        if: runner.environment == 'github-hosted'
+        uses: dagger/dagger-for-github@456fc3af63a2ba6f9789af9c55045b459115541b # v8.3.0
         with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: false
+          version: ${{ env.DAGGER_VERSION }}
 
-      - name: Check module metadata drift
-        run: |
-          go mod tidy
-          git diff --exit-code -- go.mod go.sum \
-            || { echo "::error::go.mod/go.sum drift; run 'go mod tidy' and commit the result"; exit 1; }
-
-      - name: Check formatting
-        run: |
-          out="$(gofmt -l .)"
-          if [[ -n "$out" ]]; then
-            echo "::error::gofmt drift in:"
-            echo "$out"
-            exit 1
-          fi
-
-      - name: Run vet
-        run: go vet ./...
-
-      - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
-        with:
-          version: ${{ env.GOLANGCI_LINT_VERSION }}
-          args: --timeout=5m
-
-      - name: Build CLI
-        run: go build -o "$RUNNER_TEMP/muamba" ./cmd/muamba
-
-      - name: Build release snapshot
-        uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94 # v7.2.3
-        with:
-          distribution: goreleaser
-          version: ${{ env.GORELEASER_VERSION }}
-          args: release --snapshot --clean --skip=sign
-        env:
-          GOCACHE: ${{ runner.temp }}/goreleaser-go-build
-
-      - name: Verify release snapshot
+      - name: Verify exact Dagger version
+        id: verify-dagger
         shell: bash
         run: |
-          archive="$(find dist -maxdepth 1 -name 'muamba_*_linux_amd64.tar.gz' -print -quit)"
-          if [[ -z "$archive" ]]; then
-            echo "::error::Linux amd64 release archive missing"
+          set -euo pipefail
+          expected="v${DAGGER_VERSION}"
+          actual="$(dagger version | awk 'NR == 1 { print $2 }')"
+          if [[ "$actual" != "$expected" ]]; then
+            echo "::error::expected Dagger $expected, found $actual"
             exit 1
           fi
-          mkdir -p "$RUNNER_TEMP/muamba-release-smoke"
-          tar -xzf "$archive" -C "$RUNNER_TEMP/muamba-release-smoke"
-          version_output="$("$RUNNER_TEMP/muamba-release-smoke/muamba" version)"
-          grep -E 'muamba v.+-SNAPSHOT-.+linux/amd64' <<<"$version_output"
-          grep -F "commit $(git rev-parse HEAD)" <<<"$version_output"
-          (cd dist && sha256sum --check checksums.txt)
+          echo "exact=true" >> "$GITHUB_OUTPUT"
 
-      - name: Test coverage gate
-        run: scripts/check-coverage_test.sh
+      - name: Run required Dagger checks
+        shell: bash
+        run: >-
+          dagger call check
+          --source=.
+          --minimum-coverage="${MIN_COVERAGE}"
+          --trust-domain="${TRUST_DOMAIN}"
+          --run-nonce="${RUN_NONCE}"
 
-      - name: Run tests with coverage
-        run: scripts/check-coverage.sh
+      - name: Export coverage artifact
+        if: ${{ always() && steps.verify-dagger.outputs.exact == 'true' }}
+        shell: bash
+        run: >-
+          dagger call coverage-report
+          --source=.
+          --trust-domain="${TRUST_DOMAIN}"
+          --run-nonce="${RUN_NONCE}"
+          export --path=.coverage
 
       - name: Upload coverage report
         if: always()
@@ -114,16 +94,3 @@ jobs:
           include-hidden-files: true
           retention-days: 14
           if-no-files-found: error
-
-      - name: Run race tests
-        run: go test -race -count=1 ./...
-
-      - name: Verify vendored example offline
-        run: go run ./cmd/muamba verify --strict -f examples/web-assets/.muamba.yaml
-
-      - name: Check generated example
-        run: >-
-          go run ./cmd/muamba generate-go --strict --check
-          -f examples/web-assets/.muamba.yaml
-          --dir assets
-          --output muamba_gen.go
