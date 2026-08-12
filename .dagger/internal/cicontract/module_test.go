@@ -26,8 +26,9 @@ func TestFreshnessAndReleaseSupplyChainContracts(t *testing.T) {
 		`dag.CacheVolume(cachepolicy.Volume(trustDomain, "go-mod"))`,
 		`dag.CacheVolume(cachepolicy.Volume(trustDomain, "go-build"))`,
 		`.coverage/test-exit-code.txt`,
+		`sha256sum -c checksums.txt`,
 	)
-	requireAbsent(t, module, `cachepolicy.PersistentAllowed`)
+	requireAbsent(t, module, `cachepolicy.PersistentAllowed`, `sha256sum --check`)
 
 	for _, signature := range []string{
 		"func (m *Muamba) Check(",

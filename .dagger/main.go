@@ -161,7 +161,7 @@ func (m *Muamba) ReleaseSnapshot(ctx context.Context, source *dagger.Directory, 
 func (m *Muamba) releaseSnapshot(ctx context.Context, source *dagger.Directory, trustDomain, runNonce string) (*dagger.Directory, error) {
 	container := fresh(m.releaseContainer(source, trustDomain), runNonce).
 		WithExec([]string{"goreleaser", "release", "--snapshot", "--clean", "--skip=sign"}).
-		WithExec([]string{"bash", "-euo", "pipefail", "-c", `archive="$(find dist -maxdepth 1 -name 'muamba_*_linux_amd64.tar.gz' -print -quit)"; test -n "$archive"; mkdir -p /tmp/smoke; tar -xzf "$archive" -C /tmp/smoke; version_output="$(/tmp/smoke/muamba version)"; grep -E 'muamba v.+-SNAPSHOT-.+linux/amd64' <<<"$version_output"; grep -F "commit $(git rev-parse HEAD)" <<<"$version_output"; (cd dist && sha256sum --check checksums.txt)`})
+		WithExec([]string{"bash", "-euo", "pipefail", "-c", `archive="$(find dist -maxdepth 1 -name 'muamba_*_linux_amd64.tar.gz' -print -quit)"; test -n "$archive"; mkdir -p /tmp/smoke; tar -xzf "$archive" -C /tmp/smoke; version_output="$(/tmp/smoke/muamba version)"; grep -E 'muamba v.+-SNAPSHOT-.+linux/amd64' <<<"$version_output"; grep -F "commit $(git rev-parse HEAD)" <<<"$version_output"; (cd dist && sha256sum -c checksums.txt)`})
 	if _, err := container.Directory("/src/dist").Sync(ctx); err != nil {
 		return nil, err
 	}
