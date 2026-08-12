@@ -22,7 +22,8 @@ func TestRequiredCIAdapter(t *testing.T) {
 		"github.event.pull_request.head.repo.fork && 'fork'",
 		"github.event_name == 'pull_request' && 'internal'",
 		"'main'",
-		"hostinger-vps",
+		`fromJSON('["self-hosted","Linux","X64","hostinger-vps-pr"]')`,
+		`fromJSON('["self-hosted","Linux","X64","hostinger-vps-trusted"]')`,
 		"Install pinned Dagger on GitHub-hosted runner",
 		"if: runner.environment == 'github-hosted'",
 		"version: ${{ env.DAGGER_VERSION }}",
@@ -45,6 +46,7 @@ func TestRequiredCIAdapter(t *testing.T) {
 		"if-no-files-found: error",
 	)
 	requireAbsent(t, workflow, "coderabbit", "setup-go", "golangci-lint-action", "goreleaser-action")
+	requireAbsent(t, workflow, `"hostinger-vps"]`)
 	requireCount(t, workflow, "uses: dagger/dagger-for-github@", 1)
 	requireCount(t, workflow, "dagger call ", 2)
 	requireInOrder(t, workflow,
@@ -68,6 +70,7 @@ func TestReleaseAdapter(t *testing.T) {
 		"id-token: write",
 		"RUN_NONCE: ${{ github.run_id }}-${{ github.run_attempt }}",
 		"TRUST_DOMAIN: release",
+		`runs-on: ${{ fromJSON('["self-hosted","Linux","X64","hostinger-vps-trusted"]') }}`,
 		"if: runner.environment == 'github-hosted'",
 		"version: ${{ env.DAGGER_VERSION }}",
 		`expected="v${DAGGER_VERSION}"`,
@@ -85,6 +88,7 @@ func TestReleaseAdapter(t *testing.T) {
 		"GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}",
 	)
 	requireAbsent(t, workflow, "coderabbit", "setup-go", "cosign-installer", "goreleaser-action")
+	requireAbsent(t, workflow, `"hostinger-vps"]`)
 	requireCount(t, workflow, "uses: dagger/dagger-for-github@", 1)
 	requireCount(t, workflow, "dagger call ", 2)
 	requireInOrder(t, workflow,

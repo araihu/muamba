@@ -21,6 +21,30 @@ licenses, notices, source maps, executables, and other release files without
 package-manager rules. Once you commit the manifest and files, builds and tests
 need no network access.
 
+## Repository CI with Dagger
+
+Repository checks and release preparation run through Dagger v0.21.8. The same
+required checks can run from a trusted local checkout with:
+
+```bash
+dagger call check --source=. --minimum-coverage=70.0 \
+  --trust-domain=main --run-nonce=1-1
+dagger call coverage-report --source=. \
+  --trust-domain=main --run-nonce=1-1 export --path=.coverage
+```
+
+GitHub Actions treats runner selection as a security boundary. Admitted pull
+requests use the `hostinger-vps-pr` label; protected main and release jobs use
+`hostinger-vps-trusted`. Host configuration isolates their Dagger Engines,
+sockets, data roots, and ACLs. Fork and same-repository PR domains therefore
+share only the stable `pr` cache namespace inside PR Engines. They cannot read
+or populate `main` or `release` caches.
+
+Persistent volumes contain only Go module downloads and Go build outputs.
+Source, coverage reports, release artifacts, mutable application state, and
+secrets are never mounted into those volumes. GitHub-hosted fallback PRs use
+the same logical `pr` namespace on their ephemeral Engine.
+
 ## Installation
 
 ### Prebuilt archives

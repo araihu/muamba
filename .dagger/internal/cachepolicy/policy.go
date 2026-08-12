@@ -45,12 +45,16 @@ func ValidateRelease(trustDomain, runNonce string) error {
 	return nil
 }
 
-// Volume returns a cache name partitioned by validated trust domain.
-func Volume(trustDomain, purpose string) string {
-	return fmt.Sprintf("muamba-%s-%s-v2", trustDomain, purpose)
+// Partition maps every pull-request-controlled domain to the host-isolated PR
+// Engine namespace. Protected domains keep distinct mutable cache state.
+func Partition(trustDomain string) string {
+	if trustDomain == "fork" || trustDomain == "internal" {
+		return "pr"
+	}
+	return trustDomain
 }
 
-// PersistentAllowed is false for every pull-request-controlled domain.
-func PersistentAllowed(trustDomain string) bool {
-	return trustDomain == "main" || trustDomain == "release"
+// Volume returns a cache name partitioned by the host-owned Engine boundary.
+func Volume(trustDomain, purpose string) string {
+	return fmt.Sprintf("muamba-%s-%s-v2", Partition(trustDomain), purpose)
 }

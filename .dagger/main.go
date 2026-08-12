@@ -333,11 +333,9 @@ func (m *Muamba) toolContainer(source *dagger.Directory, image, trustDomain stri
 		WithWorkdir(workdir).
 		WithEnvVariable("GOMODCACHE", "/go/pkg/mod").
 		WithEnvVariable("GOCACHE", "/root/.cache/go-build")
-	// A pull request controls its workflow arguments and must not select any
-	// persistent cache on an Engine shared with trusted main/release jobs.
-	if !cachepolicy.PersistentAllowed(trustDomain) {
-		return container
-	}
+	// Host-owned runner labels isolate PR and trusted Engines, sockets, and data
+	// roots. Only reusable Go dependency/build state is mounted here; source,
+	// coverage, artifacts, release state, and secrets never enter these volumes.
 	return container.
 		WithMountedCache("/go/pkg/mod", dag.CacheVolume(cachepolicy.Volume(trustDomain, "go-mod")), dagger.ContainerWithMountedCacheOpts{Sharing: dagger.CacheSharingModeShared}).
 		WithMountedCache("/root/.cache/go-build", dag.CacheVolume(cachepolicy.Volume(trustDomain, "go-build")), dagger.ContainerWithMountedCacheOpts{Sharing: dagger.CacheSharingModeShared})

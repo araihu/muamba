@@ -21,7 +21,7 @@ jobs:
   release:
     name: Publish release
     if: github.repository == 'araihu/muamba'
-    runs-on: ubuntu-24.04
+    runs-on: ${{ fromJSON('["self-hosted","Linux","X64","hostinger-vps-trusted"]') }}
     # GoReleaser creates the GitHub release. Cosign inside its pinned image uses
     # GitHub OIDC for keyless signing.
     permissions:

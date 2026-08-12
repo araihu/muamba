@@ -52,7 +52,10 @@ func TestValidateRelease(t *testing.T) {
 func TestVolume(t *testing.T) {
 	t.Parallel()
 
-	if got, want := Volume("fork", "go-mod"), "muamba-fork-go-mod-v2"; got != want {
+	if got, want := Volume("fork", "go-mod"), "muamba-pr-go-mod-v2"; got != want {
+		t.Fatalf("Volume() = %q, want %q", got, want)
+	}
+	if got, want := Volume("internal", "go-build"), "muamba-pr-go-build-v2"; got != want {
 		t.Fatalf("Volume() = %q, want %q", got, want)
 	}
 	if got, want := Volume("release", "go-build"), "muamba-release-go-build-v2"; got != want {
@@ -60,16 +63,17 @@ func TestVolume(t *testing.T) {
 	}
 }
 
-func TestPersistentAllowed(t *testing.T) {
+func TestPartition(t *testing.T) {
 	t.Parallel()
+
 	for _, domain := range []string{"fork", "internal"} {
-		if PersistentAllowed(domain) {
-			t.Errorf("PersistentAllowed(%q) = true for pull-request domain", domain)
+		if got := Partition(domain); got != "pr" {
+			t.Errorf("Partition(%q) = %q, want pr", domain, got)
 		}
 	}
 	for _, domain := range []string{"main", "release"} {
-		if !PersistentAllowed(domain) {
-			t.Errorf("PersistentAllowed(%q) = false for trusted domain", domain)
+		if got := Partition(domain); got != domain {
+			t.Errorf("Partition(%q) = %q, want %q", domain, got, domain)
 		}
 	}
 }

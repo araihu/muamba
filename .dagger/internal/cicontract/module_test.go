@@ -27,6 +27,7 @@ func TestFreshnessAndReleaseSupplyChainContracts(t *testing.T) {
 		`dag.CacheVolume(cachepolicy.Volume(trustDomain, "go-build"))`,
 		`.coverage/test-exit-code.txt`,
 	)
+	requireAbsent(t, module, `cachepolicy.PersistentAllowed`)
 
 	for _, signature := range []string{
 		"func (m *Muamba) Check(",
