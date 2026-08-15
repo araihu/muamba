@@ -63,7 +63,7 @@ local gates. This list omits the GoReleaser snapshot smoke test that `check`
 runs:
 
 ```bash
-go mod tidy
+go mod tidy -diff
 gofmt_files="$(gofmt -l .)" || exit 1
 test -z "$gofmt_files"
 go vet ./...
