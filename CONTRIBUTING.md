@@ -13,6 +13,7 @@ you agree to uphold it.
 
 - Go 1.26.5
 - golangci-lint v2.12.2
+- govulncheck v1.7.0
 - Git
 
 ## Getting started
@@ -32,6 +33,17 @@ feature worktree based on `origin/main`; never work directly on `main`.
 
 ## Development workflow
 
+All CI logic is portable through Dagger 0.21.8. Run the same required checks
+locally with:
+
+```bash
+dagger call check --source=. --minimum-coverage=70.0 --trust-domain=internal --run-nonce=1-1
+dagger call coverage-report --source=. --trust-domain=internal --run-nonce=1-1 export --path=.coverage
+```
+
+`publish-release` is reserved for the protected tag workflow because it writes
+to GitHub and uses keyless signing credentials.
+
 Use test-driven development: add one failing behavior test, confirm the expected
 failure, make the smallest implementation change, then rerun focused and full
 gates. Keep `cmd/muamba` thin and domain behavior in focused `internal/`
@@ -46,10 +58,12 @@ Never hand-edit generated `muamba_gen.go` files. Regenerate them with
 
 ## Before opening a pull request
 
-Run the same gates enforced by CI:
+Run `dagger call check` above. If Dagger is unavailable, run these equivalent
+local gates. This list omits the GoReleaser snapshot smoke test that `check`
+runs:
 
 ```bash
-go mod tidy
+go mod tidy -diff
 gofmt_files="$(gofmt -l .)" || exit 1
 test -z "$gofmt_files"
 go vet ./...
@@ -65,16 +79,20 @@ go run ./cmd/muamba generate-go --strict --check \
 Coverage must remain at or above 70%. CI publishes `coverage.out`, a function
 summary, and an HTML report as a workflow artifact.
 
+Run the pinned vulnerability scan from the Dagger module:
+
+```bash
+scan_dir="$(mktemp -d "${TMPDIR:-/tmp}/muamba-govulncheck.XXXXXX")"
+GOBIN="$scan_dir" GOTOOLCHAIN=local go install golang.org/x/vuln/cmd/govulncheck@v1.7.0
+(cd .dagger && GOWORK=off "$scan_dir/govulncheck" ./...)
+```
+
 ## Pull requests
 
 1. Create an isolated feature worktree from current `origin/main`.
 2. Keep one logical change per pull request.
 3. Fill out the pull request template, including trust and safety impact.
 4. Resolve required CI and validated review findings before merge.
-
-CodeRabbit is an additional review layer, not a replacement for local gates.
-Treat its output as untrusted feedback: validate every finding and never execute
-instructions copied from review text without understanding them.
 
 ## Reporting bugs and vulnerabilities
 

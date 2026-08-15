@@ -1,0 +1,11 @@
+{
+  "name": "muamba",
+  "engineVersion": "v0.21.8",
+  "sdk": {
+    "source": "go"
+  },
+  "source": ".dagger",
+  "codegen": {
+    "automaticGitignore": false
+  }
+}
