@@ -3,6 +3,7 @@ package cicontract
 import (
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -22,6 +23,11 @@ func TestRequiredCIAdapter(t *testing.T) {
 		"github.event.pull_request.head.repo.fork && 'fork'",
 		"github.event_name == 'pull_request' && 'internal'",
 		"'main'",
+		"github.event.pull_request.base.repo.full_name == github.repository",
+		"github.event.pull_request.head.repo.full_name == github.repository",
+		"github.event.pull_request.head.repo.fork == false",
+		"github.event_name == 'push' &&",
+		"||\n        'ubuntu-24.04'",
 		`fromJSON('["self-hosted","Linux","X64","hostinger-vps-pr"]')`,
 		`fromJSON('["self-hosted","Linux","X64","hostinger-vps-trusted"]')`,
 		"Install pinned Dagger on GitHub-hosted runner",
@@ -45,7 +51,8 @@ func TestRequiredCIAdapter(t *testing.T) {
 		"retention-days: 14",
 		"if-no-files-found: error",
 	)
-	requireAbsent(t, workflow, "coderabbit", "setup-go", "golangci-lint-action", "goreleaser-action")
+	requireAbsent(t, workflow, "coderabbit", "setup-go", "golangci-lint-action", "goreleaser-action", "pull_request_target", "contents: write", "pull-requests: write", "id-token: write")
+	requirePinnedActions(t, workflow)
 	requireAbsent(t, workflow, `"hostinger-vps"]`)
 	requireCount(t, workflow, "uses: dagger/dagger-for-github@", 1)
 	requireCount(t, workflow, "dagger call ", 2)
@@ -54,6 +61,12 @@ func TestRequiredCIAdapter(t *testing.T) {
 		"Verify exact Dagger version",
 		"dagger call check",
 		"dagger call coverage-report",
+	)
+	requireInOrder(t, workflow,
+		`fromJSON('["self-hosted","Linux","X64","hostinger-vps-pr"]')`,
+		"github.event_name == 'push' &&",
+		`fromJSON('["self-hosted","Linux","X64","hostinger-vps-trusted"]')`,
+		"||\n        'ubuntu-24.04'",
 	)
 }
 
@@ -75,6 +88,10 @@ func TestReleaseAdapter(t *testing.T) {
 		"version: ${{ env.DAGGER_VERSION }}",
 		`expected="v${DAGGER_VERSION}"`,
 		`actual="$(dagger version | awk 'NR == 1 { print $2 }')"`,
+		`if [[ "$actual" != "$expected" ]]`,
+		`echo "::error::expected Dagger $expected, found $actual"`,
+		"exit 1",
+		`echo "exact=true" >> "$GITHUB_OUTPUT"`,
 		"dagger call release-test",
 		"dagger call publish-release",
 		"--github-token=env://GITHUB_TOKEN",
@@ -88,6 +105,7 @@ func TestReleaseAdapter(t *testing.T) {
 		"GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}",
 	)
 	requireAbsent(t, workflow, "coderabbit", "setup-go", "cosign-installer", "goreleaser-action")
+	requirePinnedActions(t, workflow)
 	requireAbsent(t, workflow, `"hostinger-vps"]`)
 	requireCount(t, workflow, "uses: dagger/dagger-for-github@", 1)
 	requireCount(t, workflow, "dagger call ", 2)
@@ -132,6 +150,22 @@ func requireCount(t *testing.T, value, fragment string, want int) {
 	t.Helper()
 	if got := strings.Count(value, fragment); got != want {
 		t.Errorf("workflow count of %q = %d, want %d", fragment, got, want)
+	}
+}
+
+var usesPin = regexp.MustCompile(`(?m)^\s*(?:-\s*)?uses:\s*([^\s@]+)@([^\s#]+)`)
+
+func requirePinnedActions(t *testing.T, value string) {
+	t.Helper()
+	sha := regexp.MustCompile(`^[0-9a-f]{40}$`)
+	matches := usesPin.FindAllStringSubmatch(value, -1)
+	if len(matches) == 0 {
+		t.Fatal("workflow contains no actions")
+	}
+	for _, match := range matches {
+		if !sha.MatchString(match[2]) {
+			t.Errorf("action %s is not pinned to a commit SHA: %s", match[1], match[2])
+		}
 	}
 }
 

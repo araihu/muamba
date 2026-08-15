@@ -83,7 +83,7 @@ func (m *Muamba) Module(ctx context.Context, source *dagger.Directory, trustDoma
 
 func (m *Muamba) module(ctx context.Context, source *dagger.Directory, trustDomain, runNonce string) (string, error) {
 	return fresh(m.goContainer(source, trustDomain), runNonce).
-		WithExec([]string{"bash", "-euo", "pipefail", "-c", "cp go.mod /tmp/go.mod && cp go.sum /tmp/go.sum && go mod tidy && cmp -s go.mod /tmp/go.mod && cmp -s go.sum /tmp/go.sum"}).
+		WithExec([]string{"bash", "-euo", "pipefail", "-c", `cp go.mod /tmp/go.mod; cp go.sum /tmp/go.sum; go mod tidy; for f in go.mod go.sum; do cmp -s "$f" "/tmp/$f" || { printf 'go mod tidy drift in %s:\n' "$f" >&2; diff -u "/tmp/$f" "$f" >&2 || true; exit 1; }; done`}).
 		WithExec([]string{"go", "version"}).
 		Stdout(ctx)
 }
@@ -162,10 +162,11 @@ func (m *Muamba) releaseSnapshot(ctx context.Context, source *dagger.Directory, 
 	container := fresh(m.releaseContainer(source, trustDomain), runNonce).
 		WithExec([]string{"goreleaser", "release", "--snapshot", "--clean", "--skip=sign"}).
 		WithExec([]string{"bash", "-euo", "pipefail", "-c", `archive="$(find dist -maxdepth 1 -name 'muamba_*_linux_amd64.tar.gz' -print -quit)"; test -n "$archive"; mkdir -p /tmp/smoke; tar -xzf "$archive" -C /tmp/smoke; version_output="$(/tmp/smoke/muamba version)"; grep -E 'muamba v.+-SNAPSHOT-.+linux/amd64' <<<"$version_output"; grep -F "commit $(git rev-parse HEAD)" <<<"$version_output"; (cd dist && sha256sum -c checksums.txt)`})
-	if _, err := container.Directory("/src/dist").Sync(ctx); err != nil {
+	distPath := workdir + "/dist"
+	if _, err := container.Directory(distPath).Sync(ctx); err != nil {
 		return nil, err
 	}
-	return container.Directory("/src/dist"), nil
+	return container.Directory(distPath), nil
 }
 
 // Coverage applies test and minimum-percentage gates, returning all reports on success.
@@ -181,10 +182,11 @@ func (m *Muamba) coverage(ctx context.Context, source *dagger.Directory, minimum
 		WithEnvVariable("MIN_COVERAGE", minimumCoverage), runNonce).
 		WithExec([]string{"scripts/check-coverage_test.sh"}).
 		WithExec([]string{"scripts/check-coverage.sh"})
-	if _, err := container.Directory("/src/.coverage").Sync(ctx); err != nil {
+	coveragePath := workdir + "/.coverage"
+	if _, err := container.Directory(coveragePath).Sync(ctx); err != nil {
 		return nil, err
 	}
-	return container.Directory("/src/.coverage"), nil
+	return container.Directory(coveragePath), nil
 }
 
 // CoverageReport always returns an artifact directory and records test exit
@@ -201,10 +203,11 @@ func (m *Muamba) CoverageReport(
 	}
 	container := fresh(m.goContainer(source, trustDomain), runNonce).
 		WithExec([]string{"bash", "-euo", "pipefail", "-c", `mkdir -p .coverage; status=0; go test -count=1 -covermode=atomic -coverprofile=.coverage/coverage.out ./... || status=$?; printf '%s\n' "$status" > .coverage/test-exit-code.txt; if test -s .coverage/coverage.out; then go tool cover -func=.coverage/coverage.out > .coverage/coverage.txt || printf 'coverage summary unavailable\n' > .coverage/coverage.txt; go tool cover -html=.coverage/coverage.out -o .coverage/coverage.html || printf '<html><body>coverage HTML unavailable</body></html>\n' > .coverage/coverage.html; else : > .coverage/coverage.out; printf 'coverage unavailable; go test exited %s\n' "$status" > .coverage/coverage.txt; printf '<html><body>coverage unavailable; go test exited %s</body></html>\n' "$status" > .coverage/coverage.html; fi`})
-	if _, err := container.Directory("/src/.coverage").Sync(ctx); err != nil {
+	coveragePath := workdir + "/.coverage"
+	if _, err := container.Directory(coveragePath).Sync(ctx); err != nil {
 		return nil, err
 	}
-	return container.Directory("/src/.coverage"), nil
+	return container.Directory(coveragePath), nil
 }
 
 // Race runs every Go test with the race detector and no test-result reuse.
@@ -272,6 +275,9 @@ func (m *Muamba) PublishRelease(
 		return "", err
 	}
 	if err := releasepolicy.ValidateIdentity(tag, commit); err != nil {
+		return "", err
+	}
+	if err := releasepolicy.ValidateRepository(repository); err != nil {
 		return "", err
 	}
 

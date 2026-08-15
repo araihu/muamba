@@ -26,12 +26,35 @@ func TestValidateIdentity(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			err := ValidateIdentity(tt.tag, tt.commit)
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("ValidateIdentity(%q, %q) error = %v, wantErr %v", tt.tag, tt.commit, err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestValidateRepository(t *testing.T) {
+	t.Parallel()
+
+	const canonical = "https://github.com/araihu/muamba.git"
+	for _, tt := range []struct {
+		name       string
+		repository string
+		wantErr    bool
+	}{
+		{name: "canonical", repository: canonical},
+		{name: "other repository", repository: "https://github.com/attacker/muamba.git", wantErr: true},
+		{name: "ssh remote", repository: "git@github.com:araihu/muamba.git", wantErr: true},
+		{name: "trailing slash", repository: canonical + "/", wantErr: true},
+		{name: "empty", wantErr: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			if err := ValidateRepository(tt.repository); (err != nil) != tt.wantErr {
+				t.Fatalf("ValidateRepository(%q) error = %v, wantErr %v", tt.repository, err, tt.wantErr)
 			}
 		})
 	}

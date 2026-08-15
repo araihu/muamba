@@ -13,6 +13,7 @@ you agree to uphold it.
 
 - Go 1.26.5
 - golangci-lint v2.12.2
+- govulncheck v1.7.0
 - Git
 
 ## Getting started
@@ -57,7 +58,9 @@ Never hand-edit generated `muamba_gen.go` files. Regenerate them with
 
 ## Before opening a pull request
 
-Run the same gates enforced by CI:
+Run `dagger call check` above. If Dagger is unavailable, run these equivalent
+local gates. This list omits the GoReleaser snapshot smoke test that `check`
+runs:
 
 ```bash
 go mod tidy
@@ -75,6 +78,14 @@ go run ./cmd/muamba generate-go --strict --check \
 
 Coverage must remain at or above 70%. CI publishes `coverage.out`, a function
 summary, and an HTML report as a workflow artifact.
+
+Run the pinned vulnerability scan from the Dagger module:
+
+```bash
+scan_dir="$(mktemp -d "${TMPDIR:-/tmp}/muamba-govulncheck.XXXXXX")"
+GOBIN="$scan_dir" GOTOOLCHAIN=local go install golang.org/x/vuln/cmd/govulncheck@v1.7.0
+(cd .dagger && GOWORK=off "$scan_dir/govulncheck" ./...)
+```
 
 ## Pull requests
 

@@ -12,6 +12,8 @@ var (
 	commitPattern     = regexp.MustCompile(`^[0-9a-f]{40}$`)
 )
 
+const releaseRepository = "https://github.com/araihu/muamba.git"
+
 // ValidateIdentity requires the exact tag and commit identity supplied by the
 // CI provider. The ancestry check still runs against origin/main in Dagger.
 func ValidateIdentity(tag, commit string) error {
@@ -20,6 +22,14 @@ func ValidateIdentity(tag, commit string) error {
 	}
 	if !commitPattern.MatchString(commit) {
 		return fmt.Errorf("release commit must be a full lowercase Git SHA-1")
+	}
+	return nil
+}
+
+// ValidateRepository rejects any remote other than the Muamba release remote.
+func ValidateRepository(repository string) error {
+	if repository != releaseRepository {
+		return fmt.Errorf("release functions require repository %s", releaseRepository)
 	}
 	return nil
 }

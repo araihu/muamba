@@ -6,7 +6,6 @@ func TestValidate(t *testing.T) {
 	t.Parallel()
 
 	for _, domain := range []string{"fork", "internal", "main", "release"} {
-		domain := domain
 		t.Run(domain, func(t *testing.T) {
 			t.Parallel()
 			if err := Validate(domain, "12345-2"); err != nil {
@@ -26,7 +25,6 @@ func TestValidate(t *testing.T) {
 		{name: "space in nonce", domain: "internal", nonce: "1 1"},
 		{name: "slash in nonce", domain: "internal", nonce: "1/1"},
 	} {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			if err := Validate(tt.domain, tt.nonce); err == nil {
