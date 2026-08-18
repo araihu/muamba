@@ -41,3 +41,13 @@ test("static build contains both HTML routes and local assets", async () => {
   assert.match(docs, /<title>Muamba docs/);
   assert.match(styles, /\.muamba-docs-codeblock/);
 });
+
+test("browser test disables macOS Chromium code-sign clones", async () => {
+  const browserScript = await read("../scripts/test-theme-browser.mjs");
+
+  assert.match(browserScript, /"--disable-features=MacAppCodeSignClone"/);
+  assert.match(
+    browserScript,
+    /process\.env\.CHROME_BIN,[\s\S]*"\/opt\/homebrew\/bin\/chromium",/,
+  );
+});

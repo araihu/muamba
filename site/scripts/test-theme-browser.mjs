@@ -10,6 +10,7 @@ const dist = fileURLToPath(new URL("../dist/", import.meta.url));
 const storageDisabled = process.env.MUAMBA_DISABLE_STORAGE === "1";
 const chromeCandidates = [
   process.env.CHROME_BIN,
+  "/opt/homebrew/bin/chromium",
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
   "/Applications/Chromium.app/Contents/MacOS/Chromium",
   "/usr/bin/google-chrome",
@@ -61,6 +62,7 @@ const origin = `http://127.0.0.1:${address.port}`;
 const profile = await mkdtemp(join(tmpdir(), "muamba-theme-browser-"));
 const chrome = spawn(await findChrome(), [
   "--headless=new",
+  "--disable-features=MacAppCodeSignClone",
   "--disable-gpu",
   "--no-default-browser-check",
   "--no-first-run",
