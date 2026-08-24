@@ -84,7 +84,7 @@ Select-String "muamba_0.0.5_windows_amd64.zip" .\checksums.txt
 ### Pinned Go tool
 
 Go projects can pin Muamba in the consumer module. This installation path
-requires Go 1.26.5 or later:
+requires Go 1.27.0 or later:
 
 ```bash
 # Latest public release:

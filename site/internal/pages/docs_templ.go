@@ -146,7 +146,7 @@ func docsContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<section aria-labelledby=\"requirements\"><h2 id=\"requirements\" data-toc-heading>Requirements and installation</h2><p>Prebuilt archives need no Go installation. Download the matching macOS, Linux, or Windows archive and its signed checksums from <a href=\"https://github.com/araihu/muamba/releases/latest\">GitHub Releases</a>.</p><p>Go projects can instead pin Muamba in their module. This path requires Go 1.26.5 or later. The command below installs the latest public release, v0.0.3. The v0.0.4 candidate is unpublished; from its checkout, invoke commands with <code class=\"font-mono\">go run ./cmd/muamba ...</code>.</p>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<section aria-labelledby=\"requirements\"><h2 id=\"requirements\" data-toc-heading>Requirements and installation</h2><p>Prebuilt archives need no Go installation. Download the matching macOS, Linux, or Windows archive and its signed checksums from <a href=\"https://github.com/araihu/muamba/releases/latest\">GitHub Releases</a>.</p><p>Go projects can instead pin Muamba in their module. This path requires Go 1.27.0 or later. The command below installs the latest public release, v0.0.3. The v0.0.4 candidate is unpublished; from its checkout, invoke commands with <code class=\"font-mono\">go run ./cmd/muamba ...</code>.</p>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

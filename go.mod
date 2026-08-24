@@ -1,6 +1,6 @@
 module github.com/araihu/muamba
 
-go 1.26.5
+go 1.27.0
 
 require (
 	github.com/gofrs/flock v0.13.0
