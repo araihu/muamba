@@ -1,6 +1,6 @@
 # AGENTS.md - Muamba
 
-Muamba is a Go 1.26.5 CLI for TOFU vendoring, integrity verification, and
+Muamba is a Go 1.27.0 CLI for TOFU vendoring, integrity verification, and
 package-scoped Go embedding. Public behavior lives in `README.md`; executable
 contracts live in focused package tests.
 
