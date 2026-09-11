@@ -8,6 +8,7 @@ package source
 import (
 	"context"
 	"fmt"
+	"io"
 
 	"github.com/araihu/muamba/internal/lifecycle"
 	"github.com/araihu/muamba/internal/transport"
@@ -49,6 +50,21 @@ type SnapshotFile struct {
 // Engine owns one explicit declaration/lock namespace.
 type Engine struct {
 	inner *lifecycle.Engine
+}
+
+// File describes one verified file without retaining its contents.
+type File = lifecycle.File
+
+// Walk synchronizes locked inputs and visits files in path order under the
+// mutation lock. The reader exposes a private, verified disk snapshot and is
+// valid only during the callback. Do not retain it or call another mutation
+// operation on this namespace from the callback. Errors and cancellation stop
+// iteration and remove staging. No implicit first trust occurs.
+func (e *Engine) Walk(ctx context.Context, selectors []string, visit func(File, io.Reader) error) error {
+	if e == nil || e.inner == nil {
+		return fmt.Errorf("source engine is nil")
+	}
+	return e.inner.Walk(ctx, selectors, visit)
 }
 
 // New opens the explicit declaration and lock paths. It never searches for a

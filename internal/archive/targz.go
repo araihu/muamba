@@ -3,6 +3,7 @@ package archive
 import (
 	"archive/tar"
 	"compress/gzip"
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -26,44 +27,70 @@ type File struct {
 }
 
 func ExtractTarGz(filename string, options Options) ([]File, error) {
-	if err := validateOptions(options); err != nil {
+	var files []File
+	err := WalkTarGz(context.Background(), filename, options, func(file File) error {
+		files = append(files, file)
+		return nil
+	})
+	if err != nil {
 		return nil, err
+	}
+	sort.Slice(files, func(i, j int) bool { return files[i].Path < files[j].Path })
+	return files, nil
+}
+
+// WalkTarGz validates all entries and visits selected files one at a time.
+// Contents are owned by the callback; do not retain them for bounded memory.
+func WalkTarGz(ctx context.Context, filename string, options Options, visit func(File) error) error {
+	if visit == nil {
+		return fmt.Errorf("archive visitor is nil")
+	}
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if err := validateOptions(options); err != nil {
+		return err
 	}
 	input, err := os.Open(filename)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer func() { _ = input.Close() }()
-	gz, err := gzip.NewReader(input)
+	gz, err := gzip.NewReader(cancelReader{ctx, input})
 	if err != nil {
-		return nil, fmt.Errorf("open tar.gz: %w", err)
+		return fmt.Errorf("open tar.gz: %w", err)
 	}
 	defer func() { _ = gz.Close() }()
 	reader := tar.NewReader(gz)
 	seen := make(map[string]struct{})
-	var files []File
+	matched := 0
 	var unpacked int64
 	for {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		header, nextErr := reader.Next()
 		if nextErr == io.EOF {
 			break
 		}
 		if nextErr != nil {
-			return nil, fmt.Errorf("read tar.gz: %w", nextErr)
+			return fmt.Errorf("read tar.gz: %w", nextErr)
 		}
-		file, entryErr := extractEntry(reader, header, options, &unpacked, seen, len(files))
+		file, entryErr := extractEntry(reader, header, options, &unpacked, seen, matched)
 		if entryErr != nil {
-			return nil, entryErr
+			return entryErr
 		}
 		if file != nil {
-			files = append(files, *file)
+			matched++
+			if err := visit(*file); err != nil {
+				return err
+			}
 		}
 	}
-	if len(files) == 0 {
-		return nil, fmt.Errorf("include globs matched no files")
+	if matched == 0 {
+		return fmt.Errorf("include globs matched no files")
 	}
-	sort.Slice(files, func(i, j int) bool { return files[i].Path < files[j].Path })
-	return files, nil
+	return ctx.Err()
 }
 
 func validateOptions(options Options) error {
@@ -189,4 +216,17 @@ func matchSegments(pattern, value []string) bool {
 	}
 	matched, err := path.Match(pattern[0], value[0])
 	return err == nil && matched && matchSegments(pattern[1:], value[1:])
+}
+
+// cancelReader also covers skipped tar entries, which tar.Reader drains internally.
+type cancelReader struct {
+	ctx    context.Context
+	reader io.Reader
+}
+
+func (r cancelReader) Read(p []byte) (int, error) {
+	if err := r.ctx.Err(); err != nil {
+		return 0, err
+	}
+	return r.reader.Read(p)
 }
