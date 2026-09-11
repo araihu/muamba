@@ -36,29 +36,26 @@ func (e *Engine) acquireDirectory(ctx context.Context, client *transport.Client,
 		return manifest.LockedDirectory{}, nil, err
 	}
 	defer func() { _ = os.Remove(downloaded.path) }()
-	files, err := archivepkg.ExtractTarGz(downloaded.path, archivepkg.Options{
-		StripComponents: directory.StripComponents,
-		Include:         directory.Include,
-		Exclude:         directory.Exclude,
-		MaxFiles:        directory.MaxFiles,
-		MaxBytes:        directory.MaxUnpackedBytes,
-	})
-	if err != nil {
-		return manifest.LockedDirectory{}, nil, fmt.Errorf("%s: %w", directory.ID(), err)
-	}
 	locked := manifest.LockedDirectory{
 		ID: directory.ID(), URL: directory.URL, Path: filepath.ToSlash(directory.Path),
 		Size: downloaded.size, Integrity: downloaded.integrity,
-		Files: make([]manifest.LockedDirectoryFile, 0, len(files)),
 	}
-	selections := make([]manifest.Selection, 0, len(files))
-	for _, file := range files {
-		digest, digestErr := digestBytes(file.Contents)
-		if digestErr != nil {
-			return manifest.LockedDirectory{}, nil, digestErr
+	staging, err := newDirectoryStaging()
+	if err != nil {
+		return manifest.LockedDirectory{}, nil, err
+	}
+	defer staging.close()
+	var selections []manifest.Selection
+	err = archivepkg.WalkTarGz(ctx, downloaded.path, archivepkg.Options{
+		StripComponents: directory.StripComponents, Include: directory.Include, Exclude: directory.Exclude,
+		MaxFiles: directory.MaxFiles, MaxBytes: directory.MaxUnpackedBytes,
+	}, func(file archivepkg.File) error {
+		digest, err := digestBytes(file.Contents)
+		if err != nil {
+			return err
 		}
-		if err := e.seedBytes(file.Contents, digest); err != nil {
-			return manifest.LockedDirectory{}, nil, err
+		if err := staging.add(file.Contents, digest); err != nil {
+			return err
 		}
 		path := filepath.ToSlash(filepath.Join(directory.Path, filepath.FromSlash(file.Path)))
 		lockedFile := manifest.LockedDirectoryFile{
@@ -67,7 +64,16 @@ func (e *Engine) acquireDirectory(ctx context.Context, client *transport.Client,
 		}
 		locked.Files = append(locked.Files, lockedFile)
 		selections = append(selections, directoryFileSelection(directory, lockedFile))
+		return nil
+	})
+	if err != nil {
+		return manifest.LockedDirectory{}, nil, fmt.Errorf("%s: %w", directory.ID(), err)
 	}
+	if err := staging.seed(ctx, e.cache); err != nil {
+		return manifest.LockedDirectory{}, nil, err
+	}
+	sort.Slice(locked.Files, func(i, j int) bool { return locked.Files[i].Source < locked.Files[j].Source })
+	sort.Slice(selections, func(i, j int) bool { return selections[i].Path < selections[j].Path })
 	return locked, selections, nil
 }
 
@@ -104,6 +110,9 @@ func (e *Engine) syncDirectory(ctx context.Context, client *transport.Client, di
 	missing := make([]manifest.Selection, 0)
 	var changed, verified []string
 	for _, selection := range selections {
+		if err := ctx.Err(); err != nil {
+			return nil, nil, err
+		}
 		if err := e.verifyFile(selection); err == nil {
 			digest, _ := integrity.Parse(selection.Integrity)
 			target, _ := e.target(selection)
@@ -148,17 +157,40 @@ func (e *Engine) syncDirectory(ctx context.Context, client *transport.Client, di
 	if downloaded.size != directory.Lock.Size {
 		return nil, nil, fmt.Errorf("%s archive size = %d, want %d", directory.ID(), downloaded.size, directory.Lock.Size)
 	}
-	files, err := archivepkg.ExtractTarGz(downloaded.path, archivepkg.Options{
+	locked := make(map[string]manifest.LockedDirectoryFile, len(directory.Lock.Files))
+	for _, file := range directory.Lock.Files {
+		locked[file.Source] = file
+	}
+	staging, err := newDirectoryStaging()
+	if err != nil {
+		return nil, nil, err
+	}
+	defer staging.close()
+	count := 0
+	err = archivepkg.WalkTarGz(ctx, downloaded.path, archivepkg.Options{
 		StripComponents: directory.StripComponents, Include: directory.Include, Exclude: directory.Exclude,
 		MaxFiles: directory.MaxFiles, MaxBytes: directory.MaxUnpackedBytes,
+	}, func(file archivepkg.File) error {
+		count++
+		digest, err := verifyDirectoryFile(directory, locked, file)
+		if err != nil {
+			return err
+		}
+		return staging.add(file.Contents, digest)
 	})
 	if err != nil {
 		return nil, nil, fmt.Errorf("%s: %w", directory.ID(), err)
 	}
-	if err := e.verifyAndSeedDirectory(directory, files); err != nil {
+	if count != len(locked) {
+		return nil, nil, fmt.Errorf("%s resolved file set changed: got %d files, want %d", directory.ID(), count, len(locked))
+	}
+	if err := staging.seed(ctx, e.cache); err != nil {
 		return nil, nil, err
 	}
 	for _, selection := range missing {
+		if err := ctx.Err(); err != nil {
+			return nil, nil, err
+		}
 		digest, _ := integrity.Parse(selection.Integrity)
 		target, _ := e.target(selection)
 		if err := e.cache.Materialize(digest, target, selectionMode(selection)); err != nil {
@@ -180,25 +212,33 @@ func (e *Engine) verifyAndSeedDirectory(directory manifest.DirectorySelection, f
 		locked[file.Source] = file
 	}
 	for _, file := range files {
-		expected, ok := locked[file.Path]
-		if !ok {
-			return fmt.Errorf("%s resolved unexpected file %q", directory.ID(), file.Path)
-		}
-		if file.Size != expected.Size {
-			return fmt.Errorf("%s file %q size = %d, want %d", directory.ID(), file.Path, file.Size, expected.Size)
-		}
-		digest, err := digestBytes(file.Contents)
+		digest, err := verifyDirectoryFile(directory, locked, file)
 		if err != nil {
 			return err
-		}
-		if integrity.FormatSRI(digest.Algorithm, digest.Sum) != expected.Integrity {
-			return fmt.Errorf("%s file %q integrity mismatch", directory.ID(), file.Path)
 		}
 		if err := e.seedBytes(file.Contents, digest); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func verifyDirectoryFile(directory manifest.DirectorySelection, locked map[string]manifest.LockedDirectoryFile, file archivepkg.File) (integrity.Digest, error) {
+	expected, ok := locked[file.Path]
+	if !ok {
+		return integrity.Digest{}, fmt.Errorf("%s resolved unexpected file %q", directory.ID(), file.Path)
+	}
+	if file.Size != expected.Size {
+		return integrity.Digest{}, fmt.Errorf("%s file %q size = %d, want %d", directory.ID(), file.Path, file.Size, expected.Size)
+	}
+	digest, err := digestBytes(file.Contents)
+	if err != nil {
+		return integrity.Digest{}, err
+	}
+	if integrity.FormatSRI(digest.Algorithm, digest.Sum) != expected.Integrity {
+		return integrity.Digest{}, fmt.Errorf("%s file %q integrity mismatch", directory.ID(), file.Path)
+	}
+	return digest, nil
 }
 
 func digestBytes(contents []byte) (integrity.Digest, error) {

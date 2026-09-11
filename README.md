@@ -348,6 +348,24 @@ instead of reopening `SnapshotFile.Path`; that preserves the verify-then-use
 binding. `Lock` is the only first-trust operation, and later `Snapshot` calls
 fail on a changed or unavailable source.
 
+For large packs, use `Walk` instead of retaining a snapshot:
+
+```go
+err = engine.Walk(ctx, nil, func(file source.File, verified io.Reader) error {
+    // Copy to consumer-owned staging; publish only after Walk succeeds.
+    return copyToStaging(file.Path, verified)
+})
+```
+
+`Walk` visits files in path order and holds the mutation lock through every
+callback. The reader exposes a private disk copy verified against the locked
+digest and size, so replacing or rewriting the materialized source cannot
+change the bytes delivered. Readers are valid only during their callback.
+Callback errors and cancellation stop iteration and remove temporary snapshots.
+Do not call another mutation operation on the same namespace from a callback.
+Archive acquisition also processes one selected file at a time; memory use does
+not grow with the sum of all image contents. Metadata remains in memory.
+
 ## Integrity cache and CI
 
 Every locked download can use the integrity cache, including JavaScript, CSS,

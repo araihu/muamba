@@ -3,11 +3,40 @@ package archive
 import (
 	"archive/tar"
 	"compress/gzip"
+	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 )
+
+func TestWalkTarGzStopsOnCallbackFailureAndCancellation(t *testing.T) {
+	path := writeTarGz(t, []tarEntry{{name: "a", body: "first"}, {name: "b", body: "second"}})
+	options := Options{Include: []string{"*"}, MaxFiles: 2, MaxBytes: 1024}
+	sentinel := errors.New("stop")
+	count := 0
+	err := WalkTarGz(t.Context(), path, options, func(file File) error {
+		count++
+		if file.Path != "a" || string(file.Contents) != "first" {
+			t.Fatalf("file=%+v", file)
+		}
+		return sentinel
+	})
+	if !errors.Is(err, sentinel) || count != 1 {
+		t.Fatalf("count=%d err=%v", count, err)
+	}
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+	count = 0
+	err = WalkTarGz(ctx, path, options, func(File) error { count++; cancel(); return nil })
+	if !errors.Is(err, context.Canceled) || count != 1 {
+		t.Fatalf("count=%d err=%v", count, err)
+	}
+	if err := WalkTarGz(t.Context(), path, options, nil); err == nil {
+		t.Fatal("nil visitor accepted")
+	}
+}
 
 type tarEntry struct {
 	name     string

@@ -2,6 +2,7 @@ package source
 
 import (
 	"context"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -56,6 +57,24 @@ func TestExplicitNamespaceLocksAndSnapshotsWithoutMuambaDiscovery(t *testing.T) 
 	}
 	if strings.Contains(string(files[0].Contents), "Muamba manifest") {
 		t.Fatal("snapshot used the discovered parent manifest")
+	}
+	var streamed []byte
+	if err := engine.Walk(context.Background(), nil, func(file File, r io.Reader) error {
+		if file.Path != files[0].Path || file.Integrity != files[0].Integrity || file.Size != files[0].Size {
+			t.Fatalf("stream metadata = %#v", file)
+		}
+		// Replacing the materialized source cannot change the verified reader.
+		if err := os.WriteFile(filepath.Join(root, file.Path), []byte("tampered"), 0600); err != nil {
+			return err
+		}
+		var err error
+		streamed, err = io.ReadAll(r)
+		return err
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if string(streamed) != "icon bytes" {
+		t.Fatalf("stream = %q", streamed)
 	}
 }
 
