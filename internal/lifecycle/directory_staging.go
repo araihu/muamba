@@ -52,7 +52,7 @@ func (s *directoryStaging) seed(ctx context.Context, cache *blobcache.Store) err
 		if err := ctx.Err(); err != nil {
 			return err
 		}
-		if err := cache.Seed(file.path, file.digest); err != nil {
+		if err := cache.SeedContext(ctx, file.path, file.digest); err != nil {
 			return err
 		}
 	}

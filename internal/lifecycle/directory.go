@@ -117,7 +117,7 @@ func (e *Engine) syncDirectory(ctx context.Context, client *transport.Client, di
 			digest, _ := integrity.Parse(selection.Integrity)
 			target, _ := e.target(selection)
 			if cacheErr := e.cache.Verify(digest); cacheErr != nil {
-				if seedErr := e.cache.Seed(target, digest); seedErr != nil {
+				if seedErr := e.cache.SeedContext(ctx, target, digest); seedErr != nil {
 					return nil, nil, seedErr
 				}
 			}

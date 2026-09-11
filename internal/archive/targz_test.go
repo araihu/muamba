@@ -19,7 +19,7 @@ func TestWalkTarGzStopsOnCallbackFailureAndCancellation(t *testing.T) {
 	err := WalkTarGz(t.Context(), path, options, func(file File) error {
 		count++
 		if file.Path != "a" || string(file.Contents) != "first" {
-			t.Fatalf("file=%+v", file)
+			t.Fatalf("file path=%q size=%d", file.Path, file.Size)
 		}
 		return sentinel
 	})

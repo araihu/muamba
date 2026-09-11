@@ -104,7 +104,7 @@ func (e *Engine) retrustSelections(ctx context.Context, client *transport.Client
 		if err != nil {
 			return nil, err
 		}
-		if err := e.cache.Seed(downloaded.path, downloaded.digest); err != nil {
+		if err := e.cache.SeedContext(ctx, downloaded.path, downloaded.digest); err != nil {
 			_ = os.Remove(downloaded.path)
 			return nil, err
 		}
@@ -143,7 +143,7 @@ func (e *Engine) restoreLocked(ctx context.Context, client *transport.Client, se
 			return false, err
 		}
 		if err := e.cache.Verify(expected); err != nil {
-			if err := e.cache.Seed(target, expected); err != nil {
+			if err := e.cache.SeedContext(ctx, target, expected); err != nil {
 				return false, err
 			}
 		}
@@ -157,7 +157,7 @@ func (e *Engine) restoreLocked(ctx context.Context, client *transport.Client, se
 		return false, err
 	}
 	defer func() { _ = os.Remove(downloaded.path) }()
-	if err := e.cache.Seed(downloaded.path, expected); err != nil {
+	if err := e.cache.SeedContext(ctx, downloaded.path, expected); err != nil {
 		return false, err
 	}
 	if err := e.cache.Materialize(expected, target, selectionMode(selection)); err != nil {

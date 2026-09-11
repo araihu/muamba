@@ -1,11 +1,13 @@
 package blobcache
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/araihu/muamba/internal/integrity"
 	"github.com/gofrs/flock"
@@ -49,7 +51,13 @@ func (s *Store) Verify(expected integrity.Digest) error {
 }
 
 func (s *Store) Seed(source string, expected integrity.Digest) error {
-	if err := verifyFile(source, expected); err != nil {
+	return s.SeedContext(context.Background(), source, expected)
+}
+
+// SeedContext verifies and atomically seeds a blob, observing cancellation
+// while waiting for its lock, reading, copying, and before publication.
+func (s *Store) SeedContext(ctx context.Context, source string, expected integrity.Digest) error {
+	if err := verifyFileContext(ctx, source, expected); err != nil {
 		return fmt.Errorf("verify cache source %s: %w", source, err)
 	}
 	target := s.Path(expected)
@@ -57,20 +65,28 @@ func (s *Store) Seed(source string, expected integrity.Digest) error {
 		return err
 	}
 	lock := flock.New(target + ".lock")
-	if err := lock.Lock(); err != nil {
+	defer func() { _ = lock.Close() }()
+	locked, err := lock.TryLockContext(ctx, 25*time.Millisecond)
+	if err != nil {
 		return fmt.Errorf("lock cache blob: %w", err)
 	}
 	defer func() { _ = lock.Unlock() }()
-	if err := verifyFile(target, expected); err == nil {
-		return nil
+	if !locked {
+		return fmt.Errorf("cache lock was not acquired")
 	}
-	temporary, err := copyTemporary(source, filepath.Dir(target), 0o644)
+	if err := verifyFileContext(ctx, target, expected); err == nil {
+		return ctx.Err()
+	}
+	temporary, err := copyTemporaryContext(ctx, source, filepath.Dir(target), 0o644)
 	if err != nil {
 		return err
 	}
 	defer func() { _ = os.Remove(temporary) }()
-	if err := verifyFile(temporary, expected); err != nil {
+	if err := verifyFileContext(ctx, temporary, expected); err != nil {
 		return fmt.Errorf("verify staged cache blob: %w", err)
+	}
+	if err := ctx.Err(); err != nil {
+		return err
 	}
 	if err := os.Rename(temporary, target); err != nil {
 		return fmt.Errorf("publish cache blob: %w", err)
@@ -101,16 +117,30 @@ func (s *Store) Materialize(expected integrity.Digest, destination string, mode 
 }
 
 func verifyFile(path string, expected integrity.Digest) error {
+	return verifyFileContext(context.Background(), path, expected)
+}
+
+func verifyFileContext(ctx context.Context, path string, expected integrity.Digest) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	file, err := os.Open(path)
 	if err != nil {
 		return err
 	}
 	defer func() { _ = file.Close() }()
-	_, err = integrity.Verify(file, expected)
+	_, err = integrity.Verify(contextReader{ctx, file}, expected)
 	return err
 }
 
 func copyTemporary(source, directory string, mode os.FileMode) (string, error) {
+	return copyTemporaryContext(context.Background(), source, directory, mode)
+}
+
+func copyTemporaryContext(ctx context.Context, source, directory string, mode os.FileMode) (string, error) {
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
 	input, err := os.Open(source)
 	if err != nil {
 		return "", err
@@ -128,10 +158,13 @@ func copyTemporary(source, directory string, mode os.FileMode) (string, error) {
 			_ = os.Remove(path)
 		}
 	}()
-	if _, err := io.Copy(output, input); err != nil {
+	if _, err := io.Copy(output, contextReader{ctx, input}); err != nil {
 		return "", err
 	}
 	if err := output.Chmod(mode.Perm()); err != nil {
+		return "", err
+	}
+	if err := ctx.Err(); err != nil {
 		return "", err
 	}
 	if err := output.Sync(); err != nil {
@@ -140,6 +173,21 @@ func copyTemporary(source, directory string, mode os.FileMode) (string, error) {
 	if err := output.Close(); err != nil {
 		return "", err
 	}
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
 	ok = true
 	return path, nil
+}
+
+type contextReader struct {
+	ctx    context.Context
+	reader io.Reader
+}
+
+func (r contextReader) Read(p []byte) (int, error) {
+	if err := r.ctx.Err(); err != nil {
+		return 0, err
+	}
+	return r.reader.Read(p)
 }

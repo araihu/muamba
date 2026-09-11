@@ -84,7 +84,7 @@ func (e *Engine) lockDownloads(ctx context.Context, client *transport.Client, ca
 		if err != nil {
 			return err
 		}
-		if err := e.cache.Seed(downloaded.path, downloaded.digest); err != nil {
+		if err := e.cache.SeedContext(ctx, downloaded.path, downloaded.digest); err != nil {
 			_ = os.Remove(downloaded.path)
 			return err
 		}
