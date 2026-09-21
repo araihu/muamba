@@ -11,6 +11,8 @@ import (
 
 const muambaCandidateVersion = "v0.0.4"
 const muambaLatestPublicVersion = "v0.0.3"
+const muambaSocialImageURL = "https://muamba.araihu.com/og-v2.png"
+const muambaSocialImageAlt = "Muamba flow from reviewed source to locked bytes and offline build."
 
 func muambaInstallCommand() string {
 	return "go get -tool github.com/araihu/muamba/cmd/muamba@" + muambaLatestPublicVersion
@@ -22,7 +24,7 @@ templ LandingPage() {
 		DocumentTitle: "Muamba · Lock first-use bytes",
 		Description: "Review source URLs, accept the first bytes fetched, and reject later changes with SHA-384 locks.",
 		CanonicalURL: "https://muamba.araihu.com/",
-		SocialImageURL: "https://muamba.araihu.com/og.png",
+		SocialImageURL: muambaSocialImageURL,
 		Head: landingHead(),
 		Hero: landingHero(),
 		Content: landingContent(),
@@ -66,13 +68,13 @@ func landingShellConfig() landingshell.Config {
 templ landingHead() {
 	<meta property="og:site_name" content="Muamba"/>
 	<meta property="og:image:type" content="image/png"/>
-	<meta property="og:image:width" content="1672"/>
-	<meta property="og:image:height" content="941"/>
-	<meta property="og:image:alt" content="Muamba first-use file-lock workflow"/>
+	<meta property="og:image:width" content="1280"/>
+	<meta property="og:image:height" content="640"/>
+	<meta property="og:image:alt" content={ muambaSocialImageAlt }/>
 	<meta name="twitter:title" content="Muamba · Lock first-use bytes"/>
 	<meta name="twitter:description" content="Review source URLs, accept the first bytes fetched, and reject later changes with SHA-384 locks."/>
-	<meta name="twitter:image" content="https://muamba.araihu.com/og.png"/>
-	<meta name="twitter:image:alt" content="Muamba first-use file-lock workflow"/>
+	<meta name="twitter:image" content={ muambaSocialImageURL }/>
+	<meta name="twitter:image:alt" content={ muambaSocialImageAlt }/>
 	<link rel="stylesheet" href="/styles/site.css"/>
 }
 

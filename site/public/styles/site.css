@@ -53,9 +53,18 @@ a { color: inherit; }
 
 .muamba-docs { color: var(--muamba-ink); }
 .muamba-docs section { margin-top: 2.75rem; scroll-margin-top: 6rem; }
-.muamba-docs h2 { margin: 0 0 1rem; color: var(--muamba-ink); font-size: 1.7rem; letter-spacing: -.025em; }
-.muamba-docs h3 { margin: 2.25rem 0 .75rem; color: var(--muamba-ink); font-size: 1.15rem; }
-.muamba-docs p { max-width: 48rem; color: var(--muamba-muted); line-height: 1.75; }
+.muamba-docs section > h2 { margin: 0 0 1rem; color: var(--muamba-ink); font-size: 1.7rem; line-height: 1.2; letter-spacing: -.025em; text-wrap: balance; }
+.muamba-docs section > h3 { margin: 2.25rem 0 .75rem; color: var(--muamba-ink); font-size: 1.15rem; font-weight: 600; line-height: 1.3; text-wrap: balance; }
+.muamba-docs section > p { max-width: 72ch; margin: 0; color: var(--muamba-muted); font-size: 1rem; line-height: 1.75; }
+.muamba-docs section > p + p,
+.muamba-docs section > .muamba-docs-codeblock + p { margin-top: 1rem; }
+.muamba-docs section > p > code {
+  display: inline-block;
+  max-width: 100%;
+  overflow-x: auto;
+  vertical-align: bottom;
+  white-space: nowrap;
+}
 .muamba-docs a { color: var(--muamba-accent); text-underline-offset: .2rem; }
 .muamba-docs-codeblock { margin-top: 1rem; }
 .muamba-docs .muamba-trust-alert { margin-top: 1rem; }
@@ -74,6 +83,31 @@ a { color: inherit; }
   .muamba-proof-grid { grid-template-columns: 1fr; gap: 2.5rem; }
   .muamba-proof-list article { grid-template-columns: 1fr; gap: .5rem; }
   .muamba-final { align-items: flex-start; flex-direction: column; }
+}
+
+@media (max-width: 959px) {
+  .component-doc-shell .component-doc-shell__sidebar { visibility: hidden; }
+  .component-doc-shell .component-doc-shell__sidebar.is-open { visibility: visible; }
+}
+
+@media (min-width: 720px) and (max-width: 959px) {
+  .component-doc-shell .component-doc-shell__menu-button { display: inline-flex; }
+  .component-doc-shell .component-doc-shell__backdrop { display: block; }
+  .component-doc-shell .component-doc-shell__sidebar {
+    position: fixed;
+    inset: 4rem auto 0 0;
+    z-index: 40;
+    width: 18rem;
+    max-width: calc(100vw - 3rem);
+    height: auto;
+    flex: none;
+    transform: translateX(-100%);
+  }
+  .component-doc-shell .component-doc-shell__sidebar.is-open { transform: translateX(0); }
+}
+
+@media (max-width: 639px) {
+  .muamba-docs section > h2 { font-size: 1.4rem; }
 }
 
 @media (max-width: 430px) {
