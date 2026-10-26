@@ -334,6 +334,10 @@ func (m *Muamba) releaseContainer(source *dagger.Directory, trustDomain string) 
 	cosign := dag.Container().From(cosignImage).File("/ko-app/cosign")
 	return m.toolContainer(source, releaseImage, trustDomain).
 		WithoutEntrypoint().
+		WithDirectory("/usr/local/go", dag.Container().From(goImage).Directory("/usr/local/go")).
+		WithEnvVariable("GOROOT", "/usr/local/go").
+		WithEnvVariable("PATH", "/usr/local/go/bin:/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin").
+		WithExec([]string{"sh", "-ec", `test "$(go env GOVERSION)" = "go$(awk '/^go / {print $2}' go.mod)"`}).
 		WithFile("/usr/bin/cosign", cosign, dagger.ContainerWithFileOpts{Permissions: 0o755}).
 		WithExec([]string{"sh", "-c", "cosign version | grep -F 'v3.1.2'"})
 }
