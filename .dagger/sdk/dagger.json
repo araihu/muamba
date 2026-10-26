@@ -1,0 +1,5 @@
+{
+  "name": "muamba-go-sdk",
+  "engineVersion": "v0.21.11",
+  "sdk": { "source": "dang" }
+}

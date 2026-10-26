@@ -1,0 +1,48 @@
+pub description = "Go SDK adapter preserving Muamba's patched dependency versions"
+
+type MuambaGoSdk {
+  # Delegate bindings to the engine's Go generator, then restore the reviewed
+  # manifests before either exporting generated code or compiling the runtime.
+  let source(modSource: ModuleSource!): Directory! {
+    let original = modSource.contextDirectory
+    let path = modSource.sourceSubpath
+    let root = modSource.sourceRootSubpath
+    modSource.withSDK("go").generatedContextChangeset.after
+      .withFile(path + "/go.mod", original.file(path + "/go.mod"))
+      .withFile(path + "/go.sum", original.file(path + "/go.sum"))
+      .withFile(root + "/dagger.json", original.file(root + "/dagger.json"))
+  }
+
+  pub codegen(modSource: ModuleSource!, introspectionJson: File!): GeneratedCode! {
+    generatedCode(source(modSource))
+      .withVCSGeneratedPaths(["dagger.gen.go", "internal/dagger/**", "internal/telemetry/**"])
+      .withVCSIgnoredPaths(["dagger.gen.go", "internal/dagger", "internal/telemetry", ".env"])
+  }
+
+  # The current Go generator no longer dispatches the legacy empty-name
+  # definition call. Reuse its AST-based type loader without compiling its
+  # dependency-rewritten runtime.
+  pub moduleTypes(modSource: ModuleSource!, introspectionJson: File!, outputFilePath: String!): Container! {
+    let definition = modSource.withSDK("go").asModule.id
+    container()
+      .from("golang:1.27.3-bookworm@sha256:972b4110ba0f47539a975c31e52c64765e1ff19f2d74469ae4a595c6676e80a5")
+      .withNewFile(outputFilePath, JSON.encode(definition))
+      .withEntrypoint(["/bin/true"])
+  }
+
+  pub moduleRuntime(modSource: ModuleSource!, introspectionJson: File!): Container! {
+    let build = container()
+      .from("golang:1.27.3-bookworm@sha256:972b4110ba0f47539a975c31e52c64765e1ff19f2d74469ae4a595c6676e80a5")
+      .withDirectory("/src", source(modSource))
+      .withWorkdir("/src/" + modSource.sourceSubpath)
+      .withEnvVariable("GOTOOLCHAIN", "local")
+      .withEnvVariable("GOWORK", "off")
+      .withEnvVariable("GOFLAGS", "-mod=readonly")
+      .withEnvVariable("GOMAXPROCS", "2")
+      .withEnvVariable("GOMEMLIMIT", "2GiB")
+      .withExec(["go", "build", "-p=2", "-trimpath", "-ldflags=-s -w", "-o", "/runtime", "."])
+    # Keep generated sources available to CurrentModule.Source().
+    build.withEntrypoint(["/runtime"])
+      .withWorkdir("/scratch")
+  }
+}

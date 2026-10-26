@@ -1,8 +1,8 @@
 {
   "name": "muamba",
-  "engineVersion": "v0.21.8",
+  "engineVersion": "v0.21.11",
   "sdk": {
-    "source": "go"
+    "source": "./.dagger/sdk"
   },
   "source": ".dagger",
   "codegen": {

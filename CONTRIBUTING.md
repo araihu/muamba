@@ -33,7 +33,7 @@ feature worktree based on `origin/main`; never work directly on `main`.
 
 ## Development workflow
 
-All CI logic is portable through Dagger 0.21.8. Run the same required checks
+All CI logic is portable through Dagger 0.21.11. Run the same required checks
 locally with:
 
 ```bash

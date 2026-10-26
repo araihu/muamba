@@ -85,6 +85,12 @@ func (m *Muamba) module(ctx context.Context, source *dagger.Directory, trustDoma
 	return fresh(m.goContainer(source, trustDomain), runNonce).
 		WithExec([]string{"bash", "-euo", "pipefail", "-c", `cp go.mod /tmp/go.mod; cp go.sum /tmp/go.sum; go mod tidy; for f in go.mod go.sum; do cmp -s "$f" "/tmp/$f" || { printf 'go mod tidy drift in %s:\n' "$f" >&2; diff -u "/tmp/$f" "$f" >&2 || true; exit 1; }; done`}).
 		WithExec([]string{"go", "version"}).
+		WithWorkdir(workdir+"/.dagger").
+		WithEnvVariable("DAGGER_SESSION_PORT", "1").
+		WithEnvVariable("DAGGER_SESSION_TOKEN", "offline-test").
+		WithExec([]string{"go", "test", "-count=1", "./..."}).
+		WithWorkdir(workdir + "/.dagger/third_party/otel-go").
+		WithExec([]string{"go", "test", "-count=1", "./..."}).
 		Stdout(ctx)
 }
 

@@ -66,7 +66,11 @@ func (r Muamba) MarshalJSON() ([]byte, error) {
 
 func (r *Muamba) UnmarshalJSON(bs []byte) error {
 	var concrete struct{}
-	return json.Unmarshal(bs, &concrete)
+	err := json.Unmarshal(bs, &concrete)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func main() {
@@ -184,157 +188,371 @@ func dispatch(ctx context.Context) (rerr error) {
 	return nil
 }
 func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName string, inputArgs map[string][]byte) (_ any, err error) {
-	if parentName != "Muamba" {
+	_ = inputArgs
+	switch parentName {
+	case "Muamba":
+		switch fnName {
+		case "Build":
+			var parent Muamba
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			var source *dagger.Directory
+			if inputArgs["source"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["source"]), &source)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg source", err))
+				}
+			}
+			var trustDomain string
+			if inputArgs["trustDomain"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["trustDomain"]), &trustDomain)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg trustDomain", err))
+				}
+			}
+			return (*Muamba).Build(&parent, ctx, source, trustDomain)
+		case "Check":
+			var parent Muamba
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			var source *dagger.Directory
+			if inputArgs["source"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["source"]), &source)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg source", err))
+				}
+			}
+			var minimumCoverage string
+			if inputArgs["minimumCoverage"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["minimumCoverage"]), &minimumCoverage)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg minimumCoverage", err))
+				}
+			}
+			var trustDomain string
+			if inputArgs["trustDomain"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["trustDomain"]), &trustDomain)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg trustDomain", err))
+				}
+			}
+			var runNonce string
+			if inputArgs["runNonce"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["runNonce"]), &runNonce)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg runNonce", err))
+				}
+			}
+			return (*Muamba).Check(&parent, ctx, source, minimumCoverage, trustDomain, runNonce)
+		case "Coverage":
+			var parent Muamba
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			var source *dagger.Directory
+			if inputArgs["source"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["source"]), &source)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg source", err))
+				}
+			}
+			var minimumCoverage string
+			if inputArgs["minimumCoverage"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["minimumCoverage"]), &minimumCoverage)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg minimumCoverage", err))
+				}
+			}
+			var trustDomain string
+			if inputArgs["trustDomain"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["trustDomain"]), &trustDomain)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg trustDomain", err))
+				}
+			}
+			return (*Muamba).Coverage(&parent, ctx, source, minimumCoverage, trustDomain)
+		case "CoverageReport":
+			var parent Muamba
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			var source *dagger.Directory
+			if inputArgs["source"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["source"]), &source)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg source", err))
+				}
+			}
+			var trustDomain string
+			if inputArgs["trustDomain"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["trustDomain"]), &trustDomain)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg trustDomain", err))
+				}
+			}
+			var runNonce string
+			if inputArgs["runNonce"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["runNonce"]), &runNonce)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg runNonce", err))
+				}
+			}
+			return (*Muamba).CoverageReport(&parent, ctx, source, trustDomain, runNonce)
+		case "Examples":
+			var parent Muamba
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			var source *dagger.Directory
+			if inputArgs["source"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["source"]), &source)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg source", err))
+				}
+			}
+			var trustDomain string
+			if inputArgs["trustDomain"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["trustDomain"]), &trustDomain)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg trustDomain", err))
+				}
+			}
+			return (*Muamba).Examples(&parent, ctx, source, trustDomain)
+		case "Format":
+			var parent Muamba
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			var source *dagger.Directory
+			if inputArgs["source"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["source"]), &source)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg source", err))
+				}
+			}
+			var trustDomain string
+			if inputArgs["trustDomain"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["trustDomain"]), &trustDomain)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg trustDomain", err))
+				}
+			}
+			return (*Muamba).Format(&parent, ctx, source, trustDomain)
+		case "Lint":
+			var parent Muamba
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			var source *dagger.Directory
+			if inputArgs["source"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["source"]), &source)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg source", err))
+				}
+			}
+			var trustDomain string
+			if inputArgs["trustDomain"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["trustDomain"]), &trustDomain)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg trustDomain", err))
+				}
+			}
+			return (*Muamba).Lint(&parent, ctx, source, trustDomain)
+		case "Module":
+			var parent Muamba
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			var source *dagger.Directory
+			if inputArgs["source"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["source"]), &source)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg source", err))
+				}
+			}
+			var trustDomain string
+			if inputArgs["trustDomain"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["trustDomain"]), &trustDomain)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg trustDomain", err))
+				}
+			}
+			return (*Muamba).Module(&parent, ctx, source, trustDomain)
+		case "PublishRelease":
+			var parent Muamba
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			var source *dagger.Directory
+			if inputArgs["source"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["source"]), &source)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg source", err))
+				}
+			}
+			var githubToken *dagger.Secret
+			if inputArgs["githubToken"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["githubToken"]), &githubToken)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg githubToken", err))
+				}
+			}
+			var oidcToken *dagger.Secret
+			if inputArgs["oidcToken"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["oidcToken"]), &oidcToken)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg oidcToken", err))
+				}
+			}
+			var oidcUrl *dagger.Secret
+			if inputArgs["oidcURL"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["oidcURL"]), &oidcUrl)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg oidcURL", err))
+				}
+			}
+			var tag string
+			if inputArgs["tag"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["tag"]), &tag)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg tag", err))
+				}
+			}
+			var commit string
+			if inputArgs["commit"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["commit"]), &commit)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg commit", err))
+				}
+			}
+			var repository string
+			if inputArgs["repository"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["repository"]), &repository)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg repository", err))
+				}
+			}
+			var trustDomain string
+			if inputArgs["trustDomain"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["trustDomain"]), &trustDomain)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg trustDomain", err))
+				}
+			}
+			var runNonce string
+			if inputArgs["runNonce"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["runNonce"]), &runNonce)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg runNonce", err))
+				}
+			}
+			return (*Muamba).PublishRelease(&parent, ctx, source, githubToken, oidcToken, oidcUrl, tag, commit, repository, trustDomain, runNonce)
+		case "Race":
+			var parent Muamba
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			var source *dagger.Directory
+			if inputArgs["source"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["source"]), &source)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg source", err))
+				}
+			}
+			var trustDomain string
+			if inputArgs["trustDomain"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["trustDomain"]), &trustDomain)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg trustDomain", err))
+				}
+			}
+			return (*Muamba).Race(&parent, ctx, source, trustDomain)
+		case "ReleaseSnapshot":
+			var parent Muamba
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			var source *dagger.Directory
+			if inputArgs["source"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["source"]), &source)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg source", err))
+				}
+			}
+			var trustDomain string
+			if inputArgs["trustDomain"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["trustDomain"]), &trustDomain)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg trustDomain", err))
+				}
+			}
+			return (*Muamba).ReleaseSnapshot(&parent, ctx, source, trustDomain)
+		case "ReleaseTest":
+			var parent Muamba
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			var source *dagger.Directory
+			if inputArgs["source"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["source"]), &source)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg source", err))
+				}
+			}
+			var trustDomain string
+			if inputArgs["trustDomain"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["trustDomain"]), &trustDomain)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg trustDomain", err))
+				}
+			}
+			var runNonce string
+			if inputArgs["runNonce"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["runNonce"]), &runNonce)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg runNonce", err))
+				}
+			}
+			return (*Muamba).ReleaseTest(&parent, ctx, source, trustDomain, runNonce)
+		case "Vet":
+			var parent Muamba
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			var source *dagger.Directory
+			if inputArgs["source"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["source"]), &source)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg source", err))
+				}
+			}
+			var trustDomain string
+			if inputArgs["trustDomain"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["trustDomain"]), &trustDomain)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg trustDomain", err))
+				}
+			}
+			return (*Muamba).Vet(&parent, ctx, source, trustDomain)
+		default:
+			return nil, fmt.Errorf("unknown function %s", fnName)
+		}
+	default:
 		return nil, fmt.Errorf("unknown object %s", parentName)
 	}
-	var parent Muamba
-	if err := json.Unmarshal(parentJSON, &parent); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal parent object: %w", err)
-	}
-	source, err := decodeInput[*dagger.Directory](inputArgs, "source")
-	if err != nil {
-		return nil, err
-	}
-
-	switch fnName {
-	case "Build":
-		trustDomain, err := decodeInput[string](inputArgs, "trustDomain")
-		if err != nil {
-			return nil, err
-		}
-		return parent.Build(ctx, source, trustDomain)
-	case "Check":
-		minimum, err := decodeInput[string](inputArgs, "minimumCoverage")
-		if err != nil {
-			return nil, err
-		}
-		trustDomain, err := decodeInput[string](inputArgs, "trustDomain")
-		if err != nil {
-			return nil, err
-		}
-		runNonce, err := decodeInput[string](inputArgs, "runNonce")
-		if err != nil {
-			return nil, err
-		}
-		return parent.Check(ctx, source, minimum, trustDomain, runNonce)
-	case "Coverage":
-		minimum, err := decodeInput[string](inputArgs, "minimumCoverage")
-		if err != nil {
-			return nil, err
-		}
-		trustDomain, err := decodeInput[string](inputArgs, "trustDomain")
-		if err != nil {
-			return nil, err
-		}
-		return parent.Coverage(ctx, source, minimum, trustDomain)
-	case "CoverageReport":
-		trustDomain, err := decodeInput[string](inputArgs, "trustDomain")
-		if err != nil {
-			return nil, err
-		}
-		runNonce, err := decodeInput[string](inputArgs, "runNonce")
-		if err != nil {
-			return nil, err
-		}
-		return parent.CoverageReport(ctx, source, trustDomain, runNonce)
-	case "Examples":
-		trustDomain, err := decodeInput[string](inputArgs, "trustDomain")
-		if err != nil {
-			return nil, err
-		}
-		return parent.Examples(ctx, source, trustDomain)
-	case "Format":
-		trustDomain, err := decodeInput[string](inputArgs, "trustDomain")
-		if err != nil {
-			return nil, err
-		}
-		return parent.Format(ctx, source, trustDomain)
-	case "Lint":
-		trustDomain, err := decodeInput[string](inputArgs, "trustDomain")
-		if err != nil {
-			return nil, err
-		}
-		return parent.Lint(ctx, source, trustDomain)
-	case "Module":
-		trustDomain, err := decodeInput[string](inputArgs, "trustDomain")
-		if err != nil {
-			return nil, err
-		}
-		return parent.Module(ctx, source, trustDomain)
-	case "Race":
-		trustDomain, err := decodeInput[string](inputArgs, "trustDomain")
-		if err != nil {
-			return nil, err
-		}
-		return parent.Race(ctx, source, trustDomain)
-	case "ReleaseSnapshot":
-		trustDomain, err := decodeInput[string](inputArgs, "trustDomain")
-		if err != nil {
-			return nil, err
-		}
-		return parent.ReleaseSnapshot(ctx, source, trustDomain)
-	case "ReleaseTest":
-		trustDomain, err := decodeInput[string](inputArgs, "trustDomain")
-		if err != nil {
-			return nil, err
-		}
-		runNonce, err := decodeInput[string](inputArgs, "runNonce")
-		if err != nil {
-			return nil, err
-		}
-		return parent.ReleaseTest(ctx, source, trustDomain, runNonce)
-	case "Vet":
-		trustDomain, err := decodeInput[string](inputArgs, "trustDomain")
-		if err != nil {
-			return nil, err
-		}
-		return parent.Vet(ctx, source, trustDomain)
-	case "PublishRelease":
-		githubToken, err := decodeInput[*dagger.Secret](inputArgs, "githubToken")
-		if err != nil {
-			return nil, err
-		}
-		oidcToken, err := decodeInput[*dagger.Secret](inputArgs, "oidcToken")
-		if err != nil {
-			return nil, err
-		}
-		oidcURL, err := decodeInput[*dagger.Secret](inputArgs, "oidcURL")
-		if err != nil {
-			return nil, err
-		}
-		tag, err := decodeInput[string](inputArgs, "tag")
-		if err != nil {
-			return nil, err
-		}
-		commit, err := decodeInput[string](inputArgs, "commit")
-		if err != nil {
-			return nil, err
-		}
-		repository, err := decodeInput[string](inputArgs, "repository")
-		if err != nil {
-			return nil, err
-		}
-		trustDomain, err := decodeInput[string](inputArgs, "trustDomain")
-		if err != nil {
-			return nil, err
-		}
-		runNonce, err := decodeInput[string](inputArgs, "runNonce")
-		if err != nil {
-			return nil, err
-		}
-		return parent.PublishRelease(ctx, source, githubToken, oidcToken, oidcURL, tag, commit, repository, trustDomain, runNonce)
-	default:
-		return nil, fmt.Errorf("unknown function %s", fnName)
-	}
-}
-
-func decodeInput[T any](inputArgs map[string][]byte, name string) (T, error) {
-	var value T
-	if inputArgs[name] == nil {
-		return value, nil
-	}
-	if err := json.Unmarshal(inputArgs[name], &value); err != nil {
-		return value, fmt.Errorf("failed to unmarshal input arg %s: %w", name, err)
-	}
-	return value, nil
 }

@@ -23,7 +23,7 @@ need no network access.
 
 ## Repository CI with Dagger
 
-Repository checks and release preparation run through Dagger v0.21.8. The same
+Repository checks and release preparation run through Dagger v0.21.11. The same
 required checks can run from a trusted local checkout with:
 
 ```bash
