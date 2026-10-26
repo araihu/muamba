@@ -11,7 +11,7 @@ you agree to uphold it.
 
 ## Prerequisites
 
-- Go 1.27.0
+- Go 1.27.3
 - golangci-lint v2.13.1
 - govulncheck v1.7.0
 - Git
