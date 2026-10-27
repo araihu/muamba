@@ -66,20 +66,20 @@ func TestDependencySecurityPins(t *testing.T) {
 		module  string
 		version string
 	}{
-		{module: "go.opentelemetry.io/otel/sdk", version: "v1.43.0"},
-		{module: "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc", version: "v0.19.0"},
-		{module: "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp", version: "v0.19.0"},
-		{module: "go.opentelemetry.io/otel/log", version: "v0.19.0"},
-		{module: "go.opentelemetry.io/otel/sdk/log", version: "v0.19.0"},
-		{module: "go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc", version: "v1.43.0"},
-		{module: "go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp", version: "v1.43.0"},
-		{module: "go.opentelemetry.io/otel/exporters/otlp/otlptrace", version: "v1.43.0"},
-		{module: "go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc", version: "v1.43.0"},
-		{module: "go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp", version: "v1.43.0"},
-		{module: "google.golang.org/grpc", version: "v1.82.1"},
-		{module: "golang.org/x/net", version: "v0.56.0"},
-		{module: "golang.org/x/sys", version: "v0.46.0"},
-		{module: "golang.org/x/text", version: "v0.39.0"},
+		{module: "go.opentelemetry.io/otel/sdk", version: "v1.45.0"},
+		{module: "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc", version: "v0.21.0"},
+		{module: "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp", version: "v0.21.0"},
+		{module: "go.opentelemetry.io/otel/log", version: "v0.21.0"},
+		{module: "go.opentelemetry.io/otel/sdk/log", version: "v0.21.0"},
+		{module: "go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc", version: "v1.45.0"},
+		{module: "go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp", version: "v1.45.0"},
+		{module: "go.opentelemetry.io/otel/exporters/otlp/otlptrace", version: "v1.45.0"},
+		{module: "go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc", version: "v1.45.0"},
+		{module: "go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp", version: "v1.45.0"},
+		{module: "google.golang.org/grpc", version: "v1.83.2"},
+		{module: "golang.org/x/net", version: "v0.60.0"},
+		{module: "golang.org/x/sys", version: "v0.48.0"},
+		{module: "golang.org/x/text", version: "v0.42.0"},
 	} {
 		requireModuleVersion(t, module, dependency.module, dependency.version)
 		requireNoModuleReplacement(t, module, dependency.module)

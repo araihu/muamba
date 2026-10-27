@@ -23,7 +23,7 @@ need no network access.
 
 ## Repository CI with Dagger
 
-Repository checks and release preparation run through Dagger v0.21.8. The same
+Repository checks and release preparation run through Dagger v0.21.11. The same
 required checks can run from a trusted local checkout with:
 
 ```bash
@@ -84,7 +84,7 @@ Select-String "muamba_0.0.5_windows_amd64.zip" .\checksums.txt
 ### Pinned Go tool
 
 Go projects can pin Muamba in the consumer module. This installation path
-requires Go 1.27.0 or later:
+requires Go 1.27.3 or later:
 
 ```bash
 # Latest public release:

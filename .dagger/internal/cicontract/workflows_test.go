@@ -17,7 +17,7 @@ func TestRequiredCIAdapter(t *testing.T) {
 		"push:",
 		"branches: [main]",
 		"contents: read",
-		"DAGGER_VERSION: '0.21.8'",
+		"DAGGER_VERSION: '0.21.11'",
 		"MIN_COVERAGE: '70.0'",
 		"RUN_NONCE: ${{ github.run_id }}-${{ github.run_attempt }}",
 		"github.event.pull_request.head.repo.fork && 'fork'",
@@ -30,8 +30,7 @@ func TestRequiredCIAdapter(t *testing.T) {
 		"||\n        'ubuntu-24.04'",
 		`fromJSON('["self-hosted","Linux","X64","hostinger-vps-pr"]')`,
 		`fromJSON('["self-hosted","Linux","X64","hostinger-vps-trusted"]')`,
-		"Install pinned Dagger on GitHub-hosted runner",
-		"if: runner.environment == 'github-hosted'",
+		"Install pinned Dagger",
 		"version: ${{ env.DAGGER_VERSION }}",
 		"id: verify-dagger",
 		`expected="v${DAGGER_VERSION}"`,
@@ -57,7 +56,7 @@ func TestRequiredCIAdapter(t *testing.T) {
 	requireCount(t, workflow, "uses: dagger/dagger-for-github@", 1)
 	requireCount(t, workflow, "dagger call ", 2)
 	requireInOrder(t, workflow,
-		"Install pinned Dagger on GitHub-hosted runner",
+		"Install pinned Dagger",
 		"Verify exact Dagger version",
 		"dagger call check",
 		"dagger call coverage-report",
@@ -84,7 +83,6 @@ func TestReleaseAdapter(t *testing.T) {
 		"RUN_NONCE: ${{ github.run_id }}-${{ github.run_attempt }}",
 		"TRUST_DOMAIN: release",
 		`runs-on: ${{ fromJSON('["self-hosted","Linux","X64","hostinger-vps-trusted"]') }}`,
-		"if: runner.environment == 'github-hosted'",
 		"version: ${{ env.DAGGER_VERSION }}",
 		`expected="v${DAGGER_VERSION}"`,
 		`actual="$(dagger version | awk 'NR == 1 { print $2 }')"`,
@@ -110,7 +108,7 @@ func TestReleaseAdapter(t *testing.T) {
 	requireCount(t, workflow, "uses: dagger/dagger-for-github@", 1)
 	requireCount(t, workflow, "dagger call ", 2)
 	requireInOrder(t, workflow,
-		"Install pinned Dagger on GitHub-hosted runner",
+		"Install pinned Dagger",
 		"Verify exact Dagger version",
 		"dagger call release-test",
 		"dagger call publish-release",

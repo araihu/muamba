@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	goImage      = "golang:1.27.0-bookworm@sha256:484ef6066fa69acb059fdfeda7ba2b8f7391f2ef6abc6f9b8411e669ebd56466"
-	lintImage    = "golangci/golangci-lint:v2.13.1@sha256:d371321370bf2907bd13a8f6f8baff0e0ca7438d76fdf636b281eadf7e2305e3"
+	goImage      = "golang:1.27.3-bookworm@sha256:972b4110ba0f47539a975c31e52c64765e1ff19f2d74469ae4a595c6676e80a5"
+	lintImage    = "golangci/golangci-lint:v2.15.0@sha256:fbfcfd12a6f8d7f1b97b3362ca80fc2a244d46863148c73cb88e7793af96c481"
 	releaseImage = "goreleaser/goreleaser:v2.18.0@sha256:a7609141326e383370858ab3ca2572e96e00fb212fe3fd5610cd4de434652faa"
 	cosignImage  = "ghcr.io/sigstore/cosign/cosign:v3.1.2@sha256:d91bc4e7e95e8d2f549c747a72dc174f90579e410a1695f57f686674f84ce849"
 
@@ -85,6 +85,12 @@ func (m *Muamba) module(ctx context.Context, source *dagger.Directory, trustDoma
 	return fresh(m.goContainer(source, trustDomain), runNonce).
 		WithExec([]string{"bash", "-euo", "pipefail", "-c", `cp go.mod /tmp/go.mod; cp go.sum /tmp/go.sum; go mod tidy; for f in go.mod go.sum; do cmp -s "$f" "/tmp/$f" || { printf 'go mod tidy drift in %s:\n' "$f" >&2; diff -u "/tmp/$f" "$f" >&2 || true; exit 1; }; done`}).
 		WithExec([]string{"go", "version"}).
+		WithWorkdir(workdir+"/.dagger").
+		WithEnvVariable("DAGGER_SESSION_PORT", "1").
+		WithEnvVariable("DAGGER_SESSION_TOKEN", "offline-test").
+		WithExec([]string{"go", "test", "-count=1", "./..."}).
+		WithWorkdir(workdir + "/.dagger/third_party/otel-go").
+		WithExec([]string{"go", "test", "-count=1", "./..."}).
 		Stdout(ctx)
 }
 
@@ -335,10 +341,14 @@ func (m *Muamba) releaseContainer(source *dagger.Directory, trustDomain string) 
 func (m *Muamba) toolContainer(source *dagger.Directory, image, trustDomain string) *dagger.Container {
 	container := dag.Container().
 		From(image).
+		WithDirectory("/usr/local/go", dag.Container().From(goImage).Directory("/usr/local/go")).
+		WithEnvVariable("GOROOT", "/usr/local/go").
+		WithEnvVariable("PATH", "/usr/local/go/bin:/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin").
 		WithDirectory(workdir, source).
 		WithWorkdir(workdir).
 		WithEnvVariable("GOMODCACHE", "/go/pkg/mod").
-		WithEnvVariable("GOCACHE", "/root/.cache/go-build")
+		WithEnvVariable("GOCACHE", "/root/.cache/go-build").
+		WithExec([]string{"sh", "-ec", `test "$(go env GOVERSION)" = "go$(awk '/^go / {print $2}' go.mod)"`})
 	// Host-owned runner labels isolate PR and trusted Engines, sockets, and data
 	// roots. Only reusable Go dependency/build state is mounted here; source,
 	// coverage, artifacts, release state, and secrets never enter these volumes.
