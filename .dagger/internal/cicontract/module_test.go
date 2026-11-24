@@ -56,21 +56,29 @@ func TestFreshnessAndReleaseSupplyChainContracts(t *testing.T) {
 
 func TestDependencySecurityPins(t *testing.T) {
 	t.Parallel()
-	path := filepath.Join("..", "..", "go.mod")
-	contents, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatalf("read %s: %v", path, err)
+	for _, manifest := range []string{"go.mod", "third_party/otel-go/go.mod"} {
+		t.Run(manifest, func(t *testing.T) {
+			contents, err := os.ReadFile(filepath.Join("..", "..", manifest))
+			if err != nil {
+				t.Fatal(err)
+			}
+			checkDependencySecurityPins(t, string(contents))
+		})
 	}
-	module := string(contents)
+}
+
+func checkDependencySecurityPins(t *testing.T, module string) {
+	t.Helper()
 	for _, dependency := range []struct {
 		module  string
 		version string
 	}{
-		{module: "go.opentelemetry.io/otel/sdk", version: "v1.45.0"},
-		{module: "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc", version: "v0.21.0"},
-		{module: "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp", version: "v0.21.0"},
-		{module: "go.opentelemetry.io/otel/log", version: "v0.21.0"},
-		{module: "go.opentelemetry.io/otel/sdk/log", version: "v0.21.0"},
+		{module: "go.opentelemetry.io/otel/sdk", version: "v1.47.0"},
+		{module: "go.opentelemetry.io/otel/trace", version: "v1.47.0"},
+		{module: "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc", version: "v0.23.0"},
+		{module: "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp", version: "v0.23.0"},
+		{module: "go.opentelemetry.io/otel/log", version: "v1.47.0"},
+		{module: "go.opentelemetry.io/otel/sdk/log", version: "v1.47.0"},
 		{module: "go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc", version: "v1.45.0"},
 		{module: "go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp", version: "v1.45.0"},
 		{module: "go.opentelemetry.io/otel/exporters/otlp/otlptrace", version: "v1.45.0"},
